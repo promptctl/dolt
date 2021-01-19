@@ -7,11 +7,15 @@ module.exports =
 
 const core = __webpack_require__(53475);
 const aws = __webpack_require__(32197);
+const fs = __webpack_require__(35747);
 
 const region = core.getInput('region');
+const dataFilePath = core.getInput('dataFile');
 const CcAddresses = JSON.parse(core.getInput('ccAddresses'));
 const ToAddresses = JSON.parse(core.getInput('toAddresses'));
 const ReplyToAddresses = JSON.parse(core.getInput('replyToAddresses'));
+
+const data = fs.readFileSync(dataFilePath, { encoding: 'utf-8' });
 
 // Set the region
 aws.config.update({ region });
@@ -26,7 +30,7 @@ const params = {
         Body: { /* required */
             Html: {
                 Charset: "UTF-8",
-                Data: "This is the body of the test email"
+                Data: `This is the first part of the email.\n ${data}`
             },
             // Text: {
             //     Charset: "UTF-8",
