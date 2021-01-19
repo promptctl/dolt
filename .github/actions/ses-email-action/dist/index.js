@@ -10,12 +10,18 @@ const aws = __webpack_require__(32197);
 const fs = __webpack_require__(35747);
 
 const region = core.getInput('region');
+const version = core.getInput('version');
 const dataFilePath = core.getInput('dataFile');
 const CcAddresses = JSON.parse(core.getInput('ccAddresses'));
 const ToAddresses = JSON.parse(core.getInput('toAddresses'));
 const ReplyToAddresses = JSON.parse(core.getInput('replyToAddresses'));
 
 const data = fs.readFileSync(dataFilePath, { encoding: 'utf-8' });
+
+const templated = {
+    version,
+    results: data,
+};
 
 // Set the region
 aws.config.update({ region });
@@ -26,28 +32,15 @@ const params = {
         CcAddresses,
         ToAddresses,
     },
-    Message: { /* required */
-        Body: { /* required */
-            Html: {
-                Charset: "UTF-8",
-                Data: `This is the first part of the email.\n ${data}`
-            },
-            // Text: {
-            //     Charset: "UTF-8",
-            //     Data: "TEXT_FORMAT_BODY"
-            // }
-        },
-        Subject: {
-            Charset: 'UTF-8',
-            Data: 'Test email'
-        }
-    },
     Source: 'dustin@dolthub.com', /* required */
+    Template: 'PerformanceBenchmarkingReleaseTemplate',
+    TemplateData: JSON.stringify(templated),
     ReplyToAddresses,
 };
 
 // Create the promise and SES service object
-const sendPromise = new aws.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
+// const sendPromise = new aws.SES({apiVersion: '2010-12-01'}).sendEmail(params).promise();
+const sendPromise = new aws.SES({apiVersion: '2010-12-01'}).sendTemplatedEmail(params).promise();
 
 // Handle promise's fulfilled/rejected states
 sendPromise
