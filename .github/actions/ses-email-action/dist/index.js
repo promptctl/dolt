@@ -2,15 +2,16 @@ module.exports =
 /******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 60781:
+/***/ 41762:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-const core = __webpack_require__(53475);
-const aws = __webpack_require__(32197);
+const core = __webpack_require__(79594);
+const aws = __webpack_require__(96742);
 const fs = __webpack_require__(35747);
 
 const region = core.getInput('region');
 const version = core.getInput('version');
+const Template = core.getInput('template');
 const dataFilePath = core.getInput('dataFile');
 const CcAddresses = JSON.parse(core.getInput('ccAddresses'));
 const ToAddresses = JSON.parse(core.getInput('toAddresses'));
@@ -33,7 +34,7 @@ const params = {
         ToAddresses,
     },
     Source: 'github-actions-bot@corp.ld-corp.com', /* required */
-    Template: 'PerformanceBenchmarkingReleaseTemplate',
+    Template,
     TemplateData: JSON.stringify(templated),
     ReplyToAddresses,
 };
@@ -50,7 +51,7 @@ sendPromise
 
 /***/ }),
 
-/***/ 78483:
+/***/ 40169:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -64,7 +65,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const os = __importStar(__webpack_require__(12087));
-const utils_1 = __webpack_require__(23274);
+const utils_1 = __webpack_require__(62273);
 /**
  * Commands
  *
@@ -136,7 +137,7 @@ function escapeProperty(s) {
 
 /***/ }),
 
-/***/ 53475:
+/***/ 79594:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -158,9 +159,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-const command_1 = __webpack_require__(78483);
-const file_command_1 = __webpack_require__(68503);
-const utils_1 = __webpack_require__(23274);
+const command_1 = __webpack_require__(40169);
+const file_command_1 = __webpack_require__(82823);
+const utils_1 = __webpack_require__(62273);
 const os = __importStar(__webpack_require__(12087));
 const path = __importStar(__webpack_require__(85622));
 /**
@@ -381,7 +382,7 @@ exports.getState = getState;
 
 /***/ }),
 
-/***/ 68503:
+/***/ 82823:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 "use strict";
@@ -399,7 +400,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 /* eslint-disable @typescript-eslint/no-explicit-any */
 const fs = __importStar(__webpack_require__(35747));
 const os = __importStar(__webpack_require__(12087));
-const utils_1 = __webpack_require__(23274);
+const utils_1 = __webpack_require__(62273);
 function issueCommand(command, message) {
     const filePath = process.env[`GITHUB_${command}`];
     if (!filePath) {
@@ -417,7 +418,7 @@ exports.issueCommand = issueCommand;
 
 /***/ }),
 
-/***/ 23274:
+/***/ 62273:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -443,11 +444,11 @@ exports.toCommandValue = toCommandValue;
 
 /***/ }),
 
-/***/ 41057:
+/***/ 4078:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -468,11 +469,11 @@ module.exports = AWS.AccessAnalyzer;
 
 /***/ }),
 
-/***/ 86683:
+/***/ 85662:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -494,11 +495,11 @@ module.exports = AWS.ACM;
 
 /***/ }),
 
-/***/ 78535:
+/***/ 57869:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -520,11 +521,11 @@ module.exports = AWS.ACMPCA;
 
 /***/ }),
 
-/***/ 74715:
+/***/ 20653:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -545,277 +546,277 @@ module.exports = AWS.AlexaForBusiness;
 
 /***/ }),
 
-/***/ 18842:
+/***/ 91465:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
+__webpack_require__(23704);
 module.exports = {
-  ACM: __webpack_require__(86683),
-  APIGateway: __webpack_require__(97899),
-  ApplicationAutoScaling: __webpack_require__(64166),
-  AppStream: __webpack_require__(70036),
-  AutoScaling: __webpack_require__(27586),
-  Batch: __webpack_require__(53249),
-  Budgets: __webpack_require__(76805),
-  CloudDirectory: __webpack_require__(80921),
-  CloudFormation: __webpack_require__(19455),
-  CloudFront: __webpack_require__(23074),
-  CloudHSM: __webpack_require__(44167),
-  CloudSearch: __webpack_require__(74272),
-  CloudSearchDomain: __webpack_require__(11739),
-  CloudTrail: __webpack_require__(73384),
-  CloudWatch: __webpack_require__(36207),
-  CloudWatchEvents: __webpack_require__(60802),
-  CloudWatchLogs: __webpack_require__(61946),
-  CodeBuild: __webpack_require__(90881),
-  CodeCommit: __webpack_require__(91141),
-  CodeDeploy: __webpack_require__(16586),
-  CodePipeline: __webpack_require__(77116),
-  CognitoIdentity: __webpack_require__(57561),
-  CognitoIdentityServiceProvider: __webpack_require__(6941),
-  CognitoSync: __webpack_require__(12915),
-  ConfigService: __webpack_require__(52825),
-  CUR: __webpack_require__(82789),
-  DataPipeline: __webpack_require__(19809),
-  DeviceFarm: __webpack_require__(70930),
-  DirectConnect: __webpack_require__(7741),
-  DirectoryService: __webpack_require__(94561),
-  Discovery: __webpack_require__(71958),
-  DMS: __webpack_require__(26170),
-  DynamoDB: __webpack_require__(56013),
-  DynamoDBStreams: __webpack_require__(48182),
-  EC2: __webpack_require__(71552),
-  ECR: __webpack_require__(85117),
-  ECS: __webpack_require__(35382),
-  EFS: __webpack_require__(3905),
-  ElastiCache: __webpack_require__(28758),
-  ElasticBeanstalk: __webpack_require__(85876),
-  ELB: __webpack_require__(92421),
-  ELBv2: __webpack_require__(46582),
-  EMR: __webpack_require__(71768),
-  ES: __webpack_require__(19466),
-  ElasticTranscoder: __webpack_require__(87909),
-  Firehose: __webpack_require__(6231),
-  GameLift: __webpack_require__(57616),
-  Glacier: __webpack_require__(79220),
-  Health: __webpack_require__(61668),
-  IAM: __webpack_require__(10659),
-  ImportExport: __webpack_require__(39736),
-  Inspector: __webpack_require__(13236),
-  Iot: __webpack_require__(51376),
-  IotData: __webpack_require__(84853),
-  Kinesis: __webpack_require__(49516),
-  KinesisAnalytics: __webpack_require__(98747),
-  KMS: __webpack_require__(61835),
-  Lambda: __webpack_require__(25189),
-  LexRuntime: __webpack_require__(97540),
-  Lightsail: __webpack_require__(58196),
-  MachineLearning: __webpack_require__(44583),
-  MarketplaceCommerceAnalytics: __webpack_require__(30856),
-  MarketplaceMetering: __webpack_require__(1078),
-  MTurk: __webpack_require__(89115),
-  MobileAnalytics: __webpack_require__(77024),
-  OpsWorks: __webpack_require__(59326),
-  OpsWorksCM: __webpack_require__(97504),
-  Organizations: __webpack_require__(7224),
-  Pinpoint: __webpack_require__(45683),
-  Polly: __webpack_require__(64729),
-  RDS: __webpack_require__(95309),
-  Redshift: __webpack_require__(34765),
-  Rekognition: __webpack_require__(15855),
-  ResourceGroupsTaggingAPI: __webpack_require__(31502),
-  Route53: __webpack_require__(98363),
-  Route53Domains: __webpack_require__(46256),
-  S3: __webpack_require__(65526),
-  S3Control: __webpack_require__(40464),
-  ServiceCatalog: __webpack_require__(70822),
-  SES: __webpack_require__(53604),
-  Shield: __webpack_require__(27880),
-  SimpleDB: __webpack_require__(97015),
-  SMS: __webpack_require__(82437),
-  Snowball: __webpack_require__(87539),
-  SNS: __webpack_require__(22904),
-  SQS: __webpack_require__(44108),
-  SSM: __webpack_require__(84787),
-  StorageGateway: __webpack_require__(10833),
-  StepFunctions: __webpack_require__(14423),
-  STS: __webpack_require__(74396),
-  Support: __webpack_require__(87214),
-  SWF: __webpack_require__(57433),
-  XRay: __webpack_require__(29066),
-  WAF: __webpack_require__(39120),
-  WAFRegional: __webpack_require__(27269),
-  WorkDocs: __webpack_require__(78886),
-  WorkSpaces: __webpack_require__(62088),
-  CodeStar: __webpack_require__(69827),
-  LexModelBuildingService: __webpack_require__(6282),
-  MarketplaceEntitlementService: __webpack_require__(47667),
-  Athena: __webpack_require__(90937),
-  Greengrass: __webpack_require__(75341),
-  DAX: __webpack_require__(93316),
-  MigrationHub: __webpack_require__(13563),
-  CloudHSMV2: __webpack_require__(12521),
-  Glue: __webpack_require__(36174),
-  Mobile: __webpack_require__(57110),
-  Pricing: __webpack_require__(47977),
-  CostExplorer: __webpack_require__(3675),
-  MediaConvert: __webpack_require__(99831),
-  MediaLive: __webpack_require__(82512),
-  MediaPackage: __webpack_require__(61638),
-  MediaStore: __webpack_require__(33312),
-  MediaStoreData: __webpack_require__(77343),
-  AppSync: __webpack_require__(48230),
-  GuardDuty: __webpack_require__(95686),
-  MQ: __webpack_require__(51554),
-  Comprehend: __webpack_require__(57314),
-  IoTJobsDataPlane: __webpack_require__(56050),
-  KinesisVideoArchivedMedia: __webpack_require__(14465),
-  KinesisVideoMedia: __webpack_require__(37344),
-  KinesisVideo: __webpack_require__(48307),
-  SageMakerRuntime: __webpack_require__(12540),
-  SageMaker: __webpack_require__(69667),
-  Translate: __webpack_require__(41091),
-  ResourceGroups: __webpack_require__(18000),
-  AlexaForBusiness: __webpack_require__(74715),
-  Cloud9: __webpack_require__(59825),
-  ServerlessApplicationRepository: __webpack_require__(83018),
-  ServiceDiscovery: __webpack_require__(79797),
-  WorkMail: __webpack_require__(21044),
-  AutoScalingPlans: __webpack_require__(22243),
-  TranscribeService: __webpack_require__(66751),
-  Connect: __webpack_require__(94956),
-  ACMPCA: __webpack_require__(78535),
-  FMS: __webpack_require__(52646),
-  SecretsManager: __webpack_require__(17596),
-  IoTAnalytics: __webpack_require__(71566),
-  IoT1ClickDevicesService: __webpack_require__(30157),
-  IoT1ClickProjects: __webpack_require__(36838),
-  PI: __webpack_require__(40020),
-  Neptune: __webpack_require__(78141),
-  MediaTailor: __webpack_require__(42746),
-  EKS: __webpack_require__(49769),
-  Macie: __webpack_require__(14194),
-  DLM: __webpack_require__(9030),
-  Signer: __webpack_require__(41676),
-  Chime: __webpack_require__(76564),
-  PinpointEmail: __webpack_require__(55204),
-  RAM: __webpack_require__(38830),
-  Route53Resolver: __webpack_require__(85956),
-  PinpointSMSVoice: __webpack_require__(30182),
-  QuickSight: __webpack_require__(13334),
-  RDSDataService: __webpack_require__(92454),
-  Amplify: __webpack_require__(79284),
-  DataSync: __webpack_require__(60700),
-  RoboMaker: __webpack_require__(33027),
-  Transfer: __webpack_require__(20021),
-  GlobalAccelerator: __webpack_require__(35309),
-  ComprehendMedical: __webpack_require__(63676),
-  KinesisAnalyticsV2: __webpack_require__(70866),
-  MediaConnect: __webpack_require__(22023),
-  FSx: __webpack_require__(42947),
-  SecurityHub: __webpack_require__(548),
-  AppMesh: __webpack_require__(72372),
-  LicenseManager: __webpack_require__(33486),
-  Kafka: __webpack_require__(76259),
-  ApiGatewayManagementApi: __webpack_require__(26873),
-  ApiGatewayV2: __webpack_require__(85734),
-  DocDB: __webpack_require__(53936),
-  Backup: __webpack_require__(34322),
-  WorkLink: __webpack_require__(74381),
-  Textract: __webpack_require__(64829),
-  ManagedBlockchain: __webpack_require__(59453),
-  MediaPackageVod: __webpack_require__(83611),
-  GroundStation: __webpack_require__(76983),
-  IoTThingsGraph: __webpack_require__(91998),
-  IoTEvents: __webpack_require__(95443),
-  IoTEventsData: __webpack_require__(76302),
-  Personalize: __webpack_require__(26457),
-  PersonalizeEvents: __webpack_require__(62529),
-  PersonalizeRuntime: __webpack_require__(68169),
-  ApplicationInsights: __webpack_require__(61401),
-  ServiceQuotas: __webpack_require__(90592),
-  EC2InstanceConnect: __webpack_require__(54400),
-  EventBridge: __webpack_require__(46125),
-  LakeFormation: __webpack_require__(87780),
-  ForecastService: __webpack_require__(14963),
-  ForecastQueryService: __webpack_require__(82546),
-  QLDB: __webpack_require__(90779),
-  QLDBSession: __webpack_require__(81820),
-  WorkMailMessageFlow: __webpack_require__(61457),
-  CodeStarNotifications: __webpack_require__(32267),
-  SavingsPlans: __webpack_require__(45613),
-  SSO: __webpack_require__(65292),
-  SSOOIDC: __webpack_require__(15114),
-  MarketplaceCatalog: __webpack_require__(10129),
-  DataExchange: __webpack_require__(87435),
-  SESV2: __webpack_require__(333),
-  MigrationHubConfig: __webpack_require__(59709),
-  ConnectParticipant: __webpack_require__(13276),
-  AppConfig: __webpack_require__(44890),
-  IoTSecureTunneling: __webpack_require__(88530),
-  WAFV2: __webpack_require__(60812),
-  ElasticInference: __webpack_require__(3184),
-  Imagebuilder: __webpack_require__(33587),
-  Schemas: __webpack_require__(77431),
-  AccessAnalyzer: __webpack_require__(41057),
-  CodeGuruReviewer: __webpack_require__(83824),
-  CodeGuruProfiler: __webpack_require__(99526),
-  ComputeOptimizer: __webpack_require__(69044),
-  FraudDetector: __webpack_require__(95471),
-  Kendra: __webpack_require__(4474),
-  NetworkManager: __webpack_require__(64801),
-  Outposts: __webpack_require__(72618),
-  AugmentedAIRuntime: __webpack_require__(77597),
-  EBS: __webpack_require__(93073),
-  KinesisVideoSignalingChannels: __webpack_require__(77766),
-  Detective: __webpack_require__(7288),
-  CodeStarconnections: __webpack_require__(37682),
-  Synthetics: __webpack_require__(84626),
-  IoTSiteWise: __webpack_require__(13161),
-  Macie2: __webpack_require__(24085),
-  CodeArtifact: __webpack_require__(43134),
-  Honeycode: __webpack_require__(97983),
-  IVS: __webpack_require__(81137),
-  Braket: __webpack_require__(22824),
-  IdentityStore: __webpack_require__(66568),
-  Appflow: __webpack_require__(38988),
-  RedshiftData: __webpack_require__(73379),
-  SSOAdmin: __webpack_require__(70580),
-  TimestreamQuery: __webpack_require__(43432),
-  TimestreamWrite: __webpack_require__(87374),
-  S3Outposts: __webpack_require__(68175),
-  DataBrew: __webpack_require__(505),
-  ServiceCatalogAppRegistry: __webpack_require__(28773),
-  NetworkFirewall: __webpack_require__(84113),
-  MWAA: __webpack_require__(46416),
-  AmplifyBackend: __webpack_require__(88181),
-  AppIntegrations: __webpack_require__(77806),
-  ConnectContactLens: __webpack_require__(98414),
-  DevOpsGuru: __webpack_require__(96769),
-  ECRPUBLIC: __webpack_require__(26200),
-  LookoutVision: __webpack_require__(61221),
-  SageMakerFeatureStoreRuntime: __webpack_require__(55403),
-  CustomerProfiles: __webpack_require__(20504),
-  AuditManager: __webpack_require__(29172),
-  EMRcontainers: __webpack_require__(78218),
-  HealthLake: __webpack_require__(53668),
-  SagemakerEdge: __webpack_require__(36314),
-  Amp: __webpack_require__(74249),
-  GreengrassV2: __webpack_require__(11527),
-  IotDeviceAdvisor: __webpack_require__(28247),
-  IoTFleetHub: __webpack_require__(87397),
-  IoTWireless: __webpack_require__(70611),
-  Location: __webpack_require__(10661),
-  WellArchitected: __webpack_require__(91250)
+  ACM: __webpack_require__(85662),
+  APIGateway: __webpack_require__(93417),
+  ApplicationAutoScaling: __webpack_require__(33757),
+  AppStream: __webpack_require__(53210),
+  AutoScaling: __webpack_require__(82848),
+  Batch: __webpack_require__(46427),
+  Budgets: __webpack_require__(88435),
+  CloudDirectory: __webpack_require__(40982),
+  CloudFormation: __webpack_require__(97083),
+  CloudFront: __webpack_require__(17454),
+  CloudHSM: __webpack_require__(19968),
+  CloudSearch: __webpack_require__(43483),
+  CloudSearchDomain: __webpack_require__(65115),
+  CloudTrail: __webpack_require__(67482),
+  CloudWatch: __webpack_require__(99412),
+  CloudWatchEvents: __webpack_require__(75497),
+  CloudWatchLogs: __webpack_require__(78404),
+  CodeBuild: __webpack_require__(41022),
+  CodeCommit: __webpack_require__(8764),
+  CodeDeploy: __webpack_require__(72932),
+  CodePipeline: __webpack_require__(57801),
+  CognitoIdentity: __webpack_require__(28998),
+  CognitoIdentityServiceProvider: __webpack_require__(36052),
+  CognitoSync: __webpack_require__(12702),
+  ConfigService: __webpack_require__(5807),
+  CUR: __webpack_require__(16998),
+  DataPipeline: __webpack_require__(82989),
+  DeviceFarm: __webpack_require__(33202),
+  DirectConnect: __webpack_require__(49747),
+  DirectoryService: __webpack_require__(60791),
+  Discovery: __webpack_require__(46131),
+  DMS: __webpack_require__(7158),
+  DynamoDB: __webpack_require__(23321),
+  DynamoDBStreams: __webpack_require__(57992),
+  EC2: __webpack_require__(17348),
+  ECR: __webpack_require__(85974),
+  ECS: __webpack_require__(99917),
+  EFS: __webpack_require__(16786),
+  ElastiCache: __webpack_require__(58944),
+  ElasticBeanstalk: __webpack_require__(9063),
+  ELB: __webpack_require__(35814),
+  ELBv2: __webpack_require__(7206),
+  EMR: __webpack_require__(19391),
+  ES: __webpack_require__(75361),
+  ElasticTranscoder: __webpack_require__(77528),
+  Firehose: __webpack_require__(20819),
+  GameLift: __webpack_require__(78103),
+  Glacier: __webpack_require__(46395),
+  Health: __webpack_require__(79126),
+  IAM: __webpack_require__(84151),
+  ImportExport: __webpack_require__(60333),
+  Inspector: __webpack_require__(60651),
+  Iot: __webpack_require__(1314),
+  IotData: __webpack_require__(54986),
+  Kinesis: __webpack_require__(13015),
+  KinesisAnalytics: __webpack_require__(33325),
+  KMS: __webpack_require__(67205),
+  Lambda: __webpack_require__(82999),
+  LexRuntime: __webpack_require__(16165),
+  Lightsail: __webpack_require__(34444),
+  MachineLearning: __webpack_require__(77620),
+  MarketplaceCommerceAnalytics: __webpack_require__(14974),
+  MarketplaceMetering: __webpack_require__(9219),
+  MTurk: __webpack_require__(18127),
+  MobileAnalytics: __webpack_require__(74569),
+  OpsWorks: __webpack_require__(80248),
+  OpsWorksCM: __webpack_require__(16435),
+  Organizations: __webpack_require__(52794),
+  Pinpoint: __webpack_require__(95793),
+  Polly: __webpack_require__(46076),
+  RDS: __webpack_require__(67662),
+  Redshift: __webpack_require__(15562),
+  Rekognition: __webpack_require__(74552),
+  ResourceGroupsTaggingAPI: __webpack_require__(63694),
+  Route53: __webpack_require__(36780),
+  Route53Domains: __webpack_require__(51368),
+  S3: __webpack_require__(39030),
+  S3Control: __webpack_require__(48309),
+  ServiceCatalog: __webpack_require__(49003),
+  SES: __webpack_require__(40622),
+  Shield: __webpack_require__(47361),
+  SimpleDB: __webpack_require__(6229),
+  SMS: __webpack_require__(53923),
+  Snowball: __webpack_require__(33731),
+  SNS: __webpack_require__(91901),
+  SQS: __webpack_require__(27263),
+  SSM: __webpack_require__(12638),
+  StorageGateway: __webpack_require__(56859),
+  StepFunctions: __webpack_require__(89199),
+  STS: __webpack_require__(92941),
+  Support: __webpack_require__(85646),
+  SWF: __webpack_require__(8625),
+  XRay: __webpack_require__(78658),
+  WAF: __webpack_require__(90968),
+  WAFRegional: __webpack_require__(90435),
+  WorkDocs: __webpack_require__(13702),
+  WorkSpaces: __webpack_require__(33316),
+  CodeStar: __webpack_require__(27976),
+  LexModelBuildingService: __webpack_require__(74486),
+  MarketplaceEntitlementService: __webpack_require__(99431),
+  Athena: __webpack_require__(14939),
+  Greengrass: __webpack_require__(99943),
+  DAX: __webpack_require__(52896),
+  MigrationHub: __webpack_require__(67222),
+  CloudHSMV2: __webpack_require__(99656),
+  Glue: __webpack_require__(44160),
+  Mobile: __webpack_require__(17689),
+  Pricing: __webpack_require__(58994),
+  CostExplorer: __webpack_require__(88416),
+  MediaConvert: __webpack_require__(99524),
+  MediaLive: __webpack_require__(38330),
+  MediaPackage: __webpack_require__(1250),
+  MediaStore: __webpack_require__(94383),
+  MediaStoreData: __webpack_require__(62984),
+  AppSync: __webpack_require__(38942),
+  GuardDuty: __webpack_require__(79752),
+  MQ: __webpack_require__(27625),
+  Comprehend: __webpack_require__(24801),
+  IoTJobsDataPlane: __webpack_require__(50809),
+  KinesisVideoArchivedMedia: __webpack_require__(44614),
+  KinesisVideoMedia: __webpack_require__(60407),
+  KinesisVideo: __webpack_require__(94071),
+  SageMakerRuntime: __webpack_require__(8134),
+  SageMaker: __webpack_require__(81113),
+  Translate: __webpack_require__(9034),
+  ResourceGroups: __webpack_require__(91221),
+  AlexaForBusiness: __webpack_require__(20653),
+  Cloud9: __webpack_require__(21702),
+  ServerlessApplicationRepository: __webpack_require__(37474),
+  ServiceDiscovery: __webpack_require__(63985),
+  WorkMail: __webpack_require__(44737),
+  AutoScalingPlans: __webpack_require__(7098),
+  TranscribeService: __webpack_require__(73227),
+  Connect: __webpack_require__(11528),
+  ACMPCA: __webpack_require__(57869),
+  FMS: __webpack_require__(68047),
+  SecretsManager: __webpack_require__(97063),
+  IoTAnalytics: __webpack_require__(27641),
+  IoT1ClickDevicesService: __webpack_require__(69568),
+  IoT1ClickProjects: __webpack_require__(86472),
+  PI: __webpack_require__(14531),
+  Neptune: __webpack_require__(15806),
+  MediaTailor: __webpack_require__(37045),
+  EKS: __webpack_require__(57674),
+  Macie: __webpack_require__(58159),
+  DLM: __webpack_require__(58058),
+  Signer: __webpack_require__(72534),
+  Chime: __webpack_require__(30130),
+  PinpointEmail: __webpack_require__(49241),
+  RAM: __webpack_require__(5444),
+  Route53Resolver: __webpack_require__(93316),
+  PinpointSMSVoice: __webpack_require__(89447),
+  QuickSight: __webpack_require__(2508),
+  RDSDataService: __webpack_require__(35938),
+  Amplify: __webpack_require__(38276),
+  DataSync: __webpack_require__(13051),
+  RoboMaker: __webpack_require__(29266),
+  Transfer: __webpack_require__(38165),
+  GlobalAccelerator: __webpack_require__(94711),
+  ComprehendMedical: __webpack_require__(53588),
+  KinesisAnalyticsV2: __webpack_require__(80348),
+  MediaConnect: __webpack_require__(45892),
+  FSx: __webpack_require__(49965),
+  SecurityHub: __webpack_require__(73426),
+  AppMesh: __webpack_require__(869),
+  LicenseManager: __webpack_require__(45113),
+  Kafka: __webpack_require__(98997),
+  ApiGatewayManagementApi: __webpack_require__(29710),
+  ApiGatewayV2: __webpack_require__(53441),
+  DocDB: __webpack_require__(107),
+  Backup: __webpack_require__(9418),
+  WorkLink: __webpack_require__(6664),
+  Textract: __webpack_require__(15102),
+  ManagedBlockchain: __webpack_require__(70398),
+  MediaPackageVod: __webpack_require__(24008),
+  GroundStation: __webpack_require__(21483),
+  IoTThingsGraph: __webpack_require__(55358),
+  IoTEvents: __webpack_require__(38761),
+  IoTEventsData: __webpack_require__(18005),
+  Personalize: __webpack_require__(56095),
+  PersonalizeEvents: __webpack_require__(21215),
+  PersonalizeRuntime: __webpack_require__(77624),
+  ApplicationInsights: __webpack_require__(57533),
+  ServiceQuotas: __webpack_require__(80756),
+  EC2InstanceConnect: __webpack_require__(76561),
+  EventBridge: __webpack_require__(45595),
+  LakeFormation: __webpack_require__(14215),
+  ForecastService: __webpack_require__(45739),
+  ForecastQueryService: __webpack_require__(27685),
+  QLDB: __webpack_require__(82971),
+  QLDBSession: __webpack_require__(2882),
+  WorkMailMessageFlow: __webpack_require__(31344),
+  CodeStarNotifications: __webpack_require__(38151),
+  SavingsPlans: __webpack_require__(54443),
+  SSO: __webpack_require__(60370),
+  SSOOIDC: __webpack_require__(10335),
+  MarketplaceCatalog: __webpack_require__(18493),
+  DataExchange: __webpack_require__(97839),
+  SESV2: __webpack_require__(63698),
+  MigrationHubConfig: __webpack_require__(84297),
+  ConnectParticipant: __webpack_require__(90557),
+  AppConfig: __webpack_require__(42163),
+  IoTSecureTunneling: __webpack_require__(9530),
+  WAFV2: __webpack_require__(94923),
+  ElasticInference: __webpack_require__(72630),
+  Imagebuilder: __webpack_require__(56894),
+  Schemas: __webpack_require__(50201),
+  AccessAnalyzer: __webpack_require__(4078),
+  CodeGuruReviewer: __webpack_require__(53547),
+  CodeGuruProfiler: __webpack_require__(96407),
+  ComputeOptimizer: __webpack_require__(94063),
+  FraudDetector: __webpack_require__(85935),
+  Kendra: __webpack_require__(82129),
+  NetworkManager: __webpack_require__(54685),
+  Outposts: __webpack_require__(85787),
+  AugmentedAIRuntime: __webpack_require__(9529),
+  EBS: __webpack_require__(37308),
+  KinesisVideoSignalingChannels: __webpack_require__(9746),
+  Detective: __webpack_require__(89599),
+  CodeStarconnections: __webpack_require__(70181),
+  Synthetics: __webpack_require__(84955),
+  IoTSiteWise: __webpack_require__(29372),
+  Macie2: __webpack_require__(55184),
+  CodeArtifact: __webpack_require__(83189),
+  Honeycode: __webpack_require__(59644),
+  IVS: __webpack_require__(74562),
+  Braket: __webpack_require__(26565),
+  IdentityStore: __webpack_require__(98699),
+  Appflow: __webpack_require__(94804),
+  RedshiftData: __webpack_require__(71007),
+  SSOAdmin: __webpack_require__(73672),
+  TimestreamQuery: __webpack_require__(45037),
+  TimestreamWrite: __webpack_require__(11266),
+  S3Outposts: __webpack_require__(42087),
+  DataBrew: __webpack_require__(10286),
+  ServiceCatalogAppRegistry: __webpack_require__(81555),
+  NetworkFirewall: __webpack_require__(3928),
+  MWAA: __webpack_require__(68501),
+  AmplifyBackend: __webpack_require__(70049),
+  AppIntegrations: __webpack_require__(46978),
+  ConnectContactLens: __webpack_require__(34085),
+  DevOpsGuru: __webpack_require__(60746),
+  ECRPUBLIC: __webpack_require__(9412),
+  LookoutVision: __webpack_require__(28794),
+  SageMakerFeatureStoreRuntime: __webpack_require__(55759),
+  CustomerProfiles: __webpack_require__(1271),
+  AuditManager: __webpack_require__(31772),
+  EMRcontainers: __webpack_require__(9240),
+  HealthLake: __webpack_require__(48475),
+  SagemakerEdge: __webpack_require__(19799),
+  Amp: __webpack_require__(31661),
+  GreengrassV2: __webpack_require__(85288),
+  IotDeviceAdvisor: __webpack_require__(90189),
+  IoTFleetHub: __webpack_require__(38586),
+  IoTWireless: __webpack_require__(57979),
+  Location: __webpack_require__(64639),
+  WellArchitected: __webpack_require__(92666)
 };
 
 /***/ }),
 
-/***/ 74249:
+/***/ 31661:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -836,11 +837,11 @@ module.exports = AWS.Amp;
 
 /***/ }),
 
-/***/ 79284:
+/***/ 38276:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -861,11 +862,11 @@ module.exports = AWS.Amplify;
 
 /***/ }),
 
-/***/ 88181:
+/***/ 70049:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -886,17 +887,17 @@ module.exports = AWS.AmplifyBackend;
 
 /***/ }),
 
-/***/ 97899:
+/***/ 93417:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['apigateway'] = {};
 AWS.APIGateway = Service.defineService('apigateway', ['2015-07-09']);
-__webpack_require__(23998);
+__webpack_require__(6032);
 Object.defineProperty(apiLoader.services['apigateway'], '2015-07-09', {
   get: function get() {
     var model = __webpack_require__(33895);
@@ -912,11 +913,11 @@ module.exports = AWS.APIGateway;
 
 /***/ }),
 
-/***/ 26873:
+/***/ 29710:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -937,11 +938,11 @@ module.exports = AWS.ApiGatewayManagementApi;
 
 /***/ }),
 
-/***/ 85734:
+/***/ 53441:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -962,11 +963,11 @@ module.exports = AWS.ApiGatewayV2;
 
 /***/ }),
 
-/***/ 44890:
+/***/ 42163:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -987,11 +988,11 @@ module.exports = AWS.AppConfig;
 
 /***/ }),
 
-/***/ 38988:
+/***/ 94804:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1012,11 +1013,11 @@ module.exports = AWS.Appflow;
 
 /***/ }),
 
-/***/ 77806:
+/***/ 46978:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1037,11 +1038,11 @@ module.exports = AWS.AppIntegrations;
 
 /***/ }),
 
-/***/ 64166:
+/***/ 33757:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1062,11 +1063,11 @@ module.exports = AWS.ApplicationAutoScaling;
 
 /***/ }),
 
-/***/ 61401:
+/***/ 57533:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1087,11 +1088,11 @@ module.exports = AWS.ApplicationInsights;
 
 /***/ }),
 
-/***/ 72372:
+/***/ 869:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1121,11 +1122,11 @@ module.exports = AWS.AppMesh;
 
 /***/ }),
 
-/***/ 70036:
+/***/ 53210:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1147,11 +1148,11 @@ module.exports = AWS.AppStream;
 
 /***/ }),
 
-/***/ 48230:
+/***/ 38942:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1172,11 +1173,11 @@ module.exports = AWS.AppSync;
 
 /***/ }),
 
-/***/ 90937:
+/***/ 14939:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1197,11 +1198,11 @@ module.exports = AWS.Athena;
 
 /***/ }),
 
-/***/ 29172:
+/***/ 31772:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1222,11 +1223,11 @@ module.exports = AWS.AuditManager;
 
 /***/ }),
 
-/***/ 77597:
+/***/ 9529:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1247,11 +1248,11 @@ module.exports = AWS.AugmentedAIRuntime;
 
 /***/ }),
 
-/***/ 27586:
+/***/ 82848:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1272,11 +1273,11 @@ module.exports = AWS.AutoScaling;
 
 /***/ }),
 
-/***/ 22243:
+/***/ 7098:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1297,11 +1298,11 @@ module.exports = AWS.AutoScalingPlans;
 
 /***/ }),
 
-/***/ 34322:
+/***/ 9418:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1322,11 +1323,11 @@ module.exports = AWS.Backup;
 
 /***/ }),
 
-/***/ 53249:
+/***/ 46427:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1347,11 +1348,11 @@ module.exports = AWS.Batch;
 
 /***/ }),
 
-/***/ 22824:
+/***/ 26565:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1372,11 +1373,11 @@ module.exports = AWS.Braket;
 
 /***/ }),
 
-/***/ 76805:
+/***/ 88435:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1397,11 +1398,11 @@ module.exports = AWS.Budgets;
 
 /***/ }),
 
-/***/ 76564:
+/***/ 30130:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1422,11 +1423,11 @@ module.exports = AWS.Chime;
 
 /***/ }),
 
-/***/ 59825:
+/***/ 21702:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1447,11 +1448,11 @@ module.exports = AWS.Cloud9;
 
 /***/ }),
 
-/***/ 80921:
+/***/ 40982:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1481,11 +1482,11 @@ module.exports = AWS.CloudDirectory;
 
 /***/ }),
 
-/***/ 19455:
+/***/ 97083:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1507,17 +1508,17 @@ module.exports = AWS.CloudFormation;
 
 /***/ }),
 
-/***/ 23074:
+/***/ 17454:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['cloudfront'] = {};
 AWS.CloudFront = Service.defineService('cloudfront', ['2013-05-12*', '2013-11-11*', '2014-05-31*', '2014-10-21*', '2014-11-06*', '2015-04-17*', '2015-07-27*', '2015-09-17*', '2016-01-13*', '2016-01-28*', '2016-08-01*', '2016-08-20*', '2016-09-07*', '2016-09-29*', '2016-11-25', '2016-11-25*', '2017-03-25', '2017-03-25*', '2017-10-30', '2017-10-30*', '2018-06-18', '2018-06-18*', '2018-11-05', '2018-11-05*', '2019-03-26', '2019-03-26*', '2020-05-31']);
-__webpack_require__(53716);
+__webpack_require__(86372);
 Object.defineProperty(apiLoader.services['cloudfront'], '2016-11-25', {
   get: function get() {
     var model = __webpack_require__(81977);
@@ -1594,11 +1595,11 @@ module.exports = AWS.CloudFront;
 
 /***/ }),
 
-/***/ 44167:
+/***/ 19968:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1619,11 +1620,11 @@ module.exports = AWS.CloudHSM;
 
 /***/ }),
 
-/***/ 12521:
+/***/ 99656:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1644,11 +1645,11 @@ module.exports = AWS.CloudHSMV2;
 
 /***/ }),
 
-/***/ 74272:
+/***/ 43483:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1678,17 +1679,17 @@ module.exports = AWS.CloudSearch;
 
 /***/ }),
 
-/***/ 11739:
+/***/ 65115:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['cloudsearchdomain'] = {};
 AWS.CloudSearchDomain = Service.defineService('cloudsearchdomain', ['2013-01-01']);
-__webpack_require__(9056);
+__webpack_require__(27369);
 Object.defineProperty(apiLoader.services['cloudsearchdomain'], '2013-01-01', {
   get: function get() {
     var model = __webpack_require__(56588);
@@ -1703,11 +1704,11 @@ module.exports = AWS.CloudSearchDomain;
 
 /***/ }),
 
-/***/ 73384:
+/***/ 67482:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1728,11 +1729,11 @@ module.exports = AWS.CloudTrail;
 
 /***/ }),
 
-/***/ 36207:
+/***/ 99412:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1754,11 +1755,11 @@ module.exports = AWS.CloudWatch;
 
 /***/ }),
 
-/***/ 60802:
+/***/ 75497:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1779,11 +1780,11 @@ module.exports = AWS.CloudWatchEvents;
 
 /***/ }),
 
-/***/ 61946:
+/***/ 78404:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1804,11 +1805,11 @@ module.exports = AWS.CloudWatchLogs;
 
 /***/ }),
 
-/***/ 43134:
+/***/ 83189:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1829,11 +1830,11 @@ module.exports = AWS.CodeArtifact;
 
 /***/ }),
 
-/***/ 90881:
+/***/ 41022:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1854,11 +1855,11 @@ module.exports = AWS.CodeBuild;
 
 /***/ }),
 
-/***/ 91141:
+/***/ 8764:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1879,11 +1880,11 @@ module.exports = AWS.CodeCommit;
 
 /***/ }),
 
-/***/ 16586:
+/***/ 72932:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1905,11 +1906,11 @@ module.exports = AWS.CodeDeploy;
 
 /***/ }),
 
-/***/ 99526:
+/***/ 96407:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1930,11 +1931,11 @@ module.exports = AWS.CodeGuruProfiler;
 
 /***/ }),
 
-/***/ 83824:
+/***/ 53547:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1955,11 +1956,11 @@ module.exports = AWS.CodeGuruReviewer;
 
 /***/ }),
 
-/***/ 77116:
+/***/ 57801:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -1980,11 +1981,11 @@ module.exports = AWS.CodePipeline;
 
 /***/ }),
 
-/***/ 69827:
+/***/ 27976:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2005,11 +2006,11 @@ module.exports = AWS.CodeStar;
 
 /***/ }),
 
-/***/ 37682:
+/***/ 70181:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2030,11 +2031,11 @@ module.exports = AWS.CodeStarconnections;
 
 /***/ }),
 
-/***/ 32267:
+/***/ 38151:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2055,11 +2056,11 @@ module.exports = AWS.CodeStarNotifications;
 
 /***/ }),
 
-/***/ 57561:
+/***/ 28998:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2080,11 +2081,11 @@ module.exports = AWS.CognitoIdentity;
 
 /***/ }),
 
-/***/ 6941:
+/***/ 36052:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2105,11 +2106,11 @@ module.exports = AWS.CognitoIdentityServiceProvider;
 
 /***/ }),
 
-/***/ 12915:
+/***/ 12702:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2129,11 +2130,11 @@ module.exports = AWS.CognitoSync;
 
 /***/ }),
 
-/***/ 57314:
+/***/ 24801:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2154,11 +2155,11 @@ module.exports = AWS.Comprehend;
 
 /***/ }),
 
-/***/ 63676:
+/***/ 53588:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2179,11 +2180,11 @@ module.exports = AWS.ComprehendMedical;
 
 /***/ }),
 
-/***/ 69044:
+/***/ 94063:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2204,11 +2205,11 @@ module.exports = AWS.ComputeOptimizer;
 
 /***/ }),
 
-/***/ 52825:
+/***/ 5807:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2229,11 +2230,11 @@ module.exports = AWS.ConfigService;
 
 /***/ }),
 
-/***/ 94956:
+/***/ 11528:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2254,11 +2255,11 @@ module.exports = AWS.Connect;
 
 /***/ }),
 
-/***/ 98414:
+/***/ 34085:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2279,11 +2280,11 @@ module.exports = AWS.ConnectContactLens;
 
 /***/ }),
 
-/***/ 13276:
+/***/ 90557:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2304,11 +2305,11 @@ module.exports = AWS.ConnectParticipant;
 
 /***/ }),
 
-/***/ 3675:
+/***/ 88416:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2329,11 +2330,11 @@ module.exports = AWS.CostExplorer;
 
 /***/ }),
 
-/***/ 82789:
+/***/ 16998:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2354,11 +2355,11 @@ module.exports = AWS.CUR;
 
 /***/ }),
 
-/***/ 20504:
+/***/ 1271:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2379,11 +2380,11 @@ module.exports = AWS.CustomerProfiles;
 
 /***/ }),
 
-/***/ 505:
+/***/ 10286:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2404,11 +2405,11 @@ module.exports = AWS.DataBrew;
 
 /***/ }),
 
-/***/ 87435:
+/***/ 97839:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2429,11 +2430,11 @@ module.exports = AWS.DataExchange;
 
 /***/ }),
 
-/***/ 19809:
+/***/ 82989:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2454,11 +2455,11 @@ module.exports = AWS.DataPipeline;
 
 /***/ }),
 
-/***/ 60700:
+/***/ 13051:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2479,11 +2480,11 @@ module.exports = AWS.DataSync;
 
 /***/ }),
 
-/***/ 93316:
+/***/ 52896:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2504,11 +2505,11 @@ module.exports = AWS.DAX;
 
 /***/ }),
 
-/***/ 7288:
+/***/ 89599:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2529,11 +2530,11 @@ module.exports = AWS.Detective;
 
 /***/ }),
 
-/***/ 70930:
+/***/ 33202:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2554,11 +2555,11 @@ module.exports = AWS.DeviceFarm;
 
 /***/ }),
 
-/***/ 96769:
+/***/ 60746:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2579,11 +2580,11 @@ module.exports = AWS.DevOpsGuru;
 
 /***/ }),
 
-/***/ 7741:
+/***/ 49747:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2604,11 +2605,11 @@ module.exports = AWS.DirectConnect;
 
 /***/ }),
 
-/***/ 94561:
+/***/ 60791:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2629,11 +2630,11 @@ module.exports = AWS.DirectoryService;
 
 /***/ }),
 
-/***/ 71958:
+/***/ 46131:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2654,11 +2655,11 @@ module.exports = AWS.Discovery;
 
 /***/ }),
 
-/***/ 9030:
+/***/ 58058:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2679,11 +2680,11 @@ module.exports = AWS.DLM;
 
 /***/ }),
 
-/***/ 26170:
+/***/ 7158:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2692,7 +2693,7 @@ AWS.DMS = Service.defineService('dms', ['2016-01-01']);
 Object.defineProperty(apiLoader.services['dms'], '2016-01-01', {
   get: function get() {
     var model = __webpack_require__(85765);
-    model.paginators = __webpack_require__(34184)/* .pagination */ .o;
+    model.paginators = __webpack_require__(170)/* .pagination */ .o;
     model.waiters = __webpack_require__(31491)/* .waiters */ .V;
     return model;
   },
@@ -2705,11 +2706,11 @@ module.exports = AWS.DMS;
 
 /***/ }),
 
-/***/ 53936:
+/***/ 107:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2731,17 +2732,17 @@ module.exports = AWS.DocDB;
 
 /***/ }),
 
-/***/ 56013:
+/***/ 23321:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['dynamodb'] = {};
 AWS.DynamoDB = Service.defineService('dynamodb', ['2011-12-05', '2012-08-10']);
-__webpack_require__(26638);
+__webpack_require__(62054);
 Object.defineProperty(apiLoader.services['dynamodb'], '2011-12-05', {
   get: function get() {
     var model = __webpack_require__(59225);
@@ -2768,11 +2769,11 @@ module.exports = AWS.DynamoDB;
 
 /***/ }),
 
-/***/ 48182:
+/***/ 57992:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2793,11 +2794,11 @@ module.exports = AWS.DynamoDBStreams;
 
 /***/ }),
 
-/***/ 93073:
+/***/ 37308:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2818,17 +2819,17 @@ module.exports = AWS.EBS;
 
 /***/ }),
 
-/***/ 71552:
+/***/ 17348:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['ec2'] = {};
 AWS.EC2 = Service.defineService('ec2', ['2013-06-15*', '2013-10-15*', '2014-02-01*', '2014-05-01*', '2014-06-15*', '2014-09-01*', '2014-10-01*', '2015-03-01*', '2015-04-15*', '2015-10-01*', '2016-04-01*', '2016-09-15*', '2016-11-15']);
-__webpack_require__(17820);
+__webpack_require__(64590);
 Object.defineProperty(apiLoader.services['ec2'], '2016-11-15', {
   get: function get() {
     var model = __webpack_require__(8893);
@@ -2845,11 +2846,11 @@ module.exports = AWS.EC2;
 
 /***/ }),
 
-/***/ 54400:
+/***/ 76561:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2870,11 +2871,11 @@ module.exports = AWS.EC2InstanceConnect;
 
 /***/ }),
 
-/***/ 85117:
+/***/ 85974:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2896,11 +2897,11 @@ module.exports = AWS.ECR;
 
 /***/ }),
 
-/***/ 26200:
+/***/ 9412:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2921,11 +2922,11 @@ module.exports = AWS.ECRPUBLIC;
 
 /***/ }),
 
-/***/ 35382:
+/***/ 99917:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2947,11 +2948,11 @@ module.exports = AWS.ECS;
 
 /***/ }),
 
-/***/ 3905:
+/***/ 16786:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2972,11 +2973,11 @@ module.exports = AWS.EFS;
 
 /***/ }),
 
-/***/ 49769:
+/***/ 57674:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -2986,7 +2987,7 @@ Object.defineProperty(apiLoader.services['eks'], '2017-11-01', {
   get: function get() {
     var model = __webpack_require__(7766);
     model.paginators = __webpack_require__(17233)/* .pagination */ .o;
-    model.waiters = __webpack_require__(40904)/* .waiters */ .V;
+    model.waiters = __webpack_require__(11545)/* .waiters */ .V;
     return model;
   },
   enumerable: true,
@@ -2998,11 +2999,11 @@ module.exports = AWS.EKS;
 
 /***/ }),
 
-/***/ 28758:
+/***/ 58944:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3024,11 +3025,11 @@ module.exports = AWS.ElastiCache;
 
 /***/ }),
 
-/***/ 85876:
+/***/ 9063:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3050,11 +3051,11 @@ module.exports = AWS.ElasticBeanstalk;
 
 /***/ }),
 
-/***/ 3184:
+/***/ 72630:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3075,11 +3076,11 @@ module.exports = AWS.ElasticInference;
 
 /***/ }),
 
-/***/ 87909:
+/***/ 77528:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3101,11 +3102,11 @@ module.exports = AWS.ElasticTranscoder;
 
 /***/ }),
 
-/***/ 92421:
+/***/ 35814:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3127,11 +3128,11 @@ module.exports = AWS.ELB;
 
 /***/ }),
 
-/***/ 46582:
+/***/ 7206:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3153,11 +3154,11 @@ module.exports = AWS.ELBv2;
 
 /***/ }),
 
-/***/ 71768:
+/***/ 19391:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3179,11 +3180,11 @@ module.exports = AWS.EMR;
 
 /***/ }),
 
-/***/ 78218:
+/***/ 9240:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3204,11 +3205,11 @@ module.exports = AWS.EMRcontainers;
 
 /***/ }),
 
-/***/ 19466:
+/***/ 75361:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3229,11 +3230,11 @@ module.exports = AWS.ES;
 
 /***/ }),
 
-/***/ 46125:
+/***/ 45595:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3254,11 +3255,11 @@ module.exports = AWS.EventBridge;
 
 /***/ }),
 
-/***/ 6231:
+/***/ 20819:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3279,11 +3280,11 @@ module.exports = AWS.Firehose;
 
 /***/ }),
 
-/***/ 52646:
+/***/ 68047:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3304,11 +3305,11 @@ module.exports = AWS.FMS;
 
 /***/ }),
 
-/***/ 82546:
+/***/ 27685:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3329,11 +3330,11 @@ module.exports = AWS.ForecastQueryService;
 
 /***/ }),
 
-/***/ 14963:
+/***/ 45739:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3354,11 +3355,11 @@ module.exports = AWS.ForecastService;
 
 /***/ }),
 
-/***/ 95471:
+/***/ 85935:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3379,11 +3380,11 @@ module.exports = AWS.FraudDetector;
 
 /***/ }),
 
-/***/ 42947:
+/***/ 49965:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3404,11 +3405,11 @@ module.exports = AWS.FSx;
 
 /***/ }),
 
-/***/ 57616:
+/***/ 78103:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3429,17 +3430,17 @@ module.exports = AWS.GameLift;
 
 /***/ }),
 
-/***/ 79220:
+/***/ 46395:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['glacier'] = {};
 AWS.Glacier = Service.defineService('glacier', ['2012-06-01']);
-__webpack_require__(2441);
+__webpack_require__(68962);
 Object.defineProperty(apiLoader.services['glacier'], '2012-06-01', {
   get: function get() {
     var model = __webpack_require__(47563);
@@ -3456,11 +3457,11 @@ module.exports = AWS.Glacier;
 
 /***/ }),
 
-/***/ 35309:
+/***/ 94711:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3481,11 +3482,11 @@ module.exports = AWS.GlobalAccelerator;
 
 /***/ }),
 
-/***/ 36174:
+/***/ 44160:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3506,11 +3507,11 @@ module.exports = AWS.Glue;
 
 /***/ }),
 
-/***/ 75341:
+/***/ 99943:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3530,11 +3531,11 @@ module.exports = AWS.Greengrass;
 
 /***/ }),
 
-/***/ 11527:
+/***/ 85288:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3555,11 +3556,11 @@ module.exports = AWS.GreengrassV2;
 
 /***/ }),
 
-/***/ 76983:
+/***/ 21483:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3580,11 +3581,11 @@ module.exports = AWS.GroundStation;
 
 /***/ }),
 
-/***/ 95686:
+/***/ 79752:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3605,11 +3606,11 @@ module.exports = AWS.GuardDuty;
 
 /***/ }),
 
-/***/ 61668:
+/***/ 79126:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3630,11 +3631,11 @@ module.exports = AWS.Health;
 
 /***/ }),
 
-/***/ 53668:
+/***/ 48475:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3655,11 +3656,11 @@ module.exports = AWS.HealthLake;
 
 /***/ }),
 
-/***/ 97983:
+/***/ 59644:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3680,11 +3681,11 @@ module.exports = AWS.Honeycode;
 
 /***/ }),
 
-/***/ 10659:
+/***/ 84151:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3706,11 +3707,11 @@ module.exports = AWS.IAM;
 
 /***/ }),
 
-/***/ 66568:
+/***/ 98699:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3731,11 +3732,11 @@ module.exports = AWS.IdentityStore;
 
 /***/ }),
 
-/***/ 33587:
+/***/ 56894:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3756,11 +3757,11 @@ module.exports = AWS.Imagebuilder;
 
 /***/ }),
 
-/***/ 39736:
+/***/ 60333:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3781,11 +3782,11 @@ module.exports = AWS.ImportExport;
 
 /***/ }),
 
-/***/ 13236:
+/***/ 60651:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3806,11 +3807,11 @@ module.exports = AWS.Inspector;
 
 /***/ }),
 
-/***/ 51376:
+/***/ 1314:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3831,11 +3832,11 @@ module.exports = AWS.Iot;
 
 /***/ }),
 
-/***/ 30157:
+/***/ 69568:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3855,11 +3856,11 @@ module.exports = AWS.IoT1ClickDevicesService;
 
 /***/ }),
 
-/***/ 36838:
+/***/ 86472:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3880,11 +3881,11 @@ module.exports = AWS.IoT1ClickProjects;
 
 /***/ }),
 
-/***/ 71566:
+/***/ 27641:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3905,17 +3906,17 @@ module.exports = AWS.IoTAnalytics;
 
 /***/ }),
 
-/***/ 84853:
+/***/ 54986:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['iotdata'] = {};
 AWS.IotData = Service.defineService('iotdata', ['2015-05-28']);
-__webpack_require__(90789);
+__webpack_require__(98676);
 Object.defineProperty(apiLoader.services['iotdata'], '2015-05-28', {
   get: function get() {
     var model = __webpack_require__(94126);
@@ -3931,11 +3932,11 @@ module.exports = AWS.IotData;
 
 /***/ }),
 
-/***/ 28247:
+/***/ 90189:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3956,11 +3957,11 @@ module.exports = AWS.IotDeviceAdvisor;
 
 /***/ }),
 
-/***/ 95443:
+/***/ 38761:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -3981,11 +3982,11 @@ module.exports = AWS.IoTEvents;
 
 /***/ }),
 
-/***/ 76302:
+/***/ 18005:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4006,11 +4007,11 @@ module.exports = AWS.IoTEventsData;
 
 /***/ }),
 
-/***/ 87397:
+/***/ 38586:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4031,11 +4032,11 @@ module.exports = AWS.IoTFleetHub;
 
 /***/ }),
 
-/***/ 56050:
+/***/ 50809:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4056,11 +4057,11 @@ module.exports = AWS.IoTJobsDataPlane;
 
 /***/ }),
 
-/***/ 88530:
+/***/ 9530:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4081,11 +4082,11 @@ module.exports = AWS.IoTSecureTunneling;
 
 /***/ }),
 
-/***/ 13161:
+/***/ 29372:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4107,11 +4108,11 @@ module.exports = AWS.IoTSiteWise;
 
 /***/ }),
 
-/***/ 91998:
+/***/ 55358:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4132,11 +4133,11 @@ module.exports = AWS.IoTThingsGraph;
 
 /***/ }),
 
-/***/ 70611:
+/***/ 57979:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4157,11 +4158,11 @@ module.exports = AWS.IoTWireless;
 
 /***/ }),
 
-/***/ 81137:
+/***/ 74562:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4182,11 +4183,11 @@ module.exports = AWS.IVS;
 
 /***/ }),
 
-/***/ 76259:
+/***/ 98997:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4207,11 +4208,11 @@ module.exports = AWS.Kafka;
 
 /***/ }),
 
-/***/ 4474:
+/***/ 82129:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4232,11 +4233,11 @@ module.exports = AWS.Kendra;
 
 /***/ }),
 
-/***/ 49516:
+/***/ 13015:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4258,11 +4259,11 @@ module.exports = AWS.Kinesis;
 
 /***/ }),
 
-/***/ 98747:
+/***/ 33325:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4283,11 +4284,11 @@ module.exports = AWS.KinesisAnalytics;
 
 /***/ }),
 
-/***/ 70866:
+/***/ 80348:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4308,11 +4309,11 @@ module.exports = AWS.KinesisAnalyticsV2;
 
 /***/ }),
 
-/***/ 48307:
+/***/ 94071:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4333,11 +4334,11 @@ module.exports = AWS.KinesisVideo;
 
 /***/ }),
 
-/***/ 14465:
+/***/ 44614:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4358,11 +4359,11 @@ module.exports = AWS.KinesisVideoArchivedMedia;
 
 /***/ }),
 
-/***/ 37344:
+/***/ 60407:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4383,11 +4384,11 @@ module.exports = AWS.KinesisVideoMedia;
 
 /***/ }),
 
-/***/ 77766:
+/***/ 9746:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4408,11 +4409,11 @@ module.exports = AWS.KinesisVideoSignalingChannels;
 
 /***/ }),
 
-/***/ 61835:
+/***/ 67205:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4433,11 +4434,11 @@ module.exports = AWS.KMS;
 
 /***/ }),
 
-/***/ 87780:
+/***/ 14215:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4458,17 +4459,17 @@ module.exports = AWS.LakeFormation;
 
 /***/ }),
 
-/***/ 25189:
+/***/ 82999:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['lambda'] = {};
 AWS.Lambda = Service.defineService('lambda', ['2014-11-11', '2015-03-31']);
-__webpack_require__(87236);
+__webpack_require__(73629);
 Object.defineProperty(apiLoader.services['lambda'], '2014-11-11', {
   get: function get() {
     var model = __webpack_require__(63935);
@@ -4494,11 +4495,11 @@ module.exports = AWS.Lambda;
 
 /***/ }),
 
-/***/ 6282:
+/***/ 74486:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4519,11 +4520,11 @@ module.exports = AWS.LexModelBuildingService;
 
 /***/ }),
 
-/***/ 97540:
+/***/ 16165:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4544,11 +4545,11 @@ module.exports = AWS.LexRuntime;
 
 /***/ }),
 
-/***/ 33486:
+/***/ 45113:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4569,11 +4570,11 @@ module.exports = AWS.LicenseManager;
 
 /***/ }),
 
-/***/ 58196:
+/***/ 34444:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4594,11 +4595,11 @@ module.exports = AWS.Lightsail;
 
 /***/ }),
 
-/***/ 10661:
+/***/ 64639:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4619,11 +4620,11 @@ module.exports = AWS.Location;
 
 /***/ }),
 
-/***/ 61221:
+/***/ 28794:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4644,17 +4645,17 @@ module.exports = AWS.LookoutVision;
 
 /***/ }),
 
-/***/ 44583:
+/***/ 77620:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['machinelearning'] = {};
 AWS.MachineLearning = Service.defineService('machinelearning', ['2014-12-12']);
-__webpack_require__(27370);
+__webpack_require__(50958);
 Object.defineProperty(apiLoader.services['machinelearning'], '2014-12-12', {
   get: function get() {
     var model = __webpack_require__(41946);
@@ -4671,11 +4672,11 @@ module.exports = AWS.MachineLearning;
 
 /***/ }),
 
-/***/ 14194:
+/***/ 58159:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4696,11 +4697,11 @@ module.exports = AWS.Macie;
 
 /***/ }),
 
-/***/ 24085:
+/***/ 55184:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4721,11 +4722,11 @@ module.exports = AWS.Macie2;
 
 /***/ }),
 
-/***/ 59453:
+/***/ 70398:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4746,11 +4747,11 @@ module.exports = AWS.ManagedBlockchain;
 
 /***/ }),
 
-/***/ 10129:
+/***/ 18493:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4771,11 +4772,11 @@ module.exports = AWS.MarketplaceCatalog;
 
 /***/ }),
 
-/***/ 30856:
+/***/ 14974:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4796,11 +4797,11 @@ module.exports = AWS.MarketplaceCommerceAnalytics;
 
 /***/ }),
 
-/***/ 47667:
+/***/ 99431:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4821,11 +4822,11 @@ module.exports = AWS.MarketplaceEntitlementService;
 
 /***/ }),
 
-/***/ 1078:
+/***/ 9219:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4846,11 +4847,11 @@ module.exports = AWS.MarketplaceMetering;
 
 /***/ }),
 
-/***/ 22023:
+/***/ 45892:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4871,11 +4872,11 @@ module.exports = AWS.MediaConnect;
 
 /***/ }),
 
-/***/ 99831:
+/***/ 99524:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4896,11 +4897,11 @@ module.exports = AWS.MediaConvert;
 
 /***/ }),
 
-/***/ 82512:
+/***/ 38330:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4922,11 +4923,11 @@ module.exports = AWS.MediaLive;
 
 /***/ }),
 
-/***/ 61638:
+/***/ 1250:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4947,11 +4948,11 @@ module.exports = AWS.MediaPackage;
 
 /***/ }),
 
-/***/ 83611:
+/***/ 24008:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4972,11 +4973,11 @@ module.exports = AWS.MediaPackageVod;
 
 /***/ }),
 
-/***/ 33312:
+/***/ 94383:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -4997,11 +4998,11 @@ module.exports = AWS.MediaStore;
 
 /***/ }),
 
-/***/ 77343:
+/***/ 62984:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5022,11 +5023,11 @@ module.exports = AWS.MediaStoreData;
 
 /***/ }),
 
-/***/ 42746:
+/***/ 37045:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5047,11 +5048,11 @@ module.exports = AWS.MediaTailor;
 
 /***/ }),
 
-/***/ 13563:
+/***/ 67222:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5072,11 +5073,11 @@ module.exports = AWS.MigrationHub;
 
 /***/ }),
 
-/***/ 59709:
+/***/ 84297:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5097,11 +5098,11 @@ module.exports = AWS.MigrationHubConfig;
 
 /***/ }),
 
-/***/ 57110:
+/***/ 17689:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5122,11 +5123,11 @@ module.exports = AWS.Mobile;
 
 /***/ }),
 
-/***/ 77024:
+/***/ 74569:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5146,11 +5147,11 @@ module.exports = AWS.MobileAnalytics;
 
 /***/ }),
 
-/***/ 51554:
+/***/ 27625:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5171,11 +5172,11 @@ module.exports = AWS.MQ;
 
 /***/ }),
 
-/***/ 89115:
+/***/ 18127:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5196,11 +5197,11 @@ module.exports = AWS.MTurk;
 
 /***/ }),
 
-/***/ 46416:
+/***/ 68501:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5221,11 +5222,11 @@ module.exports = AWS.MWAA;
 
 /***/ }),
 
-/***/ 78141:
+/***/ 15806:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5247,11 +5248,11 @@ module.exports = AWS.Neptune;
 
 /***/ }),
 
-/***/ 84113:
+/***/ 3928:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5272,11 +5273,11 @@ module.exports = AWS.NetworkFirewall;
 
 /***/ }),
 
-/***/ 64801:
+/***/ 54685:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5297,11 +5298,11 @@ module.exports = AWS.NetworkManager;
 
 /***/ }),
 
-/***/ 59326:
+/***/ 80248:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5323,11 +5324,11 @@ module.exports = AWS.OpsWorks;
 
 /***/ }),
 
-/***/ 97504:
+/***/ 16435:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5349,11 +5350,11 @@ module.exports = AWS.OpsWorksCM;
 
 /***/ }),
 
-/***/ 7224:
+/***/ 52794:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5374,11 +5375,11 @@ module.exports = AWS.Organizations;
 
 /***/ }),
 
-/***/ 72618:
+/***/ 85787:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5399,11 +5400,11 @@ module.exports = AWS.Outposts;
 
 /***/ }),
 
-/***/ 26457:
+/***/ 56095:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5424,11 +5425,11 @@ module.exports = AWS.Personalize;
 
 /***/ }),
 
-/***/ 62529:
+/***/ 21215:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5449,11 +5450,11 @@ module.exports = AWS.PersonalizeEvents;
 
 /***/ }),
 
-/***/ 68169:
+/***/ 77624:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5462,7 +5463,7 @@ AWS.PersonalizeRuntime = Service.defineService('personalizeruntime', ['2018-05-2
 Object.defineProperty(apiLoader.services['personalizeruntime'], '2018-05-22', {
   get: function get() {
     var model = __webpack_require__(86682);
-    model.paginators = __webpack_require__(57091)/* .pagination */ .o;
+    model.paginators = __webpack_require__(32049)/* .pagination */ .o;
     return model;
   },
   enumerable: true,
@@ -5474,11 +5475,11 @@ module.exports = AWS.PersonalizeRuntime;
 
 /***/ }),
 
-/***/ 40020:
+/***/ 14531:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5499,11 +5500,11 @@ module.exports = AWS.PI;
 
 /***/ }),
 
-/***/ 45683:
+/***/ 95793:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5523,11 +5524,11 @@ module.exports = AWS.Pinpoint;
 
 /***/ }),
 
-/***/ 55204:
+/***/ 49241:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5548,11 +5549,11 @@ module.exports = AWS.PinpointEmail;
 
 /***/ }),
 
-/***/ 30182:
+/***/ 89447:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5572,17 +5573,17 @@ module.exports = AWS.PinpointSMSVoice;
 
 /***/ }),
 
-/***/ 64729:
+/***/ 46076:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['polly'] = {};
 AWS.Polly = Service.defineService('polly', ['2016-06-10']);
-__webpack_require__(77677);
+__webpack_require__(28496);
 Object.defineProperty(apiLoader.services['polly'], '2016-06-10', {
   get: function get() {
     var model = __webpack_require__(58020);
@@ -5598,11 +5599,11 @@ module.exports = AWS.Polly;
 
 /***/ }),
 
-/***/ 47977:
+/***/ 58994:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5623,11 +5624,11 @@ module.exports = AWS.Pricing;
 
 /***/ }),
 
-/***/ 90779:
+/***/ 82971:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5648,11 +5649,11 @@ module.exports = AWS.QLDB;
 
 /***/ }),
 
-/***/ 81820:
+/***/ 2882:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5673,11 +5674,11 @@ module.exports = AWS.QLDBSession;
 
 /***/ }),
 
-/***/ 13334:
+/***/ 2508:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5698,11 +5699,11 @@ module.exports = AWS.QuickSight;
 
 /***/ }),
 
-/***/ 38830:
+/***/ 5444:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5723,17 +5724,17 @@ module.exports = AWS.RAM;
 
 /***/ }),
 
-/***/ 95309:
+/***/ 67662:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['rds'] = {};
 AWS.RDS = Service.defineService('rds', ['2013-01-10', '2013-02-12', '2013-09-09', '2014-09-01', '2014-09-01*', '2014-10-31']);
-__webpack_require__(15361);
+__webpack_require__(78903);
 Object.defineProperty(apiLoader.services['rds'], '2013-01-10', {
   get: function get() {
     var model = __webpack_require__(56144);
@@ -5787,17 +5788,17 @@ module.exports = AWS.RDS;
 
 /***/ }),
 
-/***/ 92454:
+/***/ 35938:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['rdsdataservice'] = {};
 AWS.RDSDataService = Service.defineService('rdsdataservice', ['2018-08-01']);
-__webpack_require__(11905);
+__webpack_require__(88351);
 Object.defineProperty(apiLoader.services['rdsdataservice'], '2018-08-01', {
   get: function get() {
     var model = __webpack_require__(4983);
@@ -5813,11 +5814,11 @@ module.exports = AWS.RDSDataService;
 
 /***/ }),
 
-/***/ 34765:
+/***/ 15562:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5839,11 +5840,11 @@ module.exports = AWS.Redshift;
 
 /***/ }),
 
-/***/ 73379:
+/***/ 71007:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5864,11 +5865,11 @@ module.exports = AWS.RedshiftData;
 
 /***/ }),
 
-/***/ 15855:
+/***/ 74552:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5890,11 +5891,11 @@ module.exports = AWS.Rekognition;
 
 /***/ }),
 
-/***/ 18000:
+/***/ 91221:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5902,7 +5903,7 @@ apiLoader.services['resourcegroups'] = {};
 AWS.ResourceGroups = Service.defineService('resourcegroups', ['2017-11-27']);
 Object.defineProperty(apiLoader.services['resourcegroups'], '2017-11-27', {
   get: function get() {
-    var model = __webpack_require__(32268);
+    var model = __webpack_require__(28629);
     model.paginators = __webpack_require__(71378)/* .pagination */ .o;
     return model;
   },
@@ -5915,11 +5916,11 @@ module.exports = AWS.ResourceGroups;
 
 /***/ }),
 
-/***/ 31502:
+/***/ 63694:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5940,11 +5941,11 @@ module.exports = AWS.ResourceGroupsTaggingAPI;
 
 /***/ }),
 
-/***/ 33027:
+/***/ 29266:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -5965,17 +5966,17 @@ module.exports = AWS.RoboMaker;
 
 /***/ }),
 
-/***/ 98363:
+/***/ 36780:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['route53'] = {};
 AWS.Route53 = Service.defineService('route53', ['2013-04-01']);
-__webpack_require__(89179);
+__webpack_require__(56415);
 Object.defineProperty(apiLoader.services['route53'], '2013-04-01', {
   get: function get() {
     var model = __webpack_require__(91499);
@@ -5992,11 +5993,11 @@ module.exports = AWS.Route53;
 
 /***/ }),
 
-/***/ 46256:
+/***/ 51368:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6017,11 +6018,11 @@ module.exports = AWS.Route53Domains;
 
 /***/ }),
 
-/***/ 85956:
+/***/ 93316:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6042,17 +6043,17 @@ module.exports = AWS.Route53Resolver;
 
 /***/ }),
 
-/***/ 65526:
+/***/ 39030:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['s3'] = {};
 AWS.S3 = Service.defineService('s3', ['2006-03-01']);
-__webpack_require__(11545);
+__webpack_require__(58406);
 Object.defineProperty(apiLoader.services['s3'], '2006-03-01', {
   get: function get() {
     var model = __webpack_require__(32581);
@@ -6069,17 +6070,17 @@ module.exports = AWS.S3;
 
 /***/ }),
 
-/***/ 40464:
+/***/ 48309:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['s3control'] = {};
 AWS.S3Control = Service.defineService('s3control', ['2018-08-20']);
-__webpack_require__(48643);
+__webpack_require__(879);
 Object.defineProperty(apiLoader.services['s3control'], '2018-08-20', {
   get: function get() {
     var model = __webpack_require__(52092);
@@ -6095,11 +6096,11 @@ module.exports = AWS.S3Control;
 
 /***/ }),
 
-/***/ 68175:
+/***/ 42087:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6120,11 +6121,11 @@ module.exports = AWS.S3Outposts;
 
 /***/ }),
 
-/***/ 69667:
+/***/ 81113:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6146,11 +6147,11 @@ module.exports = AWS.SageMaker;
 
 /***/ }),
 
-/***/ 36314:
+/***/ 19799:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6171,11 +6172,11 @@ module.exports = AWS.SagemakerEdge;
 
 /***/ }),
 
-/***/ 55403:
+/***/ 55759:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6196,11 +6197,11 @@ module.exports = AWS.SageMakerFeatureStoreRuntime;
 
 /***/ }),
 
-/***/ 12540:
+/***/ 8134:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6221,11 +6222,11 @@ module.exports = AWS.SageMakerRuntime;
 
 /***/ }),
 
-/***/ 45613:
+/***/ 54443:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6246,11 +6247,11 @@ module.exports = AWS.SavingsPlans;
 
 /***/ }),
 
-/***/ 77431:
+/***/ 50201:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6272,11 +6273,11 @@ module.exports = AWS.Schemas;
 
 /***/ }),
 
-/***/ 17596:
+/***/ 97063:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6297,11 +6298,11 @@ module.exports = AWS.SecretsManager;
 
 /***/ }),
 
-/***/ 548:
+/***/ 73426:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6322,11 +6323,11 @@ module.exports = AWS.SecurityHub;
 
 /***/ }),
 
-/***/ 83018:
+/***/ 37474:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6347,11 +6348,11 @@ module.exports = AWS.ServerlessApplicationRepository;
 
 /***/ }),
 
-/***/ 70822:
+/***/ 49003:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6372,11 +6373,11 @@ module.exports = AWS.ServiceCatalog;
 
 /***/ }),
 
-/***/ 28773:
+/***/ 81555:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6397,11 +6398,11 @@ module.exports = AWS.ServiceCatalogAppRegistry;
 
 /***/ }),
 
-/***/ 79797:
+/***/ 63985:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6422,11 +6423,11 @@ module.exports = AWS.ServiceDiscovery;
 
 /***/ }),
 
-/***/ 90592:
+/***/ 80756:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6447,11 +6448,11 @@ module.exports = AWS.ServiceQuotas;
 
 /***/ }),
 
-/***/ 53604:
+/***/ 40622:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6473,11 +6474,11 @@ module.exports = AWS.SES;
 
 /***/ }),
 
-/***/ 333:
+/***/ 63698:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6498,11 +6499,11 @@ module.exports = AWS.SESV2;
 
 /***/ }),
 
-/***/ 27880:
+/***/ 47361:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6523,11 +6524,11 @@ module.exports = AWS.Shield;
 
 /***/ }),
 
-/***/ 41676:
+/***/ 72534:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6549,11 +6550,11 @@ module.exports = AWS.Signer;
 
 /***/ }),
 
-/***/ 97015:
+/***/ 6229:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6574,11 +6575,11 @@ module.exports = AWS.SimpleDB;
 
 /***/ }),
 
-/***/ 82437:
+/***/ 53923:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6599,11 +6600,11 @@ module.exports = AWS.SMS;
 
 /***/ }),
 
-/***/ 87539:
+/***/ 33731:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6624,11 +6625,11 @@ module.exports = AWS.Snowball;
 
 /***/ }),
 
-/***/ 22904:
+/***/ 91901:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6649,17 +6650,17 @@ module.exports = AWS.SNS;
 
 /***/ }),
 
-/***/ 44108:
+/***/ 27263:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['sqs'] = {};
 AWS.SQS = Service.defineService('sqs', ['2012-11-05']);
-__webpack_require__(15846);
+__webpack_require__(53213);
 Object.defineProperty(apiLoader.services['sqs'], '2012-11-05', {
   get: function get() {
     var model = __webpack_require__(31635);
@@ -6675,11 +6676,11 @@ module.exports = AWS.SQS;
 
 /***/ }),
 
-/***/ 84787:
+/***/ 12638:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6701,11 +6702,11 @@ module.exports = AWS.SSM;
 
 /***/ }),
 
-/***/ 65292:
+/***/ 60370:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6726,11 +6727,11 @@ module.exports = AWS.SSO;
 
 /***/ }),
 
-/***/ 70580:
+/***/ 73672:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6751,11 +6752,11 @@ module.exports = AWS.SSOAdmin;
 
 /***/ }),
 
-/***/ 15114:
+/***/ 10335:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6776,11 +6777,11 @@ module.exports = AWS.SSOOIDC;
 
 /***/ }),
 
-/***/ 14423:
+/***/ 89199:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6801,11 +6802,11 @@ module.exports = AWS.StepFunctions;
 
 /***/ }),
 
-/***/ 10833:
+/***/ 56859:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6826,17 +6827,17 @@ module.exports = AWS.StorageGateway;
 
 /***/ }),
 
-/***/ 74396:
+/***/ 92941:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['sts'] = {};
 AWS.STS = Service.defineService('sts', ['2011-06-15']);
-__webpack_require__(10147);
+__webpack_require__(52003);
 Object.defineProperty(apiLoader.services['sts'], '2011-06-15', {
   get: function get() {
     var model = __webpack_require__(18976);
@@ -6852,11 +6853,11 @@ module.exports = AWS.STS;
 
 /***/ }),
 
-/***/ 87214:
+/***/ 85646:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6877,17 +6878,17 @@ module.exports = AWS.Support;
 
 /***/ }),
 
-/***/ 57433:
+/***/ 8625:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
 apiLoader.services['swf'] = {};
 AWS.SWF = Service.defineService('swf', ['2012-01-25']);
-__webpack_require__(91130);
+__webpack_require__(49631);
 Object.defineProperty(apiLoader.services['swf'], '2012-01-25', {
   get: function get() {
     var model = __webpack_require__(4974);
@@ -6903,11 +6904,11 @@ module.exports = AWS.SWF;
 
 /***/ }),
 
-/***/ 84626:
+/***/ 84955:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6928,11 +6929,11 @@ module.exports = AWS.Synthetics;
 
 /***/ }),
 
-/***/ 64829:
+/***/ 15102:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6953,11 +6954,11 @@ module.exports = AWS.Textract;
 
 /***/ }),
 
-/***/ 43432:
+/***/ 45037:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -6978,11 +6979,11 @@ module.exports = AWS.TimestreamQuery;
 
 /***/ }),
 
-/***/ 87374:
+/***/ 11266:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7003,11 +7004,11 @@ module.exports = AWS.TimestreamWrite;
 
 /***/ }),
 
-/***/ 66751:
+/***/ 73227:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7028,11 +7029,11 @@ module.exports = AWS.TranscribeService;
 
 /***/ }),
 
-/***/ 20021:
+/***/ 38165:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7053,11 +7054,11 @@ module.exports = AWS.Transfer;
 
 /***/ }),
 
-/***/ 41091:
+/***/ 9034:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7078,11 +7079,11 @@ module.exports = AWS.Translate;
 
 /***/ }),
 
-/***/ 39120:
+/***/ 90968:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7103,11 +7104,11 @@ module.exports = AWS.WAF;
 
 /***/ }),
 
-/***/ 27269:
+/***/ 90435:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7128,11 +7129,11 @@ module.exports = AWS.WAFRegional;
 
 /***/ }),
 
-/***/ 60812:
+/***/ 94923:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7153,11 +7154,11 @@ module.exports = AWS.WAFV2;
 
 /***/ }),
 
-/***/ 91250:
+/***/ 92666:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7178,11 +7179,11 @@ module.exports = AWS.WellArchitected;
 
 /***/ }),
 
-/***/ 78886:
+/***/ 13702:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7203,11 +7204,11 @@ module.exports = AWS.WorkDocs;
 
 /***/ }),
 
-/***/ 74381:
+/***/ 6664:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7228,11 +7229,11 @@ module.exports = AWS.WorkLink;
 
 /***/ }),
 
-/***/ 21044:
+/***/ 44737:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7253,11 +7254,11 @@ module.exports = AWS.WorkMail;
 
 /***/ }),
 
-/***/ 61457:
+/***/ 31344:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7278,11 +7279,11 @@ module.exports = AWS.WorkMailMessageFlow;
 
 /***/ }),
 
-/***/ 62088:
+/***/ 33316:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7303,11 +7304,11 @@ module.exports = AWS.WorkSpaces;
 
 /***/ }),
 
-/***/ 29066:
+/***/ 78658:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
-var AWS = __webpack_require__(6044);
+__webpack_require__(23704);
+var AWS = __webpack_require__(90785);
 var Service = AWS.Service;
 var apiLoader = AWS.apiLoader;
 
@@ -7328,7 +7329,7 @@ module.exports = AWS.XRay;
 
 /***/ }),
 
-/***/ 62785:
+/***/ 39625:
 /***/ ((module) => {
 
 function apiLoader(svc, version) {
@@ -7354,15 +7355,15 @@ module.exports = apiLoader;
 
 /***/ }),
 
-/***/ 32197:
+/***/ 96742:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(78526);
+__webpack_require__(23704);
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 // Load all service classes
-__webpack_require__(18842);
+__webpack_require__(91465);
 
 /**
  * @api private
@@ -7372,10 +7373,10 @@ module.exports = AWS;
 
 /***/ }),
 
-/***/ 63933:
+/***/ 68703:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044),
+var AWS = __webpack_require__(90785),
     url = AWS.util.url,
     crypto = AWS.util.crypto.lib,
     base64Encode = AWS.util.base64.encode,
@@ -7589,12 +7590,12 @@ module.exports = AWS.CloudFront.Signer;
 
 /***/ }),
 
-/***/ 33349:
+/***/ 65248:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-__webpack_require__(51338);
-__webpack_require__(65004);
+var AWS = __webpack_require__(90785);
+__webpack_require__(62614);
+__webpack_require__(66854);
 var PromisesDependency;
 
 /**
@@ -8214,10 +8215,10 @@ AWS.config = new AWS.Config();
 
 /***/ }),
 
-/***/ 83310:
+/***/ 39904:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 /**
  * @api private
  */
@@ -8288,13 +8289,13 @@ module.exports = resolveRegionalEndpointsFlag;
 
 /***/ }),
 
-/***/ 6044:
+/***/ 90785:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /**
  * The main AWS namespace
  */
-var AWS = { util: __webpack_require__(38020) };
+var AWS = { util: __webpack_require__(73576) };
 
 /**
  * @api private
@@ -8324,18 +8325,18 @@ AWS.util.update(AWS, {
    * @api private
    */
   Protocol: {
-    Json: __webpack_require__(13263),
-    Query: __webpack_require__(66605),
-    Rest: __webpack_require__(34251),
-    RestJson: __webpack_require__(56120),
-    RestXml: __webpack_require__(9263)
+    Json: __webpack_require__(74343),
+    Query: __webpack_require__(84586),
+    Rest: __webpack_require__(41957),
+    RestJson: __webpack_require__(62007),
+    RestXml: __webpack_require__(38074)
   },
 
   /**
    * @api private
    */
   XML: {
-    Builder: __webpack_require__(24065),
+    Builder: __webpack_require__(90633),
     Parser: null // conditionally set based on environment
   },
 
@@ -8343,41 +8344,41 @@ AWS.util.update(AWS, {
    * @api private
    */
   JSON: {
-    Builder: __webpack_require__(11109),
-    Parser: __webpack_require__(36722)
+    Builder: __webpack_require__(47080),
+    Parser: __webpack_require__(44142)
   },
 
   /**
    * @api private
    */
   Model: {
-    Api: __webpack_require__(56291),
-    Operation: __webpack_require__(49742),
-    Shape: __webpack_require__(49084),
-    Paginator: __webpack_require__(42768),
-    ResourceWaiter: __webpack_require__(49140)
+    Api: __webpack_require__(9941),
+    Operation: __webpack_require__(26308),
+    Shape: __webpack_require__(90454),
+    Paginator: __webpack_require__(20499),
+    ResourceWaiter: __webpack_require__(54978)
   },
 
   /**
    * @api private
    */
-  apiLoader: __webpack_require__(62785),
+  apiLoader: __webpack_require__(39625),
 
   /**
    * @api private
    */
-  EndpointCache: __webpack_require__(35974)/* .EndpointCache */ .$
+  EndpointCache: __webpack_require__(23673)/* .EndpointCache */ .$
 });
-__webpack_require__(96699);
-__webpack_require__(2260);
-__webpack_require__(33349);
-__webpack_require__(81421);
-__webpack_require__(86485);
-__webpack_require__(93878);
-__webpack_require__(89672);
-__webpack_require__(8768);
-__webpack_require__(28493);
-__webpack_require__(32167);
+__webpack_require__(52715);
+__webpack_require__(92665);
+__webpack_require__(65248);
+__webpack_require__(66677);
+__webpack_require__(62096);
+__webpack_require__(95821);
+__webpack_require__(1058);
+__webpack_require__(42829);
+__webpack_require__(82067);
+__webpack_require__(2973);
 
 /**
  * @readonly
@@ -8404,10 +8405,10 @@ AWS.util.memoizedProperty(AWS, 'endpointCache', function() {
 
 /***/ }),
 
-/***/ 51338:
+/***/ 62614:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Represents your AWS security credentials, specifically the
@@ -8657,11 +8658,11 @@ AWS.util.addPromises(AWS.Credentials);
 
 /***/ }),
 
-/***/ 170:
+/***/ 81336:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var STS = __webpack_require__(74396);
+var AWS = __webpack_require__(90785);
+var STS = __webpack_require__(92941);
 
 /**
  * Represents temporary credentials retrieved from {AWS.STS}. Without any
@@ -8864,12 +8865,12 @@ AWS.ChainableTemporaryCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 57502:
+/***/ 16341:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var CognitoIdentity = __webpack_require__(57561);
-var STS = __webpack_require__(74396);
+var AWS = __webpack_require__(90785);
+var CognitoIdentity = __webpack_require__(28998);
+var STS = __webpack_require__(92941);
 
 /**
  * Represents credentials retrieved from STS Web Identity Federation using
@@ -9256,10 +9257,10 @@ AWS.CognitoIdentityCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 65004:
+/***/ 66854:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Creates a credential provider chain that searches for AWS credentials
@@ -9442,11 +9443,11 @@ AWS.util.addPromises(AWS.CredentialProviderChain);
 
 /***/ }),
 
-/***/ 35248:
+/***/ 31299:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-__webpack_require__(17245);
+var AWS = __webpack_require__(90785);
+__webpack_require__(11759);
 
 /**
  * Represents credentials received from the metadata service on an EC2 instance.
@@ -9556,10 +9557,10 @@ AWS.EC2MetadataCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 79666:
+/***/ 52180:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Represents credentials received from relative URI specified in the ECS container.
@@ -9591,10 +9592,10 @@ AWS.ECSCredentials = AWS.RemoteCredentials;
 
 /***/ }),
 
-/***/ 27445:
+/***/ 63512:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Represents credentials from the environment.
@@ -9689,10 +9690,10 @@ AWS.EnvironmentCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 28629:
+/***/ 28825:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Represents credentials from a JSON file on disk.
@@ -9764,10 +9765,10 @@ AWS.FileSystemCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 58796:
+/***/ 76498:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var proc = __webpack_require__(63129);
 var iniLoader = AWS.util.iniLoader;
 
@@ -9936,10 +9937,10 @@ AWS.ProcessCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 83676:
+/***/ 45161:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044),
+var AWS = __webpack_require__(90785),
   ENV_RELATIVE_URI = 'AWS_CONTAINER_CREDENTIALS_RELATIVE_URI',
   ENV_FULL_URI = 'AWS_CONTAINER_CREDENTIALS_FULL_URI',
   ENV_AUTH_TOKEN = 'AWS_CONTAINER_AUTHORIZATION_TOKEN',
@@ -10151,11 +10152,11 @@ AWS.RemoteCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 21580:
+/***/ 77342:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var STS = __webpack_require__(74396);
+var AWS = __webpack_require__(90785);
+var STS = __webpack_require__(92941);
 
 /**
  * Represents credentials retrieved from STS SAML support.
@@ -10252,11 +10253,11 @@ AWS.SAMLCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 91688:
+/***/ 10635:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var STS = __webpack_require__(74396);
+var AWS = __webpack_require__(90785);
+var STS = __webpack_require__(92941);
 var iniLoader = AWS.util.iniLoader;
 
 var ASSUME_ROLE_DEFAULT_REGION = 'us-east-1';
@@ -10541,11 +10542,11 @@ AWS.SharedIniFileCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 87013:
+/***/ 90039:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var STS = __webpack_require__(74396);
+var AWS = __webpack_require__(90785);
+var STS = __webpack_require__(92941);
 
 /**
  * Represents temporary credentials retrieved from {AWS.STS}. Without any
@@ -10677,12 +10678,12 @@ AWS.TemporaryCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 9383:
+/***/ 10165:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var fs = __webpack_require__(35747);
-var STS = __webpack_require__(74396);
+var STS = __webpack_require__(92941);
 var iniLoader = AWS.util.iniLoader;
 
 /**
@@ -10891,11 +10892,11 @@ AWS.TokenFileWebIdentityCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 38422:
+/***/ 21184:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var STS = __webpack_require__(74396);
+var AWS = __webpack_require__(90785);
+var STS = __webpack_require__(92941);
 
 /**
  * Represents credentials retrieved from STS Web Identity Federation support.
@@ -11013,11 +11014,11 @@ AWS.WebIdentityCredentials = AWS.util.inherit(AWS.Credentials, {
 
 /***/ }),
 
-/***/ 62148:
+/***/ 91698:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var util = __webpack_require__(38020);
+var AWS = __webpack_require__(90785);
+var util = __webpack_require__(73576);
 var endpointDiscoveryEnabledEnvs = ['AWS_ENABLE_ENDPOINT_DISCOVERY', 'AWS_ENDPOINT_DISCOVERY_ENABLED'];
 
 /**
@@ -11397,14 +11398,14 @@ module.exports = {
 
 /***/ }),
 
-/***/ 19985:
+/***/ 97677:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var util = AWS.util;
-var typeOf = __webpack_require__(5922).typeOf;
-var DynamoDBSet = __webpack_require__(32049);
-var NumberValue = __webpack_require__(19815);
+var typeOf = __webpack_require__(96908).typeOf;
+var DynamoDBSet = __webpack_require__(67058);
+var NumberValue = __webpack_require__(53789);
 
 AWS.DynamoDB.Converter = {
   /**
@@ -11698,12 +11699,12 @@ module.exports = AWS.DynamoDB.Converter;
 
 /***/ }),
 
-/***/ 80539:
+/***/ 40375:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var Translator = __webpack_require__(12291);
-var DynamoDBSet = __webpack_require__(32049);
+var AWS = __webpack_require__(90785);
+var Translator = __webpack_require__(19759);
+var DynamoDBSet = __webpack_require__(67058);
 
 /**
  * The document client simplifies working with items in Amazon DynamoDB
@@ -12286,10 +12287,10 @@ module.exports = AWS.DynamoDB.DocumentClient;
 
 /***/ }),
 
-/***/ 19815:
+/***/ 53789:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
+var util = __webpack_require__(90785).util;
 
 /**
  * An object recognizable as a numeric value that stores the underlying number
@@ -12336,11 +12337,11 @@ module.exports = DynamoDBNumberValue;
 
 /***/ }),
 
-/***/ 32049:
+/***/ 67058:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
-var typeOf = __webpack_require__(5922).typeOf;
+var util = __webpack_require__(90785).util;
+var typeOf = __webpack_require__(96908).typeOf;
 
 /**
  * @api private
@@ -12414,11 +12415,11 @@ module.exports = DynamoDBSet;
 
 /***/ }),
 
-/***/ 12291:
+/***/ 19759:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
-var convert = __webpack_require__(19985);
+var util = __webpack_require__(90785).util;
+var convert = __webpack_require__(97677);
 
 var Translator = function(options) {
   options = options || {};
@@ -12508,10 +12509,10 @@ module.exports = Translator;
 
 /***/ }),
 
-/***/ 5922:
+/***/ 96908:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
+var util = __webpack_require__(90785).util;
 
 function typeOf(data) {
   if (data === null && typeof data === 'object') {
@@ -12564,11 +12565,11 @@ module.exports = {
 
 /***/ }),
 
-/***/ 39957:
+/***/ 44646:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var eventMessageChunker = __webpack_require__(46255).eventMessageChunker;
-var parseEvent = __webpack_require__(62992).parseEvent;
+var eventMessageChunker = __webpack_require__(3582).eventMessageChunker;
+var parseEvent = __webpack_require__(57157).parseEvent;
 
 function createEventStream(body, parser, model) {
     var eventMessages = eventMessageChunker(body);
@@ -12592,10 +12593,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 12904:
+/***/ 34649:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
+var util = __webpack_require__(90785).util;
 var Transform = __webpack_require__(92413).Transform;
 var allocBuffer = util.buffer.alloc;
 
@@ -12720,7 +12721,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 46255:
+/***/ 3582:
 /***/ ((module) => {
 
 /**
@@ -12757,11 +12758,11 @@ module.exports = {
 
 /***/ }),
 
-/***/ 18637:
+/***/ 70987:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 var Transform = __webpack_require__(92413).Transform;
-var parseEvent = __webpack_require__(62992).parseEvent;
+var parseEvent = __webpack_require__(57157).parseEvent;
 
 /** @type {Transform} */
 function EventUnmarshallerStream(options) {
@@ -12803,10 +12804,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 14782:
+/***/ 55416:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
+var util = __webpack_require__(90785).util;
 var toBuffer = util.buffer.toBuffer;
 
 /**
@@ -12903,10 +12904,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 62992:
+/***/ 57157:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var parseMessage = __webpack_require__(9854).parseMessage;
+var parseMessage = __webpack_require__(40788).parseMessage;
 
 /**
  *
@@ -12983,12 +12984,12 @@ module.exports = {
 
 /***/ }),
 
-/***/ 9854:
+/***/ 40788:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Int64 = __webpack_require__(14782).Int64;
+var Int64 = __webpack_require__(55416).Int64;
 
-var splitMessage = __webpack_require__(40358).splitMessage;
+var splitMessage = __webpack_require__(66985).splitMessage;
 
 var BOOLEAN_TAG = 'boolean';
 var BYTE_TAG = 'byte';
@@ -13118,10 +13119,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 40358:
+/***/ 66985:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
+var util = __webpack_require__(90785).util;
 var toBuffer = util.buffer.toBuffer;
 
 // All prelude components are unsigned, 32-bit integers
@@ -13195,7 +13196,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 49806:
+/***/ 14494:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /**
@@ -13205,8 +13206,8 @@ module.exports = {
  *  - event stream model
  */
 
-var EventMessageChunkerStream = __webpack_require__(12904).EventMessageChunkerStream;
-var EventUnmarshallerStream = __webpack_require__(18637).EventUnmarshallerStream;
+var EventMessageChunkerStream = __webpack_require__(34649).EventMessageChunkerStream;
+var EventUnmarshallerStream = __webpack_require__(70987).EventUnmarshallerStream;
 
 function createEventStream(stream, parser, model) {
     var eventStream = new EventUnmarshallerStream({
@@ -13241,12 +13242,12 @@ module.exports = {
 
 /***/ }),
 
-/***/ 86485:
+/***/ 62096:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var SequentialExecutor = __webpack_require__(96699);
-var DISCOVER_ENDPOINT = __webpack_require__(62148).discoverEndpoint;
+var AWS = __webpack_require__(90785);
+var SequentialExecutor = __webpack_require__(52715);
+var DISCOVER_ENDPOINT = __webpack_require__(91698).discoverEndpoint;
 /**
  * The namespace used to register global event listeners for request building
  * and sending.
@@ -13837,35 +13838,35 @@ AWS.EventListeners = {
   }),
 
   Json: new SequentialExecutor().addNamedListeners(function(add) {
-    var svc = __webpack_require__(13263);
+    var svc = __webpack_require__(74343);
     add('BUILD', 'build', svc.buildRequest);
     add('EXTRACT_DATA', 'extractData', svc.extractData);
     add('EXTRACT_ERROR', 'extractError', svc.extractError);
   }),
 
   Rest: new SequentialExecutor().addNamedListeners(function(add) {
-    var svc = __webpack_require__(34251);
+    var svc = __webpack_require__(41957);
     add('BUILD', 'build', svc.buildRequest);
     add('EXTRACT_DATA', 'extractData', svc.extractData);
     add('EXTRACT_ERROR', 'extractError', svc.extractError);
   }),
 
   RestJson: new SequentialExecutor().addNamedListeners(function(add) {
-    var svc = __webpack_require__(56120);
+    var svc = __webpack_require__(62007);
     add('BUILD', 'build', svc.buildRequest);
     add('EXTRACT_DATA', 'extractData', svc.extractData);
     add('EXTRACT_ERROR', 'extractError', svc.extractError);
   }),
 
   RestXml: new SequentialExecutor().addNamedListeners(function(add) {
-    var svc = __webpack_require__(9263);
+    var svc = __webpack_require__(38074);
     add('BUILD', 'build', svc.buildRequest);
     add('EXTRACT_DATA', 'extractData', svc.extractData);
     add('EXTRACT_ERROR', 'extractError', svc.extractError);
   }),
 
   Query: new SequentialExecutor().addNamedListeners(function(add) {
-    var svc = __webpack_require__(66605);
+    var svc = __webpack_require__(84586);
     add('BUILD', 'build', svc.buildRequest);
     add('EXTRACT_DATA', 'extractData', svc.extractData);
     add('EXTRACT_ERROR', 'extractError', svc.extractError);
@@ -13875,10 +13876,10 @@ AWS.EventListeners = {
 
 /***/ }),
 
-/***/ 81421:
+/***/ 66677:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
 
 /**
@@ -14120,14 +14121,14 @@ AWS.HttpClient.getInstance = function getInstance() {
 
 /***/ }),
 
-/***/ 80182:
+/***/ 60303:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var Stream = AWS.util.stream.Stream;
 var TransformStream = AWS.util.stream.Transform;
 var ReadableStream = AWS.util.stream.Readable;
-__webpack_require__(81421);
+__webpack_require__(66677);
 var CONNECTION_REUSE_ENV_NAME = 'AWS_NODEJS_CONNECTION_REUSE_ENABLED';
 
 /**
@@ -14341,10 +14342,10 @@ AWS.HttpClient.streamsApiVersion = ReadableStream ? 2 : 1;
 
 /***/ }),
 
-/***/ 11109:
+/***/ 47080:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 
 function JsonBuilder() { }
 
@@ -14407,10 +14408,10 @@ module.exports = JsonBuilder;
 
 /***/ }),
 
-/***/ 36722:
+/***/ 44142:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 
 function JsonParser() { }
 
@@ -14481,11 +14482,11 @@ module.exports = JsonParser;
 
 /***/ }),
 
-/***/ 17245:
+/***/ 11759:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-__webpack_require__(81421);
+var AWS = __webpack_require__(90785);
+__webpack_require__(66677);
 var inherit = AWS.util.inherit;
 
 /**
@@ -14723,17 +14724,17 @@ module.exports = AWS.MetadataService;
 
 /***/ }),
 
-/***/ 56291:
+/***/ 9941:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Collection = __webpack_require__(54785);
-var Operation = __webpack_require__(49742);
-var Shape = __webpack_require__(49084);
-var Paginator = __webpack_require__(42768);
-var ResourceWaiter = __webpack_require__(49140);
+var Collection = __webpack_require__(74740);
+var Operation = __webpack_require__(26308);
+var Shape = __webpack_require__(90454);
+var Paginator = __webpack_require__(20499);
+var ResourceWaiter = __webpack_require__(54978);
 var metadata = __webpack_require__(49497);
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 var property = util.property;
 var memoizedProperty = util.memoizedProperty;
 
@@ -14818,10 +14819,10 @@ module.exports = Api;
 
 /***/ }),
 
-/***/ 54785:
+/***/ 74740:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var memoizedProperty = __webpack_require__(38020).memoizedProperty;
+var memoizedProperty = __webpack_require__(73576).memoizedProperty;
 
 function memoize(name, value, factory, nameTr) {
   memoizedProperty(this, nameTr(name), function() {
@@ -14849,12 +14850,12 @@ module.exports = Collection;
 
 /***/ }),
 
-/***/ 49742:
+/***/ 26308:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Shape = __webpack_require__(49084);
+var Shape = __webpack_require__(90454);
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 var property = util.property;
 var memoizedProperty = util.memoizedProperty;
 
@@ -14969,10 +14970,10 @@ module.exports = Operation;
 
 /***/ }),
 
-/***/ 42768:
+/***/ 20499:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var property = __webpack_require__(38020).property;
+var property = __webpack_require__(73576).property;
 
 function Paginator(name, paginator) {
   property(this, 'inputToken', paginator.input_token);
@@ -14990,10 +14991,10 @@ module.exports = Paginator;
 
 /***/ }),
 
-/***/ 49140:
+/***/ 54978:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 var property = util.property;
 
 function ResourceWaiter(name, waiter, options) {
@@ -15030,12 +15031,12 @@ module.exports = ResourceWaiter;
 
 /***/ }),
 
-/***/ 49084:
+/***/ 90454:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var Collection = __webpack_require__(54785);
+var Collection = __webpack_require__(74740);
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 
 function property(obj, name, value) {
   if (value !== null && value !== undefined) {
@@ -15443,10 +15444,10 @@ module.exports = Shape;
 
 /***/ }),
 
-/***/ 78526:
+/***/ 23704:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 
 util.isBrowser = function() { return false; };
 util.isNode = function() { return true; };
@@ -15460,13 +15461,13 @@ util.url = __webpack_require__(78835);
 util.querystring = __webpack_require__(71191);
 util.environment = 'nodejs';
 util.createEventStream = util.stream.Readable ?
-  __webpack_require__(49806).createEventStream : __webpack_require__(39957).createEventStream;
-util.realClock = __webpack_require__(34510);
+  __webpack_require__(14494).createEventStream : __webpack_require__(44646).createEventStream;
+util.realClock = __webpack_require__(38491);
 util.clientSideMonitoring = {
-  Publisher: __webpack_require__(73990).Publisher,
-  configProvider: __webpack_require__(46078),
+  Publisher: __webpack_require__(29825).Publisher,
+  configProvider: __webpack_require__(5933),
 };
-util.iniLoader = __webpack_require__(42722)/* .iniLoader */ .b;
+util.iniLoader = __webpack_require__(30295)/* .iniLoader */ .b;
 util.getSystemErrorName = __webpack_require__(31669).getSystemErrorName;
 
 var AWS;
@@ -15474,34 +15475,34 @@ var AWS;
 /**
  * @api private
  */
-module.exports = AWS = __webpack_require__(6044);
+module.exports = AWS = __webpack_require__(90785);
 
-__webpack_require__(51338);
-__webpack_require__(65004);
-__webpack_require__(87013);
-__webpack_require__(170);
-__webpack_require__(38422);
-__webpack_require__(57502);
-__webpack_require__(21580);
-__webpack_require__(58796);
+__webpack_require__(62614);
+__webpack_require__(66854);
+__webpack_require__(90039);
+__webpack_require__(81336);
+__webpack_require__(21184);
+__webpack_require__(16341);
+__webpack_require__(77342);
+__webpack_require__(76498);
 
 // Load the xml2js XML parser
-AWS.XML.Parser = __webpack_require__(51105);
+AWS.XML.Parser = __webpack_require__(86278);
 
 // Load Node HTTP client
-__webpack_require__(80182);
+__webpack_require__(60303);
 
-__webpack_require__(47454);
+__webpack_require__(76219);
 
 // Load custom credential providers
-__webpack_require__(9383);
-__webpack_require__(35248);
-__webpack_require__(83676);
-__webpack_require__(79666);
-__webpack_require__(27445);
-__webpack_require__(28629);
-__webpack_require__(91688);
-__webpack_require__(58796);
+__webpack_require__(10165);
+__webpack_require__(31299);
+__webpack_require__(45161);
+__webpack_require__(52180);
+__webpack_require__(63512);
+__webpack_require__(28825);
+__webpack_require__(10635);
+__webpack_require__(76498);
 
 // Setup default chain providers
 // If this changes, please update documentation for
@@ -15561,10 +15562,10 @@ AWS.config = new AWS.Config();
 
 /***/ }),
 
-/***/ 32167:
+/***/ 2973:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * @api private
@@ -15838,10 +15839,10 @@ AWS.ParamValidator = AWS.util.inherit({
 
 /***/ }),
 
-/***/ 71002:
+/***/ 73352:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var rest = AWS.Protocol.Rest;
 
 /**
@@ -15960,11 +15961,11 @@ AWS.Polly.Presigner = AWS.util.inherit({
 
 /***/ }),
 
-/***/ 15129:
+/***/ 47586:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util =  __webpack_require__(38020);
-var AWS = __webpack_require__(6044);
+var util =  __webpack_require__(73576);
+var AWS = __webpack_require__(90785);
 
 /**
  * Prepend prefix defined by API model to endpoint that's already
@@ -16056,13 +16057,13 @@ module.exports = {
 
 /***/ }),
 
-/***/ 13263:
+/***/ 74343:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
-var JsonBuilder = __webpack_require__(11109);
-var JsonParser = __webpack_require__(36722);
-var populateHostPrefix = __webpack_require__(15129).populateHostPrefix;
+var util = __webpack_require__(73576);
+var JsonBuilder = __webpack_require__(47080);
+var JsonParser = __webpack_require__(44142);
+var populateHostPrefix = __webpack_require__(47586).populateHostPrefix;
 
 function buildRequest(req) {
   var httpRequest = req.httpRequest;
@@ -16137,14 +16138,14 @@ module.exports = {
 
 /***/ }),
 
-/***/ 66605:
+/***/ 84586:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var util = __webpack_require__(38020);
-var QueryParamSerializer = __webpack_require__(15586);
-var Shape = __webpack_require__(49084);
-var populateHostPrefix = __webpack_require__(15129).populateHostPrefix;
+var AWS = __webpack_require__(90785);
+var util = __webpack_require__(73576);
+var QueryParamSerializer = __webpack_require__(71515);
+var Shape = __webpack_require__(90454);
+var populateHostPrefix = __webpack_require__(47586).populateHostPrefix;
 
 function buildRequest(req) {
   var operation = req.service.api.operations[req.operation];
@@ -16254,11 +16255,11 @@ module.exports = {
 
 /***/ }),
 
-/***/ 34251:
+/***/ 41957:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
-var populateHostPrefix = __webpack_require__(15129).populateHostPrefix;
+var util = __webpack_require__(73576);
+var populateHostPrefix = __webpack_require__(47586).populateHostPrefix;
 
 function populateMethod(req) {
   req.httpRequest.method = req.service.api.operations[req.operation].httpMethod;
@@ -16409,14 +16410,14 @@ module.exports = {
 
 /***/ }),
 
-/***/ 56120:
+/***/ 62007:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
-var Rest = __webpack_require__(34251);
-var Json = __webpack_require__(13263);
-var JsonBuilder = __webpack_require__(11109);
-var JsonParser = __webpack_require__(36722);
+var util = __webpack_require__(73576);
+var Rest = __webpack_require__(41957);
+var Json = __webpack_require__(74343);
+var JsonBuilder = __webpack_require__(47080);
+var JsonParser = __webpack_require__(44142);
 
 function populateBody(req) {
   var builder = new JsonBuilder();
@@ -16515,12 +16516,12 @@ module.exports = {
 
 /***/ }),
 
-/***/ 9263:
+/***/ 38074:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var util = __webpack_require__(38020);
-var Rest = __webpack_require__(34251);
+var AWS = __webpack_require__(90785);
+var util = __webpack_require__(73576);
+var Rest = __webpack_require__(41957);
 
 function populateBody(req) {
   var input = req.service.api.operations[req.operation].input;
@@ -16630,10 +16631,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 46078:
+/***/ 5933:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Resolve client-side monitoring configuration from either environmental variables
@@ -16719,10 +16720,10 @@ module.exports = resolveMonitoringConfig;
 
 /***/ }),
 
-/***/ 73990:
+/***/ 29825:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(6044).util;
+var util = __webpack_require__(90785).util;
 var dgram = __webpack_require__(76200);
 var stringToBuffer = util.buffer.toBuffer;
 
@@ -16851,10 +16852,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 15586:
+/***/ 71515:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 
 function QueryParamSerializer() {
 }
@@ -16942,10 +16943,10 @@ module.exports = QueryParamSerializer;
 
 /***/ }),
 
-/***/ 73580:
+/***/ 96005:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * @api private
@@ -17167,7 +17168,7 @@ AWS.RDS.Signer = AWS.util.inherit({
 
 /***/ }),
 
-/***/ 34510:
+/***/ 38491:
 /***/ ((module) => {
 
 module.exports = {
@@ -17181,10 +17182,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 74256:
+/***/ 37309:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
+var util = __webpack_require__(73576);
 var regionConfig = __webpack_require__(51765);
 
 function generateRegionPrefix(region) {
@@ -17287,14 +17288,14 @@ module.exports = {
 
 /***/ }),
 
-/***/ 93878:
+/***/ 95821:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var AcceptorStateMachine = __webpack_require__(82899);
+var AWS = __webpack_require__(90785);
+var AcceptorStateMachine = __webpack_require__(54541);
 var inherit = AWS.util.inherit;
 var domain = AWS.util.domain;
-var jmespath = __webpack_require__(5379);
+var jmespath = __webpack_require__(2907);
 
 /**
  * @api private
@@ -18105,7 +18106,7 @@ AWS.util.mixin(AWS.Request, AWS.SequentialExecutor);
 
 /***/ }),
 
-/***/ 8768:
+/***/ 42829:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
 /**
@@ -18123,9 +18124,9 @@ AWS.util.mixin(AWS.Request, AWS.SequentialExecutor);
  * language governing permissions and limitations under the License.
  */
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
-var jmespath = __webpack_require__(5379);
+var jmespath = __webpack_require__(2907);
 
 /**
  * @api private
@@ -18316,12 +18317,12 @@ AWS.ResourceWaiter = inherit({
 
 /***/ }),
 
-/***/ 89672:
+/***/ 1058:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
-var jmespath = __webpack_require__(5379);
+var jmespath = __webpack_require__(2907);
 
 /**
  * This class encapsulates the response information
@@ -18524,10 +18525,10 @@ AWS.Response = inherit({
 
 /***/ }),
 
-/***/ 80923:
+/***/ 16445:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var byteLength = AWS.util.string.byteLength;
 var Buffer = AWS.util.Buffer;
 
@@ -19257,10 +19258,10 @@ module.exports = AWS.S3.ManagedUpload;
 
 /***/ }),
 
-/***/ 96699:
+/***/ 52715:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * @api private
@@ -19499,12 +19500,12 @@ module.exports = AWS.SequentialExecutor;
 
 /***/ }),
 
-/***/ 2260:
+/***/ 92665:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var Api = __webpack_require__(56291);
-var regionConfig = __webpack_require__(74256);
+var AWS = __webpack_require__(90785);
+var Api = __webpack_require__(9941);
+var regionConfig = __webpack_require__(37309);
 
 var inherit = AWS.util.inherit;
 var clientCount = 0;
@@ -20339,10 +20340,10 @@ module.exports = AWS.Service;
 
 /***/ }),
 
-/***/ 23998:
+/***/ 6032:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.APIGateway.prototype, {
 /**
@@ -20375,13 +20376,13 @@ AWS.util.update(AWS.APIGateway.prototype, {
 
 /***/ }),
 
-/***/ 53716:
+/***/ 86372:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 // pull in CloudFront signer
-__webpack_require__(63933);
+__webpack_require__(68703);
 
 AWS.util.update(AWS.CloudFront.prototype, {
 
@@ -20394,10 +20395,10 @@ AWS.util.update(AWS.CloudFront.prototype, {
 
 /***/ }),
 
-/***/ 9056:
+/***/ 27369:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * Constructs a service interface object. Each API operation is exposed as a
@@ -20521,11 +20522,11 @@ AWS.util.update(AWS.CloudSearchDomain.prototype, {
 
 /***/ }),
 
-/***/ 26638:
+/***/ 62054:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-__webpack_require__(80539);
+var AWS = __webpack_require__(90785);
+__webpack_require__(40375);
 
 AWS.util.update(AWS.DynamoDB.prototype, {
   /**
@@ -20586,10 +20587,10 @@ AWS.util.update(AWS.DynamoDB.prototype, {
 
 /***/ }),
 
-/***/ 17820:
+/***/ 64590:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.EC2.prototype, {
   /**
@@ -20655,10 +20656,10 @@ AWS.util.update(AWS.EC2.prototype, {
 
 /***/ }),
 
-/***/ 2441:
+/***/ 68962:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.Glacier.prototype, {
   /**
@@ -20776,10 +20777,10 @@ AWS.util.update(AWS.Glacier.prototype, {
 
 /***/ }),
 
-/***/ 90789:
+/***/ 98676:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * @api private
@@ -20883,10 +20884,10 @@ AWS.util.update(AWS.IotData.prototype, {
 
 /***/ }),
 
-/***/ 87236:
+/***/ 73629:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.Lambda.prototype, {
   /**
@@ -20903,10 +20904,10 @@ AWS.util.update(AWS.Lambda.prototype, {
 
 /***/ }),
 
-/***/ 27370:
+/***/ 50958:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.MachineLearning.prototype, {
   /**
@@ -20934,19 +20935,19 @@ AWS.util.update(AWS.MachineLearning.prototype, {
 
 /***/ }),
 
-/***/ 77677:
+/***/ 28496:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-__webpack_require__(71002);
+__webpack_require__(73352);
 
 
 /***/ }),
 
-/***/ 15361:
+/***/ 78903:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-__webpack_require__(73580);
+var AWS = __webpack_require__(90785);
+__webpack_require__(96005);
  /**
   * @api private
   */
@@ -21010,10 +21011,10 @@ __webpack_require__(73580);
 
 /***/ }),
 
-/***/ 11905:
+/***/ 88351:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.RDSDataService.prototype, {
   /**
@@ -21036,10 +21037,10 @@ AWS.util.update(AWS.RDSDataService.prototype, {
 
 /***/ }),
 
-/***/ 89179:
+/***/ 56415:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.Route53.prototype, {
   /**
@@ -21075,17 +21076,17 @@ AWS.util.update(AWS.Route53.prototype, {
 
 /***/ }),
 
-/***/ 11545:
+/***/ 58406:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var v4Credentials = __webpack_require__(82567);
-var resolveRegionalEndpointsFlag = __webpack_require__(83310);
-var s3util = __webpack_require__(63311);
-var regionUtil = __webpack_require__(74256);
+var AWS = __webpack_require__(90785);
+var v4Credentials = __webpack_require__(18249);
+var resolveRegionalEndpointsFlag = __webpack_require__(39904);
+var s3util = __webpack_require__(91004);
+var regionUtil = __webpack_require__(37309);
 
 // Pull in managed upload extension
-__webpack_require__(80923);
+__webpack_require__(16445);
 
 /**
  * @api private
@@ -22358,12 +22359,12 @@ AWS.util.addPromises(AWS.S3);
 
 /***/ }),
 
-/***/ 48643:
+/***/ 879:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var s3util = __webpack_require__(63311);
-var regionUtil = __webpack_require__(74256);
+var AWS = __webpack_require__(90785);
+var s3util = __webpack_require__(91004);
+var regionUtil = __webpack_require__(37309);
 
 AWS.util.update(AWS.S3Control.prototype, {
   /**
@@ -22564,11 +22565,11 @@ AWS.util.update(AWS.S3Control.prototype, {
 
 /***/ }),
 
-/***/ 63311:
+/***/ 91004:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var regionUtil = __webpack_require__(74256);
+var AWS = __webpack_require__(90785);
+var regionUtil = __webpack_require__(37309);
 
 var s3util = {
   /**
@@ -22837,10 +22838,10 @@ module.exports = s3util;
 
 /***/ }),
 
-/***/ 15846:
+/***/ 53213:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.update(AWS.SQS.prototype, {
   /**
@@ -22975,11 +22976,11 @@ AWS.util.update(AWS.SQS.prototype, {
 
 /***/ }),
 
-/***/ 10147:
+/***/ 52003:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var resolveRegionalEndpointsFlag = __webpack_require__(83310);
+var AWS = __webpack_require__(90785);
+var resolveRegionalEndpointsFlag = __webpack_require__(39904);
 var ENV_REGIONAL_ENDPOINT_ENABLED = 'AWS_STS_REGIONAL_ENDPOINTS';
 var CONFIG_REGIONAL_ENDPOINT_ENABLED = 'sts_regional_endpoints';
 
@@ -23068,10 +23069,10 @@ AWS.util.update(AWS.STS.prototype, {
 
 /***/ }),
 
-/***/ 91130:
+/***/ 49631:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 AWS.util.hideProperties(AWS, ['SimpleWorkflow']);
 
@@ -23085,10 +23086,10 @@ AWS.SimpleWorkflow = AWS.SWF;
 
 /***/ }),
 
-/***/ 42722:
+/***/ 30295:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var IniLoader = __webpack_require__(47454).IniLoader;
+var IniLoader = __webpack_require__(76219).IniLoader;
 /**
  * Singleton object to load specified config/credentials files.
  * It will cache all the files ever loaded;
@@ -23098,10 +23099,10 @@ module.exports.b = new IniLoader();
 
 /***/ }),
 
-/***/ 47454:
+/***/ 76219:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var os = __webpack_require__(12087);
 var path = __webpack_require__(85622);
 
@@ -23211,10 +23212,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 71108:
+/***/ 52010:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
 
 /**
@@ -23337,10 +23338,10 @@ module.exports = AWS.Signers.Presign;
 
 /***/ }),
 
-/***/ 28493:
+/***/ 82067:
 /***/ ((__unused_webpack_module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 var inherit = AWS.util.inherit;
 
@@ -23373,20 +23374,20 @@ AWS.Signers.RequestSigner.getVersion = function getVersion(version) {
   throw new Error('Unknown signing version ' + version);
 };
 
-__webpack_require__(68417);
-__webpack_require__(3437);
-__webpack_require__(39116);
-__webpack_require__(62202);
-__webpack_require__(52399);
-__webpack_require__(71108);
+__webpack_require__(15853);
+__webpack_require__(84419);
+__webpack_require__(82786);
+__webpack_require__(45603);
+__webpack_require__(58532);
+__webpack_require__(52010);
 
 
 /***/ }),
 
-/***/ 52399:
+/***/ 58532:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
 
 /**
@@ -23565,10 +23566,10 @@ module.exports = AWS.Signers.S3;
 
 /***/ }),
 
-/***/ 68417:
+/***/ 15853:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
 
 /**
@@ -23620,10 +23621,10 @@ module.exports = AWS.Signers.V2;
 
 /***/ }),
 
-/***/ 3437:
+/***/ 84419:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
 
 /**
@@ -23704,13 +23705,13 @@ module.exports = AWS.Signers.V3;
 
 /***/ }),
 
-/***/ 39116:
+/***/ 82786:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var inherit = AWS.util.inherit;
 
-__webpack_require__(3437);
+__webpack_require__(84419);
 
 /**
  * @api private
@@ -23736,11 +23737,11 @@ module.exports = AWS.Signers.V3Https;
 
 /***/ }),
 
-/***/ 62202:
+/***/ 45603:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
-var v4Credentials = __webpack_require__(82567);
+var AWS = __webpack_require__(90785);
+var v4Credentials = __webpack_require__(18249);
 var inherit = AWS.util.inherit;
 
 /**
@@ -23958,10 +23959,10 @@ module.exports = AWS.Signers.V4;
 
 /***/ }),
 
-/***/ 82567:
+/***/ 18249:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 
 /**
  * @api private
@@ -24065,7 +24066,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 82899:
+/***/ 54541:
 /***/ ((module) => {
 
 function AcceptorStateMachine(states, state) {
@@ -24117,7 +24118,7 @@ module.exports = AcceptorStateMachine;
 
 /***/ }),
 
-/***/ 38020:
+/***/ 73576:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 /* eslint guard-for-in:0 */
@@ -24153,7 +24154,7 @@ var util = {
 
   userAgent: function userAgent() {
     var name = util.environment;
-    var agent = 'aws-sdk-' + name + '/' + __webpack_require__(6044).VERSION;
+    var agent = 'aws-sdk-' + name + '/' + __webpack_require__(90785).VERSION;
     if (name === 'nodejs') agent += ' ' + util.engine();
     return agent;
   },
@@ -24395,7 +24396,7 @@ var util = {
      *   requests.
      */
     getDate: function getDate() {
-      if (!AWS) AWS = __webpack_require__(6044);
+      if (!AWS) AWS = __webpack_require__(90785);
       if (AWS.config.systemClockOffset) { // use offset when non-zero
         return new Date(new Date().getTime() + AWS.config.systemClockOffset);
       } else {
@@ -25044,7 +25045,7 @@ var util = {
    */
   uuid: {
     v4: function uuidV4() {
-      return __webpack_require__(64879).v4();
+      return __webpack_require__(6213).v4();
     }
   },
 
@@ -25185,12 +25186,12 @@ module.exports = util;
 
 /***/ }),
 
-/***/ 24065:
+/***/ 90633:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var util = __webpack_require__(38020);
-var XmlNode = __webpack_require__(21041).XmlNode;
-var XmlText = __webpack_require__(26122).XmlText;
+var util = __webpack_require__(73576);
+var XmlNode = __webpack_require__(53626).XmlNode;
+var XmlText = __webpack_require__(99575).XmlText;
 
 function XmlBuilder() { }
 
@@ -25294,7 +25295,7 @@ module.exports = XmlBuilder;
 
 /***/ }),
 
-/***/ 40153:
+/***/ 79403:
 /***/ ((module) => {
 
 /**
@@ -25314,7 +25315,7 @@ module.exports = {
 
 /***/ }),
 
-/***/ 11318:
+/***/ 4518:
 /***/ ((module) => {
 
 /**
@@ -25334,14 +25335,14 @@ module.exports = {
 
 /***/ }),
 
-/***/ 51105:
+/***/ 86278:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var AWS = __webpack_require__(6044);
+var AWS = __webpack_require__(90785);
 var util = AWS.util;
 var Shape = AWS.Model.Shape;
 
-var xml2js = __webpack_require__(77876);
+var xml2js = __webpack_require__(7438);
 
 /**
  * @api private
@@ -25504,10 +25505,10 @@ module.exports = NodeXmlParser;
 
 /***/ }),
 
-/***/ 21041:
+/***/ 53626:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var escapeAttribute = __webpack_require__(40153).escapeAttribute;
+var escapeAttribute = __webpack_require__(79403).escapeAttribute;
 
 /**
  * Represents an XML node.
@@ -25556,10 +25557,10 @@ module.exports = {
 
 /***/ }),
 
-/***/ 26122:
+/***/ 99575:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var escapeElement = __webpack_require__(11318).escapeElement;
+var escapeElement = __webpack_require__(4518).escapeElement;
 
 /**
  * Represents an XML text value.
@@ -25583,14 +25584,14 @@ module.exports = {
 
 /***/ }),
 
-/***/ 35974:
+/***/ 23673:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 "use strict";
 var __webpack_unused_export__;
 
 __webpack_unused_export__ = ({ value: true });
-var LRU_1 = __webpack_require__(5952);
+var LRU_1 = __webpack_require__(47016);
 var CACHE_SIZE = 1000;
 /**
  * Inspired node-lru-cache[https://github.com/isaacs/node-lru-cache]
@@ -25660,7 +25661,7 @@ exports.$ = EndpointCache;
 
 /***/ }),
 
-/***/ 5952:
+/***/ 47016:
 /***/ ((__unused_webpack_module, exports) => {
 
 "use strict";
@@ -25774,7 +25775,7 @@ exports.LRUCache = LRUCache;
 
 /***/ }),
 
-/***/ 5379:
+/***/ 2907:
 /***/ ((__unused_webpack_module, exports) => {
 
 (function(exports) {
@@ -27448,7 +27449,7 @@ exports.LRUCache = LRUCache;
 
 /***/ }),
 
-/***/ 14279:
+/***/ 38960:
 /***/ ((__unused_webpack_module, exports, __webpack_require__) => {
 
 ;(function (sax) { // wrapper for non-node envs
@@ -29031,11 +29032,11 @@ exports.LRUCache = LRUCache;
 
 /***/ }),
 
-/***/ 64879:
+/***/ 6213:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var v1 = __webpack_require__(42635);
-var v4 = __webpack_require__(9886);
+var v1 = __webpack_require__(59185);
+var v4 = __webpack_require__(66125);
 
 var uuid = v4;
 uuid.v1 = v1;
@@ -29046,7 +29047,7 @@ module.exports = uuid;
 
 /***/ }),
 
-/***/ 49942:
+/***/ 38059:
 /***/ ((module) => {
 
 /**
@@ -29077,7 +29078,7 @@ module.exports = bytesToUuid;
 
 /***/ }),
 
-/***/ 52422:
+/***/ 7910:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 // Unique ID creation requires a high quality random # generator.  In node.js
@@ -29092,11 +29093,11 @@ module.exports = function nodeRNG() {
 
 /***/ }),
 
-/***/ 42635:
+/***/ 59185:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var rng = __webpack_require__(52422);
-var bytesToUuid = __webpack_require__(49942);
+var rng = __webpack_require__(7910);
+var bytesToUuid = __webpack_require__(38059);
 
 // **`v1()` - Generate time-based UUID**
 //
@@ -29208,11 +29209,11 @@ module.exports = v1;
 
 /***/ }),
 
-/***/ 9886:
+/***/ 66125:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
-var rng = __webpack_require__(52422);
-var bytesToUuid = __webpack_require__(49942);
+var rng = __webpack_require__(7910);
+var bytesToUuid = __webpack_require__(38059);
 
 function v4(options, buf, offset) {
   var i = buf && offset || 0;
@@ -29244,7 +29245,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 73730:
+/***/ 1145:
 /***/ (function(__unused_webpack_module, exports) {
 
 // Generated by CoffeeScript 1.12.7
@@ -29263,7 +29264,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 19517:
+/***/ 98918:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -29272,9 +29273,9 @@ module.exports = v4;
   var builder, defaults, escapeCDATA, requiresCDATA, wrapCDATA,
     hasProp = {}.hasOwnProperty;
 
-  builder = __webpack_require__(46246);
+  builder = __webpack_require__(35616);
 
-  defaults = __webpack_require__(43059).defaults;
+  defaults = __webpack_require__(51690).defaults;
 
   requiresCDATA = function(entry) {
     return typeof entry === "string" && (entry.indexOf('&') >= 0 || entry.indexOf('>') >= 0 || entry.indexOf('<') >= 0);
@@ -29397,7 +29398,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 43059:
+/***/ 51690:
 /***/ (function(__unused_webpack_module, exports) {
 
 // Generated by CoffeeScript 1.12.7
@@ -29476,7 +29477,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 62395:
+/***/ 38356:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -29487,17 +29488,17 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  sax = __webpack_require__(14279);
+  sax = __webpack_require__(38960);
 
   events = __webpack_require__(28614);
 
-  bom = __webpack_require__(73730);
+  bom = __webpack_require__(1145);
 
-  processors = __webpack_require__(71319);
+  processors = __webpack_require__(19308);
 
   setImmediate = __webpack_require__(78213).setImmediate;
 
-  defaults = __webpack_require__(43059).defaults;
+  defaults = __webpack_require__(51690).defaults;
 
   isEmpty = function(thing) {
     return typeof thing === "object" && (thing != null) && Object.keys(thing).length === 0;
@@ -29840,7 +29841,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 71319:
+/***/ 19308:
 /***/ (function(__unused_webpack_module, exports) {
 
 // Generated by CoffeeScript 1.12.7
@@ -29881,7 +29882,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 77876:
+/***/ 7438:
 /***/ (function(__unused_webpack_module, exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -29891,13 +29892,13 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  defaults = __webpack_require__(43059);
+  defaults = __webpack_require__(51690);
 
-  builder = __webpack_require__(19517);
+  builder = __webpack_require__(98918);
 
-  parser = __webpack_require__(62395);
+  parser = __webpack_require__(38356);
 
-  processors = __webpack_require__(71319);
+  processors = __webpack_require__(19308);
 
   exports.defaults = defaults.defaults;
 
@@ -29925,7 +29926,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 9585:
+/***/ 72108:
 /***/ (function(module) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30005,7 +30006,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 76782:
+/***/ 56416:
 /***/ (function(module) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30043,7 +30044,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 26543:
+/***/ 51367:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30052,7 +30053,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLCData = (function(superClass) {
     extend(XMLCData, superClass);
@@ -30082,7 +30083,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 7100:
+/***/ 82638:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30091,7 +30092,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLComment = (function(superClass) {
     extend(XMLComment, superClass);
@@ -30121,7 +30122,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 36507:
+/***/ 66646:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30130,7 +30131,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLDTDAttList = (function(superClass) {
     extend(XMLDTDAttList, superClass);
@@ -30178,7 +30179,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 37967:
+/***/ 63300:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30187,7 +30188,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLDTDElement = (function(superClass) {
     extend(XMLDTDElement, superClass);
@@ -30220,7 +30221,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 26041:
+/***/ 77161:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30229,9 +30230,9 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  isObject = __webpack_require__(9585).isObject;
+  isObject = __webpack_require__(72108).isObject;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLDTDEntity = (function(superClass) {
     extend(XMLDTDEntity, superClass);
@@ -30283,7 +30284,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 25224:
+/***/ 24259:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30292,7 +30293,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLDTDNotation = (function(superClass) {
     extend(XMLDTDNotation, superClass);
@@ -30327,7 +30328,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 51513:
+/***/ 6154:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30336,9 +30337,9 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  isObject = __webpack_require__(9585).isObject;
+  isObject = __webpack_require__(72108).isObject;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLDeclaration = (function(superClass) {
     extend(XMLDeclaration, superClass);
@@ -30374,7 +30375,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 63034:
+/***/ 91634:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30383,17 +30384,17 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  isObject = __webpack_require__(9585).isObject;
+  isObject = __webpack_require__(72108).isObject;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
-  XMLDTDAttList = __webpack_require__(36507);
+  XMLDTDAttList = __webpack_require__(66646);
 
-  XMLDTDEntity = __webpack_require__(26041);
+  XMLDTDEntity = __webpack_require__(77161);
 
-  XMLDTDElement = __webpack_require__(37967);
+  XMLDTDElement = __webpack_require__(63300);
 
-  XMLDTDNotation = __webpack_require__(25224);
+  XMLDTDNotation = __webpack_require__(24259);
 
   module.exports = XMLDocType = (function(superClass) {
     extend(XMLDocType, superClass);
@@ -30488,7 +30489,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 54239:
+/***/ 78454:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30497,13 +30498,13 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  isPlainObject = __webpack_require__(9585).isPlainObject;
+  isPlainObject = __webpack_require__(72108).isPlainObject;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
-  XMLStringifier = __webpack_require__(49041);
+  XMLStringifier = __webpack_require__(11658);
 
-  XMLStringWriter = __webpack_require__(45264);
+  XMLStringWriter = __webpack_require__(1931);
 
   module.exports = XMLDocument = (function(superClass) {
     extend(XMLDocument, superClass);
@@ -30543,7 +30544,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 3004:
+/***/ 92898:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30551,37 +30552,37 @@ module.exports = v4;
   var XMLAttribute, XMLCData, XMLComment, XMLDTDAttList, XMLDTDElement, XMLDTDEntity, XMLDTDNotation, XMLDeclaration, XMLDocType, XMLDocumentCB, XMLElement, XMLProcessingInstruction, XMLRaw, XMLStringWriter, XMLStringifier, XMLText, isFunction, isObject, isPlainObject, ref,
     hasProp = {}.hasOwnProperty;
 
-  ref = __webpack_require__(9585), isObject = ref.isObject, isFunction = ref.isFunction, isPlainObject = ref.isPlainObject;
+  ref = __webpack_require__(72108), isObject = ref.isObject, isFunction = ref.isFunction, isPlainObject = ref.isPlainObject;
 
-  XMLElement = __webpack_require__(24149);
+  XMLElement = __webpack_require__(93481);
 
-  XMLCData = __webpack_require__(26543);
+  XMLCData = __webpack_require__(51367);
 
-  XMLComment = __webpack_require__(7100);
+  XMLComment = __webpack_require__(82638);
 
-  XMLRaw = __webpack_require__(16710);
+  XMLRaw = __webpack_require__(25764);
 
-  XMLText = __webpack_require__(57270);
+  XMLText = __webpack_require__(65995);
 
-  XMLProcessingInstruction = __webpack_require__(48891);
+  XMLProcessingInstruction = __webpack_require__(79361);
 
-  XMLDeclaration = __webpack_require__(51513);
+  XMLDeclaration = __webpack_require__(6154);
 
-  XMLDocType = __webpack_require__(63034);
+  XMLDocType = __webpack_require__(91634);
 
-  XMLDTDAttList = __webpack_require__(36507);
+  XMLDTDAttList = __webpack_require__(66646);
 
-  XMLDTDEntity = __webpack_require__(26041);
+  XMLDTDEntity = __webpack_require__(77161);
 
-  XMLDTDElement = __webpack_require__(37967);
+  XMLDTDElement = __webpack_require__(63300);
 
-  XMLDTDNotation = __webpack_require__(25224);
+  XMLDTDNotation = __webpack_require__(24259);
 
-  XMLAttribute = __webpack_require__(76782);
+  XMLAttribute = __webpack_require__(56416);
 
-  XMLStringifier = __webpack_require__(49041);
+  XMLStringifier = __webpack_require__(11658);
 
-  XMLStringWriter = __webpack_require__(45264);
+  XMLStringWriter = __webpack_require__(1931);
 
   module.exports = XMLDocumentCB = (function() {
     function XMLDocumentCB(options, onData, onEnd) {
@@ -30952,7 +30953,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 24149:
+/***/ 93481:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -30961,11 +30962,11 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  ref = __webpack_require__(9585), isObject = ref.isObject, isFunction = ref.isFunction;
+  ref = __webpack_require__(72108), isObject = ref.isObject, isFunction = ref.isFunction;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
-  XMLAttribute = __webpack_require__(76782);
+  XMLAttribute = __webpack_require__(56416);
 
   module.exports = XMLElement = (function(superClass) {
     extend(XMLElement, superClass);
@@ -31070,7 +31071,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 64133:
+/***/ 40069:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -31078,7 +31079,7 @@ module.exports = v4;
   var XMLCData, XMLComment, XMLDeclaration, XMLDocType, XMLElement, XMLNode, XMLProcessingInstruction, XMLRaw, XMLText, isEmpty, isFunction, isObject, ref,
     hasProp = {}.hasOwnProperty;
 
-  ref = __webpack_require__(9585), isObject = ref.isObject, isFunction = ref.isFunction, isEmpty = ref.isEmpty;
+  ref = __webpack_require__(72108), isObject = ref.isObject, isFunction = ref.isFunction, isEmpty = ref.isEmpty;
 
   XMLElement = null;
 
@@ -31105,14 +31106,14 @@ module.exports = v4;
       }
       this.children = [];
       if (!XMLElement) {
-        XMLElement = __webpack_require__(24149);
-        XMLCData = __webpack_require__(26543);
-        XMLComment = __webpack_require__(7100);
-        XMLDeclaration = __webpack_require__(51513);
-        XMLDocType = __webpack_require__(63034);
-        XMLRaw = __webpack_require__(16710);
-        XMLText = __webpack_require__(57270);
-        XMLProcessingInstruction = __webpack_require__(48891);
+        XMLElement = __webpack_require__(93481);
+        XMLCData = __webpack_require__(51367);
+        XMLComment = __webpack_require__(82638);
+        XMLDeclaration = __webpack_require__(6154);
+        XMLDocType = __webpack_require__(91634);
+        XMLRaw = __webpack_require__(25764);
+        XMLText = __webpack_require__(65995);
+        XMLProcessingInstruction = __webpack_require__(79361);
       }
     }
 
@@ -31509,7 +31510,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 48891:
+/***/ 79361:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -31518,7 +31519,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLProcessingInstruction = (function(superClass) {
     extend(XMLProcessingInstruction, superClass);
@@ -31551,7 +31552,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 16710:
+/***/ 25764:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -31560,7 +31561,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLRaw = (function(superClass) {
     extend(XMLRaw, superClass);
@@ -31590,7 +31591,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 18960:
+/***/ 59890:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -31599,31 +31600,31 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLDeclaration = __webpack_require__(51513);
+  XMLDeclaration = __webpack_require__(6154);
 
-  XMLDocType = __webpack_require__(63034);
+  XMLDocType = __webpack_require__(91634);
 
-  XMLCData = __webpack_require__(26543);
+  XMLCData = __webpack_require__(51367);
 
-  XMLComment = __webpack_require__(7100);
+  XMLComment = __webpack_require__(82638);
 
-  XMLElement = __webpack_require__(24149);
+  XMLElement = __webpack_require__(93481);
 
-  XMLRaw = __webpack_require__(16710);
+  XMLRaw = __webpack_require__(25764);
 
-  XMLText = __webpack_require__(57270);
+  XMLText = __webpack_require__(65995);
 
-  XMLProcessingInstruction = __webpack_require__(48891);
+  XMLProcessingInstruction = __webpack_require__(79361);
 
-  XMLDTDAttList = __webpack_require__(36507);
+  XMLDTDAttList = __webpack_require__(66646);
 
-  XMLDTDElement = __webpack_require__(37967);
+  XMLDTDElement = __webpack_require__(63300);
 
-  XMLDTDEntity = __webpack_require__(26041);
+  XMLDTDEntity = __webpack_require__(77161);
 
-  XMLDTDNotation = __webpack_require__(25224);
+  XMLDTDNotation = __webpack_require__(24259);
 
-  XMLWriterBase = __webpack_require__(17521);
+  XMLWriterBase = __webpack_require__(14834);
 
   module.exports = XMLStreamWriter = (function(superClass) {
     extend(XMLStreamWriter, superClass);
@@ -31876,7 +31877,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 45264:
+/***/ 1931:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -31885,31 +31886,31 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLDeclaration = __webpack_require__(51513);
+  XMLDeclaration = __webpack_require__(6154);
 
-  XMLDocType = __webpack_require__(63034);
+  XMLDocType = __webpack_require__(91634);
 
-  XMLCData = __webpack_require__(26543);
+  XMLCData = __webpack_require__(51367);
 
-  XMLComment = __webpack_require__(7100);
+  XMLComment = __webpack_require__(82638);
 
-  XMLElement = __webpack_require__(24149);
+  XMLElement = __webpack_require__(93481);
 
-  XMLRaw = __webpack_require__(16710);
+  XMLRaw = __webpack_require__(25764);
 
-  XMLText = __webpack_require__(57270);
+  XMLText = __webpack_require__(65995);
 
-  XMLProcessingInstruction = __webpack_require__(48891);
+  XMLProcessingInstruction = __webpack_require__(79361);
 
-  XMLDTDAttList = __webpack_require__(36507);
+  XMLDTDAttList = __webpack_require__(66646);
 
-  XMLDTDElement = __webpack_require__(37967);
+  XMLDTDElement = __webpack_require__(63300);
 
-  XMLDTDEntity = __webpack_require__(26041);
+  XMLDTDEntity = __webpack_require__(77161);
 
-  XMLDTDNotation = __webpack_require__(25224);
+  XMLDTDNotation = __webpack_require__(24259);
 
-  XMLWriterBase = __webpack_require__(17521);
+  XMLWriterBase = __webpack_require__(14834);
 
   module.exports = XMLStringWriter = (function(superClass) {
     extend(XMLStringWriter, superClass);
@@ -32217,7 +32218,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 49041:
+/***/ 11658:
 /***/ (function(module) {
 
 // Generated by CoffeeScript 1.12.7
@@ -32387,7 +32388,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 57270:
+/***/ 65995:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
@@ -32396,7 +32397,7 @@ module.exports = v4;
     extend = function(child, parent) { for (var key in parent) { if (hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; },
     hasProp = {}.hasOwnProperty;
 
-  XMLNode = __webpack_require__(64133);
+  XMLNode = __webpack_require__(40069);
 
   module.exports = XMLText = (function(superClass) {
     extend(XMLText, superClass);
@@ -32426,7 +32427,7 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 17521:
+/***/ 14834:
 /***/ (function(module) {
 
 // Generated by CoffeeScript 1.12.7
@@ -32523,22 +32524,22 @@ module.exports = v4;
 
 /***/ }),
 
-/***/ 46246:
+/***/ 35616:
 /***/ (function(module, __unused_webpack_exports, __webpack_require__) {
 
 // Generated by CoffeeScript 1.12.7
 (function() {
   var XMLDocument, XMLDocumentCB, XMLStreamWriter, XMLStringWriter, assign, isFunction, ref;
 
-  ref = __webpack_require__(9585), assign = ref.assign, isFunction = ref.isFunction;
+  ref = __webpack_require__(72108), assign = ref.assign, isFunction = ref.isFunction;
 
-  XMLDocument = __webpack_require__(54239);
+  XMLDocument = __webpack_require__(78454);
 
-  XMLDocumentCB = __webpack_require__(3004);
+  XMLDocumentCB = __webpack_require__(92898);
 
-  XMLStringWriter = __webpack_require__(45264);
+  XMLStringWriter = __webpack_require__(1931);
 
-  XMLStreamWriter = __webpack_require__(18960);
+  XMLStreamWriter = __webpack_require__(59890);
 
   module.exports.create = function(name, xmldec, doctype, options) {
     var doc, root;
@@ -33951,7 +33952,7 @@ module.exports = JSON.parse("{\"version\":\"2.0\",\"metadata\":{\"apiVersion\":\
 
 /***/ }),
 
-/***/ 34184:
+/***/ 170:
 /***/ ((module) => {
 
 "use strict";
@@ -34191,7 +34192,7 @@ module.exports = JSON.parse("{\"o\":{\"DescribeAddonVersions\":{\"input_token\":
 
 /***/ }),
 
-/***/ 40904:
+/***/ 11545:
 /***/ ((module) => {
 
 "use strict";
@@ -35951,7 +35952,7 @@ module.exports = JSON.parse("{\"version\":\"2.0\",\"metadata\":{\"apiVersion\":\
 
 /***/ }),
 
-/***/ 57091:
+/***/ 32049:
 /***/ ((module) => {
 
 "use strict";
@@ -36271,7 +36272,7 @@ module.exports = JSON.parse("{\"V\":{\"ProjectVersionTrainingCompleted\":{\"desc
 
 /***/ }),
 
-/***/ 32268:
+/***/ 28629:
 /***/ ((module) => {
 
 "use strict";
@@ -37453,6 +37454,6 @@ module.exports = require("util");;
 /******/ 	// module exports must be returned from runtime so entry inlining is disabled
 /******/ 	// startup
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(60781);
+/******/ 	return __webpack_require__(41762);
 /******/ })()
 ;
