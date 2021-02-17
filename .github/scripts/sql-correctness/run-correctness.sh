@@ -12,9 +12,15 @@ if [ -z "$TEMPLATE_SCRIPT" ]; then
     exit 1
 fi
 
-if [ -z "$FROM_SERVER" ] || [ -z "$FROM_VERSION" ] || [ -z "$TO_SERVER" ] || [ -z "$TO_VERSION" ]; then
-    echo  "Must set FROM_SERVER FROM_VERSION TO_SERVER and TO_VERSION"
+if [ -z "$FROM_VERSION" ] && [ -z "$TO_VERSION" ]; then
+    echo  "Must set FROM_VERSION or TO_VERSION for correctness run"
+    echo  "Must set both for regressions run"
     exit 1
+fi
+
+if  [ ! -z "$FROM_VERSION" ] && [ -z "$TO_VERSION" ]; then
+  echo "Setting TO_VERSION for correctness run"
+  TO_VERSION="$FROM_VERSION"
 fi
 
 if [ -z "$ACTOR" ]; then
@@ -26,9 +32,6 @@ if [ -z "$MODE" ]; then
     echo  "Must set MODE"
     exit 1
 fi
-
-echo "Setting from $FROM_SERVER: $FROM_VERSION"
-echo "Setting to $TO_SERVER: $TO_VERSION"
 
 # use first 8 characters of TO_VERSION to differentiate
 # jobs
@@ -47,18 +50,18 @@ if [ "$MODE" = "release" ]; then
   format="html"
 fi
 
-source "$TEMPLATE_SCRIPT" "$jobname" "$FROM_SERVER" "$FROM_VERSION" "$TO_SERVER" "$TO_VERSION" "$timeprefix" "$actorprefix" "$format" > job.json
+source "$TEMPLATE_SCRIPT" "$jobname" "$FROM_VERSION" "$TO_VERSION" "$timeprefix" "$actorprefix" "$format" > job.json
 
 KUBECONFIG="$KUBECONFIG" kubectl apply -f job.json
 
-out=$(KUBECONFIG="$KUBECONFIG" kubectl wait job/"$jobname" --for=condition=complete -n performance-benchmarking --timeout=7200s || true)
+out=$(KUBECONFIG="$KUBECONFIG" kubectl wait job/"$jobname" --for=condition=complete -n sql-correctness --timeout=7200s || true)
 
 if [ "$out" != "job.batch/$jobname condition met" ]; then
   echo "output of kubectl wait: $out"
-  KUBECONFIG="$KUBECONFIG" kubectl logs job/"$jobname" -n performance-benchmarking
+  KUBECONFIG="$KUBECONFIG" kubectl logs job/"$jobname" -n sql-correctness
 else
-  echo "::set-output name=object-key::$timeprefix/$actorprefix/comparison-results.log"
-  KUBECONFIG="$KUBECONFIG" kubectl delete job/"$jobname" -n performance-benchmarking
+  echo "::set-output name=object-key::$timeprefix/$actorprefix/correctness-results.log"
+  KUBECONFIG="$KUBECONFIG" kubectl delete job/"$jobname" -n sql-correctness
 fi
 
 exit 0
