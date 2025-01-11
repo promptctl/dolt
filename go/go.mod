@@ -96,6 +96,7 @@ require (
 )
 
 require (
+	bazil.org/fuse v0.0.0-20200117225306-7b5117fecadc // indirect
 	cloud.google.com/go v0.110.7 // indirect
 	cloud.google.com/go/compute v1.23.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
