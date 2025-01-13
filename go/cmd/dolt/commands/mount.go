@@ -176,6 +176,19 @@ func (d AddressesDir) Lookup(ctx context.Context, specRef string) (fs.Node, erro
 	return nil, syscall.ENOENT
 }
 
+type CommitDir struct {
+	db *doltdb.DoltDB
+}
+
+var _ Directory = CommitDir{}
+
+type IndexDir struct {
+	db   *doltdb.DoltDB
+	keys []interface{}
+}
+
+var _ Directory = IndexDir{}
+
 /*
 var dirDirs = []fuse.Dirent{
 	{Inode: 2, Name: "hello", Type: fuse.DT_File},
