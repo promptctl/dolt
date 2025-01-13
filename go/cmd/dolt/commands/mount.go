@@ -167,7 +167,7 @@ func (d AddressesDir) Lookup(ctx context.Context, specRef string) (fs.Node, erro
 		node, fileId, err := tree.NodeFromBytes(v)
 		switch fileId {
 		case serial.BlobFileID:
-			return Blob{
+			return &Blob{
 				ns:   d.db.NodeStore(),
 				node: node,
 			}, err
@@ -192,10 +192,17 @@ type Blob struct {
 
 var _ File = Blob{}
 
-func (b Blob) Attr(_ context.Context, a *fuse.Attr) (err error) {
+func (b Blob) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	a.Mode = 0o444
-	treeCount, err := b.node.TreeCount()
-	a.Size = uint64(treeCount)
+	// TODO: Report size just from the tree
+	size := uint64(0)
+	err = tree.WalkNodes(ctx, b.node, b.ns, func(ctx context.Context, n tree.Node) error {
+		if n.IsLeaf() {
+			size += uint64(len(n.GetValue(0)))
+		}
+		return nil
+	})
+	a.Size = size
 	return err
 }
 
