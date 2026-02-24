@@ -105,7 +105,6 @@ echo '
               "--results-dir='$timePrefix'",
               "--results-prefix='$actorPrefix'",
               "--perf-regression-query='"$perfRegressionQuery"'",
-              '"$sysbenchTestTime"'
               '"$withTpcc"'
               '"$initBigRepo"'
               '"$nomsBinFormat"'
