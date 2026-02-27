@@ -58,6 +58,24 @@ func newRemoteAndLocalRepos(t *testing.T, ctx context.Context) (remoteRepo *gitr
 	return remoteRepo, localRepo, localRunner
 }
 
+type countingGitAPI struct {
+	git.GitAPI
+	blobReaders int64
+}
+
+func (c *countingGitAPI) BlobReader(ctx context.Context, oid git.OID) (io.ReadCloser, error) {
+	atomic.AddInt64(&c.blobReaders, 1)
+	return c.GitAPI.BlobReader(ctx, oid)
+}
+
+type failingBlobReaderGitAPI struct {
+	git.GitAPI
+}
+
+func (f *failingBlobReaderGitAPI) BlobReader(ctx context.Context, oid git.OID) (io.ReadCloser, error) {
+	return nil, errors.New("BlobReader should not be called")
+}
+
 func TestGitBlobstore_MissingKeysAreNotFound(t *testing.T) {
 	requireGitOnPath(t)
 
@@ -128,6 +146,80 @@ func TestGitBlobstore_ExistsAndGet_AllRange(t *testing.T) {
 	require.Equal(t, uint64(len(want)), sz)
 	require.Equal(t, manifestOID.String(), ver2)
 	_ = rc.Close()
+}
+
+func TestGitBlobstore_RangedReadsReuseOnDiskCache(t *testing.T) {
+	requireGitOnPath(t)
+
+	ctx := context.Background()
+	remoteRepo, localRepo, _ := newRemoteAndLocalRepos(t, ctx)
+
+	// Seed remote with a single blob.
+	want := []byte("abcdefghijklmnopqrstuvwxyz0123456789\n")
+	_, err := remoteRepo.SetRefToTree(ctx, DoltDataRef, map[string][]byte{
+		"k": want,
+	}, "seed")
+	require.NoError(t, err)
+
+	bs, err := NewGitBlobstore(localRepo.GitDir, DoltDataRef)
+	require.NoError(t, err)
+
+	capi := &countingGitAPI{GitAPI: bs.api}
+	bs.api = capi
+
+	readTail := func() []byte {
+		rc, _, _, err := bs.Get(ctx, "k", NewBlobRange(-10, 0))
+		require.NoError(t, err)
+		b, err := io.ReadAll(rc)
+		require.NoError(t, err)
+		require.NoError(t, rc.Close())
+		return b
+	}
+
+	got1 := readTail()
+	got2 := readTail()
+	require.Equal(t, got1, got2)
+	require.Equal(t, want[len(want)-10:], got1)
+	require.Equal(t, int64(1), atomic.LoadInt64(&capi.blobReaders))
+}
+
+func TestGitBlobstore_RangedReadCreatesAndUsesCacheFile(t *testing.T) {
+	requireGitOnPath(t)
+
+	ctx := context.Background()
+	remoteRepo, localRepo, _ := newRemoteAndLocalRepos(t, ctx)
+
+	want := []byte("abcdefghijklmnopqrstuvwxyz0123456789\n")
+	_, err := remoteRepo.SetRefToTree(ctx, DoltDataRef, map[string][]byte{
+		"k": want,
+	}, "seed")
+	require.NoError(t, err)
+
+	bs, err := NewGitBlobstore(localRepo.GitDir, DoltDataRef)
+	require.NoError(t, err)
+
+	// First ranged read should materialize the full blob to disk.
+	rc, _, ver, err := bs.Get(ctx, "k", NewBlobRange(-10, 0))
+	require.NoError(t, err)
+	got1, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+	require.Equal(t, want[len(want)-10:], got1)
+
+	cachePath := bs.blobCachePath(git.OID(ver))
+	fi, err := os.Stat(cachePath)
+	require.NoError(t, err)
+	require.True(t, fi.Mode().IsRegular())
+	require.Equal(t, int64(len(want)), fi.Size())
+
+	// If BlobReader is called again, fail the test. Second ranged read should use the cache file.
+	bs.api = &failingBlobReaderGitAPI{GitAPI: bs.api}
+	rc, _, _, err = bs.Get(ctx, "k", NewBlobRange(-10, 0))
+	require.NoError(t, err)
+	got2, err := io.ReadAll(rc)
+	require.NoError(t, err)
+	require.NoError(t, rc.Close())
+	require.Equal(t, got1, got2)
 }
 
 func TestGitBlobstore_RemoteManaged_ExistsFetchesAndAligns(t *testing.T) {

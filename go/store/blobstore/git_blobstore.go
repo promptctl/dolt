@@ -21,6 +21,8 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -29,6 +31,7 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	"golang.org/x/sync/singleflight"
 
 	git "github.com/dolthub/dolt/go/store/blobstore/internal/git"
 )
@@ -74,6 +77,7 @@ func (l *limitReadCloser) Close() error               { return l.c.Close() }
 
 type multiPartReadCloser struct {
 	ctx context.Context
+	gbs *GitBlobstore
 	api git.GitAPI
 
 	slices []chunkPartSlice
@@ -124,7 +128,23 @@ func (m *multiPartReadCloser) ensureCurrent() error {
 }
 
 func (m *multiPartReadCloser) openSliceReader(s chunkPartSlice) (io.ReadCloser, error) {
-	rc, err := m.api.BlobReader(m.ctx, git.OID(s.oidHex))
+	oid := git.OID(s.oidHex)
+	if m.gbs != nil && (s.offset != 0 || s.length != 0) {
+		path, _, err := m.gbs.ensureBlobMaterialized(m.ctx, oid)
+		if err == nil {
+			f, err := os.Open(path)
+			if err == nil {
+				rc, err := readCloserForFileRange(f, NewBlobRange(s.offset, s.length))
+				if err == nil {
+					return rc, nil
+				}
+				_ = f.Close()
+			}
+		}
+	}
+
+	// Fallback to streaming reads (may read+discard for non-zero offsets).
+	rc, err := m.api.BlobReader(m.ctx, oid)
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +152,7 @@ func (m *multiPartReadCloser) openSliceReader(s chunkPartSlice) (io.ReadCloser, 
 		_ = rc.Close()
 		return nil, err
 	}
-	return rc, nil
+	return &limitReadCloser{r: io.LimitReader(rc, s.length), c: rc}, nil
 }
 
 func (m *multiPartReadCloser) closeCurrentAndAdvance() error {
@@ -276,6 +296,7 @@ type GitBlobstore struct {
 	remoteName        string
 	remoteTrackingRef string
 	mu                sync.Mutex
+	materializeGroup  singleflight.Group
 	// identity, when non-nil, is used as the author/committer identity for new commits.
 	// When nil, we prefer whatever identity git derives from env/config, falling back
 	// to a deterministic default only if git reports the identity is missing.
@@ -310,6 +331,149 @@ var _ Blobstore = (*GitBlobstore)(nil)
 type cachedGitObject struct {
 	oid git.OID
 	typ git.ObjectType
+}
+
+type materializedBlob struct {
+	path string
+	size int64
+}
+
+const gitblobstoreMaxBlobCacheBytes int64 = 1 << 30 // 1GiB
+
+func (gbs *GitBlobstore) blobCacheDir() string {
+	return filepath.Join(gbs.gitDir, "dolt-gitblobstore-blob-cache")
+}
+
+func (gbs *GitBlobstore) blobCachePath(oid git.OID) string {
+	return filepath.Join(gbs.blobCacheDir(), oid.String())
+}
+
+type blobCacheFile struct {
+	path    string
+	size    int64
+	modTime time.Time
+}
+
+func (gbs *GitBlobstore) evictBlobCacheBestEffort(dir string) {
+	if gitblobstoreMaxBlobCacheBytes <= 0 {
+		return
+	}
+	ents, err := os.ReadDir(dir)
+	if err != nil {
+		return
+	}
+	files := make([]blobCacheFile, 0, len(ents))
+	var total int64
+	for _, e := range ents {
+		// Skip in-progress temp files and non-files.
+		if strings.Contains(e.Name(), ".tmp-") {
+			continue
+		}
+		info, err := e.Info()
+		if err != nil || !info.Mode().IsRegular() {
+			continue
+		}
+		sz := info.Size()
+		if sz <= 0 {
+			continue
+		}
+		total += sz
+		files = append(files, blobCacheFile{
+			path:    filepath.Join(dir, e.Name()),
+			size:    sz,
+			modTime: info.ModTime(),
+		})
+	}
+	if total <= gitblobstoreMaxBlobCacheBytes {
+		return
+	}
+	sort.Slice(files, func(i, j int) bool {
+		if files[i].modTime.Equal(files[j].modTime) {
+			return files[i].path < files[j].path
+		}
+		return files[i].modTime.Before(files[j].modTime)
+	})
+	for _, f := range files {
+		if total <= gitblobstoreMaxBlobCacheBytes {
+			break
+		}
+		if err := os.Remove(f.path); err == nil {
+			total -= f.size
+		}
+	}
+}
+
+func (gbs *GitBlobstore) ensureBlobMaterialized(ctx context.Context, oid git.OID) (path string, size int64, err error) {
+	if oid == "" {
+		return "", 0, fmt.Errorf("gitblobstore: cannot materialize empty oid")
+	}
+	dir := gbs.blobCacheDir()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return "", 0, err
+	}
+	finalPath := gbs.blobCachePath(oid)
+	if fi, err := os.Stat(finalPath); err == nil && fi.Mode().IsRegular() {
+		return finalPath, fi.Size(), nil
+	}
+
+	v, err, _ := gbs.materializeGroup.Do(oid.String(), func() (any, error) {
+		if fi, err := os.Stat(finalPath); err == nil && fi.Mode().IsRegular() {
+			return materializedBlob{path: finalPath, size: fi.Size()}, nil
+		}
+
+		tmp, err := os.CreateTemp(dir, oid.String()+".tmp-*")
+		if err != nil {
+			return materializedBlob{}, err
+		}
+		tmpPath := tmp.Name()
+		ok := false
+		defer func() {
+			if ok {
+				return
+			}
+			_ = tmp.Close()
+			_ = os.Remove(tmpPath)
+		}()
+
+		rc, err := gbs.api.BlobReader(ctx, oid)
+		if err != nil {
+			return materializedBlob{}, err
+		}
+		n, copyErr := io.Copy(tmp, rc)
+		closeErr := rc.Close()
+		if copyErr != nil {
+			return materializedBlob{}, copyErr
+		}
+		if closeErr != nil {
+			return materializedBlob{}, closeErr
+		}
+		if err := tmp.Sync(); err != nil {
+			return materializedBlob{}, err
+		}
+		if err := tmp.Close(); err != nil {
+			return materializedBlob{}, err
+		}
+		if err := os.Rename(tmpPath, finalPath); err != nil {
+			// Another process may have won the race; if the final file exists, use it.
+			if fi, statErr := os.Stat(finalPath); statErr == nil && fi.Mode().IsRegular() {
+				ok = true
+				return materializedBlob{path: finalPath, size: fi.Size()}, nil
+			}
+			return materializedBlob{}, err
+		}
+		// Best-effort cache bounding (local perf cache only).
+		gbs.evictBlobCacheBestEffort(dir)
+		ok = true
+		return materializedBlob{path: finalPath, size: n}, nil
+	})
+	if err != nil {
+		return "", 0, err
+	}
+	mb, ok := v.(materializedBlob)
+	if !ok {
+		return "", 0, fmt.Errorf("gitblobstore: materialize returned unexpected type %T", v)
+	}
+	return mb.path, mb.size, nil
 }
 
 func (gbs *GitBlobstore) cacheGetObject(path string) (cachedGitObject, bool) {
@@ -778,6 +942,23 @@ func (gbs *GitBlobstore) getFromCache(ctx context.Context, key string, br BlobRa
 
 	switch obj.typ {
 	case git.ObjectTypeBlob:
+		if !br.isAllRange() {
+			path, sz, err := gbs.ensureBlobMaterialized(ctx, obj.oid)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			f, err := os.Open(path)
+			if err != nil {
+				return nil, 0, "", err
+			}
+			rc, err := readCloserForFileRange(f, br)
+			if err != nil {
+				_ = f.Close()
+				return nil, 0, "", err
+			}
+			return rc, uint64(sz), obj.oid.String(), nil
+		}
+
 		sz, err := gbs.api.BlobSize(ctx, obj.oid)
 		if err != nil {
 			return nil, 0, "", err
@@ -822,6 +1003,7 @@ func (gbs *GitBlobstore) openChunkedTreeRange(ctx context.Context, key string, b
 	// Stream across part blobs.
 	streamRC := &multiPartReadCloser{
 		ctx:    ctx,
+		gbs:    gbs,
 		api:    gbs.api,
 		slices: slices,
 	}
