@@ -82,7 +82,10 @@ func encodingFromQueryType(typ query.Type) serial.Encoding {
 		}
 		return serial.EncodingGeomAddr
 	case query.Type_JSON:
-		return serial.EncodingJsonAdaptive
+		if typeinfo.UseAdaptiveEncoding {
+			return serial.EncodingJsonAdaptive
+		}
+		return serial.EncodingJSONAddr
 	case query.Type_BLOB:
 		if typeinfo.UseAdaptiveEncoding {
 			return serial.EncodingBytesAdaptive

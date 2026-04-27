@@ -55,7 +55,10 @@ func (ti *jsonType) Encoding() val.Encoding {
 	if ti.enc != 0 {
 		return ti.enc
 	}
-	return val.JsonAdaptiveEnc
+	if UseAdaptiveEncoding {
+		return val.JsonAdaptiveEnc
+	}
+	return val.JSONAddrEnc
 }
 
 // WithEncoding implements TypeInfo interface.
