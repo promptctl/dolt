@@ -151,6 +151,14 @@ func getConvertToVectorFunction(keyDesc *val.TupleDesc, ns tree.NodeStore) (tree
 			}
 			return sql.ConvertToVector(ctx, jsonWrapper)
 		}, nil
+	case val.JsonAdaptiveEnc:
+		return func(ctx context.Context, bytes []byte) ([]float32, error) {
+			jsonVal, _, err := keyDesc.GetJsonAdaptiveValue(ctx, 0, ns, bytes)
+			if err != nil {
+				return nil, err
+			}
+			return sql.ConvertToVector(ctx, jsonVal)
+		}, nil
 	case val.BytesAdaptiveEnc:
 		return func(ctx context.Context, bytes []byte) ([]float32, error) {
 			vec, _, err := keyDesc.GetBytesAdaptiveValue(ctx, 0, ns, bytes)

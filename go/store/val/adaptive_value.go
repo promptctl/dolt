@@ -202,6 +202,20 @@ func (v AdaptiveValue) convertToGeometryStorage(ctx context.Context, vs ValueSto
 	return NewGeometryStorageOutOfBand(ctx, addr, vs, int64(length)), nil
 }
 
+func (v AdaptiveValue) convertToJsonStorage(vs ValueStore) (*JsonStorage, error) {
+	length, lengthBytes := uvarint.Uvarint(v)
+	addr := hash.New(v[lengthBytes:])
+	return NewJsonStorageOutOfBand(addr, vs, int64(length)), nil
+}
+
+// NewOutOfBandAdaptiveValue writes |data| to |vs| and returns an out-of-band AdaptiveValue
+// encoding [varint(len(data)) | content_hash]. This is used when writing adaptive values
+// outside the TupleBuilder (e.g. in the merge path).
+func NewOutOfBandAdaptiveValue(ctx context.Context, vs ValueStore, data []byte) (AdaptiveValue, error) {
+	inline := AdaptiveValue(append([]byte{0}, data...))
+	return inline.convertToOutOfBand(ctx, vs, nil)
+}
+
 // AdaptiveEncodingTypeHandler is an implementation of TypeHandler for adaptive encoding types,
 // that is, values that can be either a content-address or an inline value.
 // This TypeHandler converts between the address and the underlying value as needed, allowing these columns

@@ -114,6 +114,8 @@ func GetField(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple, ns N
 		}
 	case val.GeomAdaptiveEnc:
 		v, ok, err = td.GetGeomAdaptiveValue(ctx, i, ns, tup)
+	case val.JsonAdaptiveEnc:
+		v, ok, err = td.GetJsonAdaptiveValue(ctx, i, ns, tup)
 	case val.Hash128Enc:
 		v, ok = td.GetHash128(i, tup)
 	case val.BytesAddrEnc:
@@ -323,6 +325,23 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		}
 		return v, nil
 
+	case val.JsonAdaptiveEnc:
+		v.Typ = querypb.Type_JSON
+		b := td.GetField(i, tup)
+		if len(b) == 0 {
+			return v, nil // NULL
+		}
+		if b[0] == 0 {
+			// inlined: skip the 0x00 header byte
+			v.Val = b[1:]
+			return v, nil
+		}
+		// out-of-band: varint length + 20-byte address
+		_, lengthBytes := uvarint.Uvarint(b)
+		h := hash.New(b[lengthBytes:])
+		v.Val, err = ns.ReadBytes(ctx, h)
+		return v, err
+
 	case val.BytesAdaptiveEnc, val.StringAdaptiveEnc:
 		v.Typ = querypb.Type_BLOB
 		b := td.GetField(i, tup)
@@ -489,6 +508,35 @@ func PutField(ctx context.Context, ns NodeStore, tb *val.TupleBuilder, i int, v 
 			return err
 		}
 		tb.PutJSONAddr(i, h)
+	case val.JsonAdaptiveEnc:
+		switch value := v.(type) {
+		case *val.JsonStorage:
+			if !value.IsExactLength() {
+				// Out-of-band: pass through the address without loading the bytes.
+				tb.PutAdaptiveJsonFromOutline(i, value)
+			} else {
+				// Inline: re-serialize the bytes into the new tuple.
+				buf, err := value.GetBytes(ctx)
+				if err != nil {
+					return err
+				}
+				if err = tb.PutAdaptiveJsonFromInline(ctx, i, buf); err != nil {
+					return err
+				}
+			}
+		default:
+			j, err := convJson(ctx, v)
+			if err != nil {
+				return err
+			}
+			buf, err := types.MarshallJson(ctx, j)
+			if err != nil {
+				return err
+			}
+			if err = tb.PutAdaptiveJsonFromInline(ctx, i, buf); err != nil {
+				return err
+			}
+		}
 	case val.BytesAddrEnc:
 		h, err := getBlobAddrHash(ctx, ns, v)
 		if err != nil {

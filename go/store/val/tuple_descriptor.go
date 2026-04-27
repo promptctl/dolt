@@ -611,6 +611,30 @@ func (td *TupleDesc) GetStringAdaptiveValue(i int, vs ValueStore, tup Tuple) (in
 	}
 }
 
+// GetJsonAdaptiveValue reads a JSON value from an adaptive-encoded field, returning a *JsonStorage
+// that defers byte loading and JSON deserialization until the value is actually needed.
+func (td *TupleDesc) GetJsonAdaptiveValue(ctx context.Context, i int, vs ValueStore, tup Tuple) (*JsonStorage, bool, error) {
+	td.ExpectEncoding(i, JsonAdaptiveEnc)
+	return GetJsonAdaptiveValue(ctx, vs, td.GetField(i, tup))
+}
+
+// GetJsonAdaptiveValue is the standalone version used when a TupleDesc is not available.
+func GetJsonAdaptiveValue(ctx context.Context, vs ValueStore, field []byte) (*JsonStorage, bool, error) {
+	adaptiveValue := AdaptiveValue(field)
+	if len(adaptiveValue) == 0 {
+		return nil, false, nil
+	}
+	if adaptiveValue.isInlined() {
+		bytes, err := adaptiveValue.getUnderlyingBytes(ctx, vs)
+		if err != nil {
+			return nil, false, err
+		}
+		return NewJsonStorageInline(bytes), true, nil
+	}
+	gs, err := adaptiveValue.convertToJsonStorage(vs)
+	return gs, true, err
+}
+
 func (td *TupleDesc) GetCommitAddr(i int, tup Tuple) (v hash.Hash, ok bool) {
 	td.ExpectEncoding(i, CommitAddrEnc)
 	return td.GetAddr(i, tup)
