@@ -337,6 +337,10 @@ func NewJsonStorageOutOfBand(addr hash.Hash, vs ValueStore, maxByteLength int64)
 	}
 }
 
+func (j *JsonAdaptiveStorage) IsInline() bool {
+	return j.inlineBytes != nil
+}
+
 // GetBytes implements types.JSONBytes by returning the raw JSON bytes.
 func (j *JsonAdaptiveStorage) GetBytes(ctx context.Context) ([]byte, error) {
 	if j.inlineBytes != nil {

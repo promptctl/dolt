@@ -515,8 +515,8 @@ func PutField(ctx context.Context, ns NodeStore, tb *val.TupleBuilder, i int, v 
 	case val.JsonAdaptiveEnc:
 		switch value := v.(type) {
 		case *val.JsonAdaptiveStorage:
-			if !value.IsExactLength() {
-				// Out-of-band: pass through the address without loading the bytes.
+			if !value.IsInline() {
+				// Out-of-band: pass through the address without loading
 				tb.PutAdaptiveJsonFromOutline(i, value)
 			} else {
 				// Inline: re-serialize the bytes into the new tuple.
