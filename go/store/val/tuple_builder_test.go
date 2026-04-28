@@ -338,8 +338,8 @@ func TestTupleBuilderJsonAdaptiveEncoding(t *testing.T) {
 		require.True(t, ok)
 		require.NotNil(t, result)
 
-		// Out-of-band values have IsExactLength() == false.
-		require.False(t, result.IsExactLength())
+		// All adaptive values have IsExactLength() == true.
+		require.True(t, result.IsExactLength())
 		gotBytes, err := result.GetBytes(ctx)
 		require.NoError(t, err)
 		assertJsonEqual(t, largeJson, gotBytes)
@@ -373,7 +373,7 @@ func TestTupleBuilderJsonAdaptiveEncoding(t *testing.T) {
 		result1, ok, err := td.GetJsonAdaptiveValue(ctx, 1, vs, tup)
 		require.NoError(t, err)
 		require.True(t, ok)
-		require.False(t, result1.IsExactLength(), "large column should be stored out-of-band")
+		require.False(t, result1.IsInline())
 		gotBytes1, err := result1.GetBytes(ctx)
 		require.NoError(t, err)
 		assertJsonEqual(t, largeJson, gotBytes1)
@@ -449,7 +449,8 @@ func TestTupleBuilderJsonAdaptiveEncoding(t *testing.T) {
 		outOfBandResult, ok, err := td.GetJsonAdaptiveValue(ctx, 0, vs, tup)
 		require.NoError(t, err)
 		require.True(t, ok)
-		require.False(t, outOfBandResult.IsExactLength(), "large value should be out-of-band")
+		require.True(t, outOfBandResult.IsExactLength())
+		require.False(t, outOfBandResult.IsInline())
 
 		// Put the out-of-band JsonStorage back into a new tuple (pass-through).
 		tb2 := NewTupleBuilder(td, vs)

@@ -631,7 +631,7 @@ func GetJsonAdaptiveValue(ctx context.Context, vs ValueStore, field []byte) (*Js
 		}
 		return NewJsonStorageInline(bytes), true, nil
 	}
-	gs, err := adaptiveValue.convertToJsonStorage(vs)
+	gs, err := adaptiveValue.convertToJsonStorage(ctx, vs)
 	return gs, true, err
 }
 
