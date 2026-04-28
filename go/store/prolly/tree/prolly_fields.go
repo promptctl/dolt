@@ -116,6 +116,14 @@ func GetField(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple, ns N
 		v, ok, err = td.GetGeomAdaptiveValue(ctx, i, ns, tup)
 	case val.JsonAdaptiveEnc:
 		v, ok, err = td.GetJsonAdaptiveValue(ctx, i, ns, tup)
+		if ok {
+			switch val := v.(type) {
+			case *val.JsonAdaptiveStorage:
+				v, err = NewJSONDoc(val.Addr(), ns).ToIndexedJSONDocument(ctx)
+			case []byte:
+				// leave alone
+			}
+		}
 	case val.Hash128Enc:
 		v, ok = td.GetHash128(i, tup)
 	case val.BytesAddrEnc:
