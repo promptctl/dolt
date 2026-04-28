@@ -485,20 +485,7 @@ func PutField(ctx context.Context, ns NodeStore, tb *val.TupleBuilder, i int, v 
 	case val.GeomAdaptiveEnc:
 		switch value := v.(type) {
 		case *val.GeometryStorage:
-			if !value.IsInline() {
-				// Out-of-band: pass through the address without loading
-				tb.PutAdaptiveGeomFromOutOfBand(i, value.MaxByteLength(), value.Addr())
-			} else {
-				// Inline: we already have the serialized bytes
-				buf, err := value.GetSerializedBytes(ctx)
-				if err != nil {
-					return err
-				}
-				err = tb.PutAdaptiveGeomFromInline(ctx, i, buf)
-				if err != nil {
-					return err
-				}
-			}
+			tb.PutAdaptiveGeomFromOutOfBand(i, value.MaxByteLength(), value.Addr())
 		default:
 			geo := serializeGeometry(v)
 			err := tb.PutAdaptiveGeomFromInline(ctx, i, geo)
@@ -515,19 +502,7 @@ func PutField(ctx context.Context, ns NodeStore, tb *val.TupleBuilder, i int, v 
 	case val.JsonAdaptiveEnc:
 		switch value := v.(type) {
 		case *val.JsonAdaptiveStorage:
-			if !value.IsInline() {
-				// Out-of-band: pass through the address without loading
-				tb.PutAdaptiveJsonFromOutline(i, value)
-			} else {
-				// Inline: re-serialize the bytes into the new tuple.
-				buf, err := value.GetBytes(ctx)
-				if err != nil {
-					return err
-				}
-				if err = tb.PutAdaptiveJsonFromInline(ctx, i, buf); err != nil {
-					return err
-				}
-			}
+			tb.PutAdaptiveJsonFromOutline(i, value)
 		default:
 			j, err := convJson(ctx, v)
 			if err != nil {

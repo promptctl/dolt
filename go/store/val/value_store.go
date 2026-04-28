@@ -233,28 +233,14 @@ func (b *ByteArray) Value() (driver.Value, error) {
 	return b.GetBytes(b.ctx)
 }
 
-// GeometryStorage wraps serialized geometry bytes and defers deserialization until the value is needed.
-// The geometry bytes may be stored inline or out-of-band via a content address.
-// It implements sql.AnyWrapper; GMS geometry types call sql.UnwrapAny to obtain
-// the underlying types.GeometryValue when evaluation actually requires it.
+// GeometryStorage is a sql.AnyWrapper for geometry values.
 type GeometryStorage struct {
-	// inlineBytes holds the serialized geometry bytes when the value is stored inline.
-	// When nil, the value is out-of-band and must be loaded via ImmutableValue.
-	inlineBytes []byte
 	// outOfBand holds a lazily-loaded out-of-band value. Only used when inlineBytes is nil.
 	outOfBand     ImmutableValue
 	maxByteLength int64
 }
 
 var _ sql.AnyWrapper = &GeometryStorage{}
-
-// NewGeometryStorageInline creates a GeometryStorage from inline serialized bytes.
-func NewGeometryStorageInline(buf []byte) *GeometryStorage {
-	return &GeometryStorage{
-		inlineBytes:   buf,
-		maxByteLength: int64(len(buf)),
-	}
-}
 
 // NewGeometryStorageOutOfBand creates a GeometryStorage that lazily loads bytes from a content-addressed store.
 func NewGeometryStorageOutOfBand(addr hash.Hash, vs ValueStore, maxByteLength int64) *GeometryStorage {
@@ -269,16 +255,8 @@ func (g *GeometryStorage) Unwrap(ctx context.Context) (result []byte, err error)
 	return g.GetSerializedBytes(ctx)
 }
 
-// IsInline returns true if the geometry bytes are stored inline, false if they are stored out-of-band.
-func (g *GeometryStorage) IsInline() bool {
-	return g.inlineBytes != nil
-}
-
 // GetSerializedBytes returns the raw serialized geometry bytes, loading from storage if necessary.
 func (g *GeometryStorage) GetSerializedBytes(ctx context.Context) ([]byte, error) {
-	if g.inlineBytes != nil {
-		return g.inlineBytes, nil
-	}
 	return g.outOfBand.GetBytes(ctx)
 }
 
@@ -307,7 +285,7 @@ func (g *GeometryStorage) Compare(ctx context.Context, other interface{}) (cmp i
 	if !ok {
 		return 0, false, nil
 	}
-	if g.inlineBytes == nil && otherGeom.inlineBytes == nil && g.outOfBand.Addr == otherGeom.outOfBand.Addr {
+	if g.outOfBand.Addr == otherGeom.outOfBand.Addr {
 		return 0, true, nil
 	}
 	return 0, false, nil
@@ -327,10 +305,6 @@ func (g *GeometryStorage) Addr() hash.Hash {
 // The bytes may be stored inline or out-of-band via a content address.
 // It implements sql.JSONWrapper and types.JSONBytes.
 type JsonAdaptiveStorage struct {
-	// inlineBytes holds the raw JSON bytes when the value is stored inline.
-	// When nil, the value is out-of-band and must be loaded via outOfBand.
-	inlineBytes []byte
-	// outOfBand holds the lazily-loaded address. Only used when inlineBytes is nil.
 	outOfBand     ImmutableValue
 	maxByteLength int64
 }
@@ -338,14 +312,6 @@ type JsonAdaptiveStorage struct {
 var _ sql.JSONWrapper = &JsonAdaptiveStorage{}
 var _ sql.AnyWrapper = &JsonAdaptiveStorage{}
 var _ types.JSONBytes = &JsonAdaptiveStorage{}
-
-// NewJsonStorageInline creates a JsonAdaptiveStorage from inline serialized bytes.
-func NewJsonStorageInline(buf []byte) *JsonAdaptiveStorage {
-	return &JsonAdaptiveStorage{
-		inlineBytes:   buf,
-		maxByteLength: int64(len(buf)),
-	}
-}
 
 // NewJsonStorageOutOfBand creates a JsonAdaptiveStorage that lazily loads bytes from a content-addressed store.
 func NewJsonStorageOutOfBand(addr hash.Hash, vs ValueStore, maxByteLength int64) *JsonAdaptiveStorage {
@@ -355,23 +321,14 @@ func NewJsonStorageOutOfBand(addr hash.Hash, vs ValueStore, maxByteLength int64)
 	}
 }
 
-// IsInline returns true if the JSON bytes are stored inline, false if they are stored out-of-band.
-func (j *JsonAdaptiveStorage) IsInline() bool {
-	return j.inlineBytes != nil
-}
-
 // GetBytes implements types.JSONBytes by returning the raw JSON bytes.
 func (j *JsonAdaptiveStorage) GetBytes(ctx context.Context) ([]byte, error) {
-	if j.inlineBytes != nil {
-		return j.inlineBytes, nil
-	}
 	return j.outOfBand.GetBytes(ctx)
 }
 
 // Clone implements sql.JSONWrapper.
 func (j *JsonAdaptiveStorage) Clone(_ context.Context) sql.JSONWrapper {
 	return &JsonAdaptiveStorage{
-		inlineBytes:   j.inlineBytes,
 		outOfBand:     j.outOfBand,
 		maxByteLength: j.maxByteLength,
 	}
@@ -416,7 +373,7 @@ func (j *JsonAdaptiveStorage) Compare(ctx context.Context, other interface{}) (c
 	if !ok {
 		return 0, false, nil
 	}
-	if j.inlineBytes == nil && otherJson.inlineBytes == nil && j.outOfBand.Addr == otherJson.outOfBand.Addr {
+	if j.outOfBand.Addr == otherJson.outOfBand.Addr {
 		return 0, true, nil
 	}
 	return 0, false, nil
