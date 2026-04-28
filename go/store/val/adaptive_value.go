@@ -224,7 +224,7 @@ func (v AdaptiveValue) convertToJsonStorage(ctx context.Context, vs ValueStore) 
 	return NewJsonStorageOutOfBand(addr, vs, int64(length)), nil
 }
 
-// AdaptiveValueInlineBytes returns the inline encoding of the value given as a byte slice.
+// AdaptiveValueInlineBytes returns the inline encoding of the adaptive value given as a byte slice.
 func AdaptiveValueInlineBytes(value []byte) []byte {
 	result := make([]byte, 1+len(value))
 	result[0] = 0
@@ -232,8 +232,8 @@ func AdaptiveValueInlineBytes(value []byte) []byte {
 	return result
 }
 
-// IsNullAdaptiveValue returns whether the given byte slice represents a NULL AdaptiveValue.
-func IsNullAdaptiveValue(val []byte) bool {
+// IsNullAdaptiveValueBytes returns whether the given byte slice represents a NULL AdaptiveValue.
+func IsNullAdaptiveValueBytes(val []byte) bool {
 	return len(val) == 0
 }
 
