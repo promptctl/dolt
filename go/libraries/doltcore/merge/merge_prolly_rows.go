@@ -2259,10 +2259,7 @@ func (m *valueMerger) mergeJSONAdaptive(ctx context.Context, baseField []byte, l
 		return adaptiveVal, false, nil
 	}
 
-	// Inline adaptive value: [0x00 | json_bytes]
-	result = make([]byte, 1+len(jsonBytes))
-	result[0] = 0
-	copy(result[1:], jsonBytes)
+	result = val.AdaptiveValueInlineBytes(jsonBytes)
 	return result, false, nil
 }
 

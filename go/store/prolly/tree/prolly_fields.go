@@ -328,32 +328,35 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 	case val.JsonAdaptiveEnc:
 		v.Typ = querypb.Type_JSON
 		b := td.GetField(i, tup)
-		if len(b) == 0 {
-			return v, nil // NULL
+
+		if val.IsNullAdaptiveValue(b) {
+			return v, nil
 		}
-		if b[0] == 0 {
-			// inlined: skip the 0x00 header byte
+
+		if val.IsInlineAdaptiveBytes(b) {
 			v.Val = b[1:]
 			return v, nil
 		}
+
 		// out-of-band: varint length + 20-byte address
 		_, lengthBytes := uvarint.Uvarint(b)
 		h := hash.New(b[lengthBytes:])
-		v.Val, err = ns.ReadBytes(ctx, h)
-		return v, err
+		v.WrappedVal = val.NewJsonStorageOutOfBand(h, ns, int64(lengthBytes))
+		return v, nil
 
 	case val.BytesAdaptiveEnc, val.StringAdaptiveEnc:
 		v.Typ = querypb.Type_BLOB
 		b := td.GetField(i, tup)
-		// null value
-		if len(b) == 0 {
+
+		if val.IsNullAdaptiveValue(b) {
 			return v, nil
 		}
-		// inlined
-		if b[0] == 0 {
+
+		if val.IsInlineAdaptiveBytes(b) {
 			v.Val = b[1:]
 			return v, nil
 		}
+
 		// out-of-band
 		_, lengthBytes := uvarint.Uvarint(b)
 		h := hash.New(b[lengthBytes:])
@@ -363,20 +366,21 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 	case val.GeomAdaptiveEnc:
 		v.Typ = querypb.Type_GEOMETRY
 		b := td.GetField(i, tup)
-		// null value
-		if len(b) == 0 {
+
+		if val.IsNullAdaptiveValue(b) {
 			return v, nil
 		}
-		// inlined
-		if b[0] == 0 {
+
+		if val.IsInlineAdaptiveBytes(b) {
 			v.Val = b[1:]
 			return v, nil
 		}
+
 		// out-of-band
 		_, lengthBytes := uvarint.Uvarint(b)
 		h := hash.New(b[lengthBytes:])
-		v.Val, err = ns.ReadBytes(ctx, h)
-		return v, err
+		v.WrappedVal = val.NewGeometryStorageOutOfBand(ctx, h, ns, int64(lengthBytes))
+		return v, nil
 
 	default:
 		panic("unknown val.encoding")

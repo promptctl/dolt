@@ -208,6 +208,24 @@ func (v AdaptiveValue) convertToJsonStorage(vs ValueStore) (*JsonStorage, error)
 	return NewJsonStorageOutOfBand(addr, vs, int64(length)), nil
 }
 
+// AdaptiveValueInlineBytes returns the inline encoding of the value given as a byte slice.
+func AdaptiveValueInlineBytes(value []byte) []byte {
+	result := make([]byte, 1+len(value))
+	result[0] = 0
+	copy(result[1:], value)
+	return result
+}
+
+// IsNullAdaptiveValue returns whether the given byte slice represents a NULL AdaptiveValue.
+func IsNullAdaptiveValue(val []byte) bool {
+	return len(val) == 0
+}
+
+// IsInlineAdaptiveBytes returns whether the given byte slice represents an inlined AdaptiveValue.
+func IsInlineAdaptiveBytes(val []byte) bool {
+	return len(val) > 0 && val[0] == 0
+}
+
 // NewOutOfBandAdaptiveValue writes |data| to |vs| and returns an out-of-band AdaptiveValue
 // encoding [varint(len(data)) | content_hash]. This is used when writing adaptive values
 // outside the TupleBuilder (e.g. in the merge path).

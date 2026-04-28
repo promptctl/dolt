@@ -235,6 +235,10 @@ type GeometryStorage struct {
 	maxByteLength int64
 }
 
+func (g *GeometryStorage) Unwrap(ctx context.Context) (result []byte, err error) {
+	return g.GetSerializedBytes(ctx)
+}
+
 var _ sql.AnyWrapper = &GeometryStorage{}
 
 // NewGeometryStorageInline creates a GeometryStorage from inline serialized bytes.
@@ -376,6 +380,29 @@ func (j *JsonStorage) MaxByteLength() int64 {
 // Addr returns the content address for out-of-band storage. Only valid when IsExactLength returns false.
 func (j *JsonStorage) Addr() hash.Hash {
 	return j.outOfBand.Addr
+}
+
+func (j *JsonStorage) UnwrapAny(ctx context.Context) (interface{}, error) {
+	return j.ToInterface(ctx)
+}
+
+func (j *JsonStorage) Compare(ctx context.Context, other interface{}) (cmp int, comparable bool, err error) {
+	otherJson, ok := other.(*JsonStorage)
+	if !ok {
+		return 0, false, nil
+	}
+	if j.inlineBytes == nil && otherJson.inlineBytes == nil && j.outOfBand.Addr == otherJson.outOfBand.Addr {
+		return 0, true, nil
+	}
+	return 0, false, nil
+}
+
+func (j *JsonStorage) Hash() interface{} {
+	return j.outOfBand.Addr
+}
+
+func (j *JsonStorage) Unwrap(ctx context.Context) (result []byte, err error) {
+	return j.GetBytes(ctx)
 }
 
 // deserializeGeometryBytes converts raw serialized bytes into a types.GeometryValue.
