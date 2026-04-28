@@ -235,10 +235,6 @@ type GeometryStorage struct {
 	maxByteLength int64
 }
 
-func (g *GeometryStorage) Unwrap(ctx context.Context) (result []byte, err error) {
-	return g.GetSerializedBytes(ctx)
-}
-
 var _ sql.AnyWrapper = &GeometryStorage{}
 
 // NewGeometryStorageInline creates a GeometryStorage from inline serialized bytes.
@@ -255,6 +251,14 @@ func NewGeometryStorageOutOfBand(ctx context.Context, addr hash.Hash, vs ValueSt
 		outOfBand:     NewImmutableValue(addr, vs),
 		maxByteLength: maxByteLength,
 	}
+}
+
+func (g *GeometryStorage) Unwrap(ctx context.Context) (result []byte, err error) {
+	return g.GetSerializedBytes(ctx)
+}
+
+func (g *GeometryStorage) IsInline() bool {
+	return g.inlineBytes != nil
 }
 
 // GetSerializedBytes returns the raw serialized geometry bytes, loading from storage if necessary.

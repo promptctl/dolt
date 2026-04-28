@@ -485,7 +485,7 @@ func PutField(ctx context.Context, ns NodeStore, tb *val.TupleBuilder, i int, v 
 	case val.GeomAdaptiveEnc:
 		switch value := v.(type) {
 		case *val.GeometryStorage:
-			if !value.IsExactLength() {
+			if !value.IsInline() {
 				// Out-of-band: pass through the address without loading
 				tb.PutAdaptiveGeomFromOutOfBand(i, value.MaxByteLength(), value.Addr())
 			} else {
