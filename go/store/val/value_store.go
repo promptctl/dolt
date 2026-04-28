@@ -276,7 +276,7 @@ func (g *GeometryStorage) UnwrapAny(ctx context.Context) (interface{}, error) {
 
 // IsExactLength implements sql.AnyWrapper.
 func (g *GeometryStorage) IsExactLength() bool {
-	return g.inlineBytes != nil
+	return true
 }
 
 // MaxByteLength implements sql.AnyWrapper.
@@ -306,10 +306,10 @@ func (g *GeometryStorage) Addr() hash.Hash {
 	return g.outOfBand.Addr
 }
 
-// JsonStorage wraps raw JSON bytes and defers deserialization until the value is needed.
+// JsonAdaptiveStorage wraps raw JSON bytes and defers deserialization until the value is needed.
 // The bytes may be stored inline or out-of-band via a content address.
 // It implements sql.JSONWrapper and types.JSONBytes.
-type JsonStorage struct {
+type JsonAdaptiveStorage struct {
 	// inlineBytes holds the raw JSON bytes when the value is stored inline.
 	// When nil, the value is out-of-band and must be loaded via outOfBand.
 	inlineBytes []byte
@@ -318,27 +318,27 @@ type JsonStorage struct {
 	maxByteLength int64
 }
 
-var _ sql.JSONWrapper = &JsonStorage{}
-var _ types.JSONBytes = &JsonStorage{}
+var _ sql.JSONWrapper = &JsonAdaptiveStorage{}
+var _ types.JSONBytes = &JsonAdaptiveStorage{}
 
-// NewJsonStorageInline creates a JsonStorage from inline serialized bytes.
-func NewJsonStorageInline(buf []byte) *JsonStorage {
-	return &JsonStorage{
+// NewJsonStorageInline creates a JsonAdaptiveStorage from inline serialized bytes.
+func NewJsonStorageInline(buf []byte) *JsonAdaptiveStorage {
+	return &JsonAdaptiveStorage{
 		inlineBytes:   buf,
 		maxByteLength: int64(len(buf)),
 	}
 }
 
-// NewJsonStorageOutOfBand creates a JsonStorage that lazily loads bytes from a content-addressed store.
-func NewJsonStorageOutOfBand(addr hash.Hash, vs ValueStore, maxByteLength int64) *JsonStorage {
-	return &JsonStorage{
+// NewJsonStorageOutOfBand creates a JsonAdaptiveStorage that lazily loads bytes from a content-addressed store.
+func NewJsonStorageOutOfBand(addr hash.Hash, vs ValueStore, maxByteLength int64) *JsonAdaptiveStorage {
+	return &JsonAdaptiveStorage{
 		outOfBand:     NewImmutableValue(addr, vs),
 		maxByteLength: maxByteLength,
 	}
 }
 
 // GetBytes implements types.JSONBytes by returning the raw JSON bytes.
-func (j *JsonStorage) GetBytes(ctx context.Context) ([]byte, error) {
+func (j *JsonAdaptiveStorage) GetBytes(ctx context.Context) ([]byte, error) {
 	if j.inlineBytes != nil {
 		return j.inlineBytes, nil
 	}
@@ -346,8 +346,8 @@ func (j *JsonStorage) GetBytes(ctx context.Context) ([]byte, error) {
 }
 
 // Clone implements sql.JSONWrapper.
-func (j *JsonStorage) Clone(_ context.Context) sql.JSONWrapper {
-	return &JsonStorage{
+func (j *JsonAdaptiveStorage) Clone(_ context.Context) sql.JSONWrapper {
+	return &JsonAdaptiveStorage{
 		inlineBytes:   j.inlineBytes,
 		outOfBand:     j.outOfBand,
 		maxByteLength: j.maxByteLength,
@@ -355,7 +355,7 @@ func (j *JsonStorage) Clone(_ context.Context) sql.JSONWrapper {
 }
 
 // ToInterface implements sql.JSONWrapper by deserializing the raw JSON bytes.
-func (j *JsonStorage) ToInterface(ctx context.Context) (interface{}, error) {
+func (j *JsonAdaptiveStorage) ToInterface(ctx context.Context) (interface{}, error) {
 	buf, err := j.GetBytes(ctx)
 	if err != nil {
 		return nil, err
@@ -368,26 +368,26 @@ func (j *JsonStorage) ToInterface(ctx context.Context) (interface{}, error) {
 }
 
 // IsExactLength returns true when the bytes are stored inline (exact length known without loading).
-func (j *JsonStorage) IsExactLength() bool {
-	return j.inlineBytes != nil
+func (j *JsonAdaptiveStorage) IsExactLength() bool {
+	return true
 }
 
 // MaxByteLength returns the maximum byte length of the JSON data.
-func (j *JsonStorage) MaxByteLength() int64 {
+func (j *JsonAdaptiveStorage) MaxByteLength() int64 {
 	return j.maxByteLength
 }
 
 // Addr returns the content address for out-of-band storage. Only valid when IsExactLength returns false.
-func (j *JsonStorage) Addr() hash.Hash {
+func (j *JsonAdaptiveStorage) Addr() hash.Hash {
 	return j.outOfBand.Addr
 }
 
-func (j *JsonStorage) UnwrapAny(ctx context.Context) (interface{}, error) {
+func (j *JsonAdaptiveStorage) UnwrapAny(ctx context.Context) (interface{}, error) {
 	return j.ToInterface(ctx)
 }
 
-func (j *JsonStorage) Compare(ctx context.Context, other interface{}) (cmp int, comparable bool, err error) {
-	otherJson, ok := other.(*JsonStorage)
+func (j *JsonAdaptiveStorage) Compare(ctx context.Context, other interface{}) (cmp int, comparable bool, err error) {
+	otherJson, ok := other.(*JsonAdaptiveStorage)
 	if !ok {
 		return 0, false, nil
 	}
@@ -397,11 +397,11 @@ func (j *JsonStorage) Compare(ctx context.Context, other interface{}) (cmp int, 
 	return 0, false, nil
 }
 
-func (j *JsonStorage) Hash() interface{} {
+func (j *JsonAdaptiveStorage) Hash() interface{} {
 	return j.outOfBand.Addr
 }
 
-func (j *JsonStorage) Unwrap(ctx context.Context) (result []byte, err error) {
+func (j *JsonAdaptiveStorage) Unwrap(ctx context.Context) (result []byte, err error) {
 	return j.GetBytes(ctx)
 }
 

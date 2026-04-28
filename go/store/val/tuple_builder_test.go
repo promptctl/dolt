@@ -429,7 +429,7 @@ func TestTupleBuilderJsonAdaptiveEncoding(t *testing.T) {
 		storage := NewJsonStorageInline(smallJson)
 		clone := storage.Clone(ctx)
 		require.NotNil(t, clone)
-		gotBytes, err := clone.(*JsonStorage).GetBytes(ctx)
+		gotBytes, err := clone.(*JsonAdaptiveStorage).GetBytes(ctx)
 		require.NoError(t, err)
 		assertJsonEqual(t, smallJson, gotBytes)
 	})

@@ -339,9 +339,9 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		}
 
 		// out-of-band: varint length + 20-byte address
-		_, lengthBytes := uvarint.Uvarint(b)
-		h := hash.New(b[lengthBytes:])
-		v.WrappedVal = val.NewJsonStorageOutOfBand(h, ns, int64(lengthBytes))
+		length, offset := uvarint.Uvarint(b)
+		h := hash.New(b[offset:])
+		v.WrappedVal = val.NewJsonStorageOutOfBand(h, ns, int64(length))
 		return v, nil
 
 	case val.BytesAdaptiveEnc, val.StringAdaptiveEnc:
@@ -377,9 +377,9 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		}
 
 		// out-of-band
-		_, lengthBytes := uvarint.Uvarint(b)
-		h := hash.New(b[lengthBytes:])
-		v.WrappedVal = val.NewGeometryStorageOutOfBand(ctx, h, ns, int64(lengthBytes))
+		length, offset := uvarint.Uvarint(b)
+		h := hash.New(b[offset:])
+		v.WrappedVal = val.NewGeometryStorageOutOfBand(ctx, h, ns, int64(length))
 		return v, nil
 
 	default:
@@ -514,7 +514,7 @@ func PutField(ctx context.Context, ns NodeStore, tb *val.TupleBuilder, i int, v 
 		tb.PutJSONAddr(i, h)
 	case val.JsonAdaptiveEnc:
 		switch value := v.(type) {
-		case *val.JsonStorage:
+		case *val.JsonAdaptiveStorage:
 			if !value.IsExactLength() {
 				// Out-of-band: pass through the address without loading the bytes.
 				tb.PutAdaptiveJsonFromOutline(i, value)

@@ -648,7 +648,7 @@ func (tb *TupleBuilder) PutAdaptiveGeomFromOutOfBand(i int, maxByteLength int64,
 	tb.PutAdaptiveFromOutline(i, maxByteLength, addr)
 }
 
-func (tb *TupleBuilder) PutAdaptiveJsonFromOutline(i int, v *JsonStorage) {
+func (tb *TupleBuilder) PutAdaptiveJsonFromOutline(i int, v *JsonAdaptiveStorage) {
 	tb.Desc.ExpectEncoding(i, JsonAdaptiveEnc)
 	tb.PutAdaptiveFromOutline(i, v.MaxByteLength(), v.Addr())
 }
