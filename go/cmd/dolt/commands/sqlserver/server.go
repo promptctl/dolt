@@ -25,6 +25,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/dolthub/go-mysql-server/eventscheduler"
@@ -934,15 +935,22 @@ func ConfigureServices(
 	}
 	controller.Register(RunClusterController)
 
+	var serverShutdownWg sync.WaitGroup
 	RunSQLServer := &svcs.AnonService{
 		RunF: func(context.Context) {
+			serverShutdownWg.Add(1)
+			defer func() {
+				serverShutdownWg.Done()
+			}()
 			sqlserver.SetRunningServer(mySQLServer)
 			defer sqlserver.UnsetRunningServer()
 			mySQLServer.Start()
 		},
 		StopF: func() error {
 			sqlServerClosed = true
-			return mySQLServer.Close()
+			closeErr := mySQLServer.Close()
+			serverShutdownWg.Wait()
+			return closeErr
 		},
 	}
 	controller.Register(RunSQLServer)
