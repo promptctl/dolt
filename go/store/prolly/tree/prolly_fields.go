@@ -379,7 +379,7 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		// out-of-band
 		length, offset := uvarint.Uvarint(b)
 		h := hash.New(b[offset:])
-		v.WrappedVal = val.NewGeometryStorageOutOfBand(ctx, h, ns, int64(length))
+		v.WrappedVal = val.NewGeometryStorageOutOfBand(h, ns, int64(length))
 		return v, nil
 
 	default:

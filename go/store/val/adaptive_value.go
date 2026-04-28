@@ -210,7 +210,7 @@ func (v AdaptiveValue) convertToGeometryStorage(ctx context.Context, vs ValueSto
 	}
 	length, lengthBytes := uvarint.Uvarint(outOfBandValue)
 	addr := hash.New(outOfBandValue[lengthBytes:])
-	return NewGeometryStorageOutOfBand(ctx, addr, vs, int64(length)), nil
+	return NewGeometryStorageOutOfBand(addr, vs, int64(length)), nil
 }
 
 func (v AdaptiveValue) convertToJsonStorage(ctx context.Context, vs ValueStore) (*JsonAdaptiveStorage, error) {
