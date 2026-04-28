@@ -46,7 +46,7 @@ import (
 // correctly fill in a new column's value for existing table rows. This can happen when a column default value uses
 // references that need to be resolved by the analyzer (e.g. column references, function references).
 var ErrUnableToMergeColumnDefaultValue = errorkinds.NewKind("unable to automatically apply column default value " +
-	"in merge: %s for table '%s'; to continue merging, first manually apply the column alteration on this branch")
+		"in merge: %s for table '%s'; to continue merging, first manually apply the column alteration on this branch")
 
 // mergeProllyTable merges the table specified by |tm| using the specified |mergedSch| and returns the new table
 // instance, along with merge stats and any error. If |diffInfo.RewriteRows| is true, then any existing rows in the
@@ -54,11 +54,11 @@ var ErrUnableToMergeColumnDefaultValue = errorkinds.NewKind("unable to automatic
 // conflicts), migrates any existing table data to the specified |mergedSch|, and merges table data from both
 // sides of the merge together.
 func mergeProllyTable(
-	ctx *sql.Context,
-	tm *TableMerger,
-	mergedSch schema.Schema,
-	mergeInfo MergeInfo,
-	diffInfo tree.ThreeWayDiffInfo,
+		ctx *sql.Context,
+		tm *TableMerger,
+		mergedSch schema.Schema,
+		mergeInfo MergeInfo,
+		diffInfo tree.ThreeWayDiffInfo,
 ) (*doltdb.Table, *MergeStats, error) {
 	mergeTbl, err := mergeTableArtifacts(ctx, tm, tm.leftTbl)
 	if err != nil {
@@ -132,15 +132,15 @@ func mergeAutoIncrementValues(ctx context.Context, tbl, otherTbl, resultTbl *dol
 }
 
 func computeProllyTreePatches(
-	ctx *sql.Context,
-	tm *TableMerger,
-	finalSch schema.Schema,
-	mergeTbl *doltdb.Table,
-	valueMerger *valueMerger,
-	mergeInfo MergeInfo,
-	diffInfo tree.ThreeWayDiffInfo,
-	patchBuffer tree.PatchBuffer,
-	s *MergeStats) (*secondaryMerger, *conflictMerger, error) {
+		ctx *sql.Context,
+		tm *TableMerger,
+		finalSch schema.Schema,
+		mergeTbl *doltdb.Table,
+		valueMerger *valueMerger,
+		mergeInfo MergeInfo,
+		diffInfo tree.ThreeWayDiffInfo,
+		patchBuffer tree.PatchBuffer,
+		s *MergeStats) (*secondaryMerger, *conflictMerger, error) {
 	ns := tm.ns
 
 	iter, err := threeWayDiffer(ctx, tm, valueMerger, diffInfo)
@@ -243,13 +243,13 @@ func computeProllyTreePatches(
 	// either skip if there's secondary indexes, or merge secondary indexes.
 	needsSchemaMigration := mergeInfo.RightNeedsRewrite || mergeInfo.LeftNeedsRewrite
 	canFastMergeProllyTrees := !keyless &&
-		!needsUniquenessValidation &&
-		!needsCheckValidation &&
-		!needsNullValidation &&
-		!needsSecondaryIndexMerge &&
-		!needsSchemaMigration &&
-		!diffInfo.RightSchemaChange &&
-		!diffInfo.LeftSchemaChange
+			!needsUniquenessValidation &&
+			!needsCheckValidation &&
+			!needsNullValidation &&
+			!needsSecondaryIndexMerge &&
+			!needsSchemaMigration &&
+			!diffInfo.RightSchemaChange &&
+			!diffInfo.LeftSchemaChange
 	if canFastMergeProllyTrees {
 		lDiff, err := tree.PatchGeneratorFromRoots(ctx, ns, ns, ancRows.Node(), leftRows.Node(), leftRows.Tuples().Order)
 		if err != nil {
@@ -1048,13 +1048,13 @@ type nullValidator struct {
 }
 
 func newNullValidator(
-	ctx context.Context,
-	final schema.Schema,
-	tm *TableMerger,
-	vm *valueMerger,
-	artEditor *prolly.ArtifactsEditor,
-	patchBuffer tree.PatchBuffer,
-	secEditors []MutableSecondaryIdx,
+		ctx context.Context,
+		final schema.Schema,
+		tm *TableMerger,
+		vm *valueMerger,
+		artEditor *prolly.ArtifactsEditor,
+		patchBuffer tree.PatchBuffer,
+		secEditors []MutableSecondaryIdx,
 ) (nullValidator, error) {
 	theirRootish, err := tm.rightSrc.HashOf()
 	if err != nil {
@@ -1212,8 +1212,8 @@ func newConflictMerger(ctx context.Context, tm *TableMerger, ae *prolly.Artifact
 		}
 
 		equal := schema.ColCollsAreEqual(a.GetAllCols(), tm.ancSch.GetAllCols()) &&
-			schema.ColCollsAreEqual(l.GetAllCols(), tm.leftSch.GetAllCols()) &&
-			schema.ColCollsAreEqual(r.GetAllCols(), tm.rightSch.GetAllCols())
+				schema.ColCollsAreEqual(l.GetAllCols(), tm.leftSch.GetAllCols()) &&
+				schema.ColCollsAreEqual(r.GetAllCols(), tm.rightSch.GetAllCols())
 		if !equal {
 			return nil, ErrConflictsIncompatible
 		}
@@ -1645,16 +1645,16 @@ func remapTuple(tuple val.Tuple, desc *val.TupleDesc, mapping val.OrdinalMapping
 // |rightSide| indicates if the tuple came from the right side of the merge; this is needed to determine if the tuple
 // data needs to be converted from the old schema type to a changed schema type.
 func remapTupleWithColumnDefaults(
-	ctx *sql.Context,
-	keyTuple, valueTuple val.Tuple,
-	valDesc *val.TupleDesc,
-	mapping val.OrdinalMapping,
-	tm *TableMerger,
-	rowSch schema.Schema,
-	mergedSch schema.Schema,
-	defaultExprs []sql.Expression,
-	pool pool.BuffPool,
-	rightSide bool,
+		ctx *sql.Context,
+		keyTuple, valueTuple val.Tuple,
+		valDesc *val.TupleDesc,
+		mapping val.OrdinalMapping,
+		tm *TableMerger,
+		rowSch schema.Schema,
+		mergedSch schema.Schema,
+		defaultExprs []sql.Expression,
+		pool pool.BuffPool,
+		rightSide bool,
 ) (val.Tuple, error) {
 	tb := val.NewTupleBuilder(mergedSch.GetValueDescriptor(tm.ns), tm.ns)
 
@@ -1708,15 +1708,15 @@ func remapTupleWithColumnDefaults(
 // writeTupleExpression attempts to evaluate the expression string |exprString| against the row provided and write it
 // to the provided index in the tuple builder. This is necessary for column default values and generated columns.
 func writeTupleExpression(
-	ctx *sql.Context,
-	keyTuple val.Tuple,
-	valueTuple val.Tuple,
-	expr sql.Expression,
-	col schema.Column,
-	sch schema.Schema,
-	tm *TableMerger,
-	tb *val.TupleBuilder,
-	colIdx int,
+		ctx *sql.Context,
+		keyTuple val.Tuple,
+		valueTuple val.Tuple,
+		expr sql.Expression,
+		col schema.Column,
+		sch schema.Schema,
+		tm *TableMerger,
+		tb *val.TupleBuilder,
+		colIdx int,
 ) error {
 	if !expr.Resolved() {
 		return ErrUnableToMergeColumnDefaultValue.New(expr.String(), tm.name)
@@ -2263,19 +2263,34 @@ func (m *valueMerger) mergeJSONAdaptive(ctx context.Context, baseField []byte, l
 	return result, false, nil
 }
 
-func mergeJSON(ctx context.Context, ns tree.NodeStore, base, left, right sql.JSONWrapper) (resultDoc sql.JSONWrapper, conflict bool, err error) {
+func mergeJSON(ctx context.Context, ns tree.NodeStore, base, left, right any) (resultDoc sql.JSONWrapper, conflict bool, err error) {
+	var baseJson, leftJson, rightJson sql.JSONWrapper
+	baseJson, err = toJsonWrapper(base)
+	if err != nil {
+		return nil, false, err
+	}
+
+	leftJson, err = toJsonWrapper(left)
+	if err != nil {
+		return nil, false, err
+	}
+
+	rightJson, err = toJsonWrapper(right)
+	if err != nil {
+		return nil, false, err
+	}
+
 	// First, deserialize each value into JSON.
 	// We can only merge if the value at all three commits is a JSON object.
-
-	baseIsObject, err := tree.IsJsonObject(ctx, base)
+	baseIsObject, err := tree.IsJsonObject(ctx, baseJson)
 	if err != nil {
 		return nil, true, err
 	}
-	leftIsObject, err := tree.IsJsonObject(ctx, left)
+	leftIsObject, err := tree.IsJsonObject(ctx, leftJson)
 	if err != nil {
 		return nil, true, err
 	}
-	rightIsObject, err := tree.IsJsonObject(ctx, right)
+	rightIsObject, err := tree.IsJsonObject(ctx, rightJson)
 	if err != nil {
 		return nil, true, err
 	}
@@ -2284,24 +2299,24 @@ func mergeJSON(ctx context.Context, ns tree.NodeStore, base, left, right sql.JSO
 		// At least one of the commits does not have a JSON object.
 		// If both left and right have the same value, use that value.
 		// But if they differ, this is an unresolvable merge conflict.
-		cmp, err := types.CompareJSON(ctx, left, right)
+		cmp, err := types.CompareJSON(ctx, leftJson, rightJson)
 		if err != nil {
 			return types.JSONDocument{}, true, err
 		}
 		if cmp == 0 {
 			// convergent operation.
-			return left, false, nil
+			return leftJson, false, nil
 		} else {
 			return types.JSONDocument{}, true, nil
 		}
 	}
 
-	leftDiffer, err := tree.NewJsonDiffer(ctx, base, left)
+	leftDiffer, err := tree.NewJsonDiffer(ctx, baseJson, leftJson)
 	if err != nil {
 		return nil, true, err
 	}
 
-	rightDiffer, err := tree.NewJsonDiffer(ctx, base, right)
+	rightDiffer, err := tree.NewJsonDiffer(ctx, baseJson, rightJson)
 	if err != nil {
 		return nil, true, err
 	}
@@ -2316,8 +2331,8 @@ func mergeJSON(ctx context.Context, ns tree.NodeStore, base, left, right sql.JSO
 	// If the left object isn't an IndexedJsonDocument, we make one.
 	var ok bool
 	var merged tree.IndexedJsonDocument
-	if merged, ok = left.(tree.IndexedJsonDocument); !ok {
-		root, err := tree.SerializeJsonToAddr(ctx, ns, left)
+	if merged, ok = leftJson.(tree.IndexedJsonDocument); !ok {
+		root, err := tree.SerializeJsonToAddr(ctx, ns, leftJson)
 		if err != nil {
 			return types.JSONDocument{}, true, err
 		}
@@ -2351,6 +2366,29 @@ func mergeJSON(ctx context.Context, ns tree.NodeStore, base, left, right sql.JSO
 		default:
 			panic("unreachable")
 		}
+	}
+}
+
+func toJsonWrapper(baseJson any) (sql.JSONWrapper, error) {
+	switch x := baseJson.(type) {
+	case []byte:
+		var v any
+		err := json.Unmarshal(x, &v)
+		if err != nil {
+			return nil, err
+		}
+		return types.JSONDocument{Val: v}, nil
+	case string:
+		var v any
+		err := json.Unmarshal([]byte(x), &v)
+		if err != nil {
+			return nil, err
+		}
+		return types.JSONDocument{Val: v}, nil
+	case sql.JSONWrapper:
+		return x, nil
+	default:
+		return nil, fmt.Errorf("unexpected type for JSON value: %T", baseJson)
 	}
 }
 
