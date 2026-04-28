@@ -25,7 +25,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/dolthub/go-mysql-server/eventscheduler"
@@ -212,7 +211,7 @@ func ConfigureServices(
 			localCreds, err = persistServerLocalCreds(cfg.ServerConfig.Port(), cfg.DoltEnv)
 			return err
 		},
-		StopF: func() error {
+		StopF: func(_ svcs.RunState) error {
 			RemoveLocalCreds(cfg.DoltEnv.FS)
 			return nil
 		},
@@ -329,7 +328,7 @@ func ConfigureServices(
 	// all inflight queries.
 	var mySQLServer *server.Server
 	DrainClientConnectionsOnShutdown := &svcs.AnonService{
-		StopF: func() error {
+		StopF: func(_ svcs.RunState) error {
 			if mySQLServer != nil {
 				mySQLServer.SessionManager().WaitForClosedConnections()
 			}
@@ -368,7 +367,7 @@ func ConfigureServices(
 			}
 			return sql.SystemVariables.SetGlobal(sqlCtx, "read_only", readOnlyValue)
 		},
-		StopF: func() error {
+		StopF: func(_ svcs.RunState) error {
 			sqlEngine.Close()
 			return nil
 		},
@@ -382,7 +381,7 @@ func ConfigureServices(
 	// after they are killed, but it is not currently set up that
 	// way.
 	CloseClientConnectionsOnShutdown := &svcs.AnonService{
-		StopF: func() error {
+		StopF: func(_ svcs.RunState) error {
 			if mySQLServer != nil {
 				sm := mySQLServer.SessionManager()
 				return sm.Iter(func(s sql.Session) (bool, error) {
@@ -547,7 +546,7 @@ func ConfigureServices(
 			metListener, err = newMetricsListener(labels, cfg.Version, path, clusterController, metricsExposed)
 			return err
 		},
-		StopF: func() error {
+		StopF: func(_ svcs.RunState) error {
 			metListener.Close()
 			return nil
 		},
@@ -615,16 +614,16 @@ func ConfigureServices(
 	controller.Register(DisableMySQLDbIfRequired)
 
 	type SQLMetricsService struct {
-		state svcs.ServiceState
-		lis   net.Listener
-		srv   *http.Server
+		enabled bool
+		lis     net.Listener
+		srv     *http.Server
 	}
 
 	var metSrv SQLMetricsService
 	RunMetricsServer := &svcs.AnonService{
 		InitF: func(context.Context) (err error) {
 			if cfg.ServerConfig.MetricsHost() != "" && cfg.ServerConfig.MetricsPort() > 0 {
-				metSrv.state.Swap(svcs.ServiceState_Init)
+				metSrv.enabled = true
 
 				addr := fmt.Sprintf("%s:%d", cfg.ServerConfig.MetricsHost(), cfg.ServerConfig.MetricsPort())
 				metSrv.lis, err = net.Listen("tcp", addr)
@@ -692,7 +691,7 @@ func ConfigureServices(
 			return nil
 		},
 		RunF: func(context.Context) {
-			if metSrv.state.CompareAndSwap(svcs.ServiceState_Init, svcs.ServiceState_Run) {
+			if metSrv.enabled {
 				if metSrv.srv.TLSConfig != nil {
 					_ = metSrv.srv.ServeTLS(metSrv.lis, "", "")
 				} else {
@@ -700,11 +699,13 @@ func ConfigureServices(
 				}
 			}
 		},
-		StopF: func() error {
-			state := metSrv.state.Swap(svcs.ServiceState_Stopped)
-			if state == svcs.ServiceState_Run {
+		StopF: func(rs svcs.RunState) error {
+			if !metSrv.enabled {
+				return nil
+			}
+			if rs == svcs.RunInvoked {
 				metSrv.srv.Close()
-			} else if state == svcs.ServiceState_Init {
+			} else {
 				metSrv.lis.Close()
 			}
 			return nil
@@ -713,9 +714,9 @@ func ConfigureServices(
 	controller.Register(RunMetricsServer)
 
 	type RemoteSrvService struct {
-		state svcs.ServiceState
-		lis   remotesrv.Listeners
-		srv   *remotesrv.Server
+		enabled bool
+		lis     remotesrv.Listeners
+		srv     *remotesrv.Server
 	}
 	var remoteSrv RemoteSrvService
 	RunRemoteSrv := &svcs.AnonService{
@@ -723,7 +724,7 @@ func ConfigureServices(
 			if cfg.ServerConfig.RemotesapiPort() == nil {
 				return nil
 			}
-			remoteSrv.state.Swap(svcs.ServiceState_Init)
+			remoteSrv.enabled = true
 
 			port := *cfg.ServerConfig.RemotesapiPort()
 
@@ -770,15 +771,17 @@ func ConfigureServices(
 			return nil
 		},
 		RunF: func(ctx context.Context) {
-			if remoteSrv.state.CompareAndSwap(svcs.ServiceState_Init, svcs.ServiceState_Run) {
+			if remoteSrv.enabled {
 				remoteSrv.srv.Serve(remoteSrv.lis)
 			}
 		},
-		StopF: func() error {
-			state := remoteSrv.state.Swap(svcs.ServiceState_Stopped)
-			if state == svcs.ServiceState_Run {
+		StopF: func(rs svcs.RunState) error {
+			if !remoteSrv.enabled {
+				return nil
+			}
+			if rs == svcs.RunInvoked {
 				remoteSrv.srv.GracefulStop()
-			} else if state == svcs.ServiceState_Init {
+			} else {
 				remoteSrv.lis.Close()
 			}
 			return nil
@@ -792,7 +795,7 @@ func ConfigureServices(
 			if clusterController == nil {
 				return nil
 			}
-			clusterRemoteSrv.state.Swap(svcs.ServiceState_Init)
+			clusterRemoteSrv.enabled = true
 
 			args, err := clusterController.RemoteSrvServerArgs(sqlEngine.NewDefaultContext, remotesrv.ServerArgs{
 				Logger: logrus.NewEntry(lgr),
@@ -825,15 +828,17 @@ func ConfigureServices(
 			return nil
 		},
 		RunF: func(context.Context) {
-			if clusterRemoteSrv.state.CompareAndSwap(svcs.ServiceState_Init, svcs.ServiceState_Run) {
+			if clusterRemoteSrv.enabled {
 				clusterRemoteSrv.srv.Serve(clusterRemoteSrv.lis)
 			}
 		},
-		StopF: func() error {
-			state := clusterRemoteSrv.state.Swap(svcs.ServiceState_Stopped)
-			if state == svcs.ServiceState_Run {
+		StopF: func(rs svcs.RunState) error {
+			if !clusterRemoteSrv.enabled {
+				return nil
+			}
+			if rs == svcs.RunInvoked {
 				clusterRemoteSrv.srv.GracefulStop()
-			} else if state == svcs.ServiceState_Init {
+			} else {
 				clusterRemoteSrv.lis.Close()
 			}
 			return nil
@@ -879,7 +884,7 @@ func ConfigureServices(
 			}
 			return err
 		},
-		StopF: func() (err error) {
+		StopF: func(_ svcs.RunState) (err error) {
 			if !sqlServerClosed {
 				sqlServerClosed = true
 				return mySQLServer.Close()
@@ -925,7 +930,7 @@ func ConfigureServices(
 			}
 			clusterController.Run()
 		},
-		StopF: func() error {
+		StopF: func(_ svcs.RunState) error {
 			if clusterController == nil {
 				return nil
 			}
@@ -935,21 +940,20 @@ func ConfigureServices(
 	}
 	controller.Register(RunClusterController)
 
-	var serverShutdownWg sync.WaitGroup
+	runDone := make(chan struct{})
 	RunSQLServer := &svcs.AnonService{
 		RunF: func(context.Context) {
-			serverShutdownWg.Add(1)
-			defer func() {
-				serverShutdownWg.Done()
-			}()
+			defer close(runDone)
 			sqlserver.SetRunningServer(mySQLServer)
 			defer sqlserver.UnsetRunningServer()
 			mySQLServer.Start()
 		},
-		StopF: func() error {
+		StopF: func(rs svcs.RunState) error {
 			sqlServerClosed = true
 			closeErr := mySQLServer.Close()
-			serverShutdownWg.Wait()
+			if rs == svcs.RunInvoked {
+				<-runDone
+			}
 			return closeErr
 		},
 	}
@@ -1006,7 +1010,7 @@ func newHeartbeatService(version string, dEnv *env.DoltEnv) *heartbeatService {
 
 func (h *heartbeatService) Init(ctx context.Context) error { return nil }
 
-func (h *heartbeatService) Stop() error {
+func (h *heartbeatService) Stop(_ svcs.RunState) error {
 	if h.closer != nil {
 		return h.closer()
 	}
