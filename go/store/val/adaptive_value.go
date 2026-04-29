@@ -242,6 +242,20 @@ func IsInlineAdaptiveBytes(val []byte) bool {
 	return len(val) > 0 && val[0] == 0
 }
 
+// InlineValueBytes returns the inlined bytes represented by the given byte slice if the value is inline, or nil
+// and false if it's an out-of-band value. NULL is always an inline value.
+func InlineValueBytes(val []byte) ([]byte, bool) {
+	if IsNullAdaptiveValueBytes(val) {
+		return nil, true
+	}
+
+	if IsInlineAdaptiveBytes(val) {
+		return val[1:], true
+	}
+
+	return nil, false
+}
+
 // NewOutOfBandAdaptiveValue writes |data| to |vs| and returns an out-of-band AdaptiveValue
 // encoding [varint(len(data)) | content_hash]. This is used when writing adaptive values
 // outside the TupleBuilder (e.g. in the merge path).

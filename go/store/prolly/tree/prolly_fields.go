@@ -349,12 +349,8 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		v.Typ = querypb.Type_JSON
 		b := td.GetField(i, tup)
 
-		if val.IsNullAdaptiveValueBytes(b) {
-			return v, nil
-		}
-
-		if val.IsInlineAdaptiveBytes(b) {
-			v.Val = b[1:]
+		var isInline bool
+		if v.Val, isInline = val.InlineValueBytes(b); isInline {
 			return v, nil
 		}
 
@@ -368,12 +364,8 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		v.Typ = querypb.Type_BLOB
 		b := td.GetField(i, tup)
 
-		if val.IsNullAdaptiveValueBytes(b) {
-			return v, nil
-		}
-
-		if val.IsInlineAdaptiveBytes(b) {
-			v.Val = b[1:]
+		var isInline bool
+		if v.Val, isInline = val.InlineValueBytes(b); isInline {
 			return v, nil
 		}
 
@@ -387,12 +379,8 @@ func GetFieldValue(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple,
 		v.Typ = querypb.Type_GEOMETRY
 		b := td.GetField(i, tup)
 
-		if val.IsNullAdaptiveValueBytes(b) {
-			return v, nil
-		}
-
-		if val.IsInlineAdaptiveBytes(b) {
-			v.Val = b[1:]
+		var isInline bool
+		if v.Val, isInline = val.InlineValueBytes(b); isInline {
 			return v, nil
 		}
 

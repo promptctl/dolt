@@ -2233,7 +2233,23 @@ func (m *valueMerger) mergeJSONAdaptive(ctx context.Context, baseField []byte, l
 		return nil, true, err
 	}
 
-	mergedDoc, conflict, err := mergeJSON(ctx, m.ns, baseDoc, leftDoc, rightDoc)
+	var baseJson, leftJson, rightJson sql.JSONWrapper
+	baseJson, err = toJsonWrapper(baseDoc)
+	if err != nil {
+		return nil, false, err
+	}
+
+	leftJson, err = toJsonWrapper(leftDoc)
+	if err != nil {
+		return nil, false, err
+	}
+
+	rightJson, err = toJsonWrapper(rightDoc)
+	if err != nil {
+		return nil, false, err
+	}
+
+	mergedDoc, conflict, err := mergeJSON(ctx, m.ns, baseJson, leftJson, rightJson)
 	if err != nil {
 		return nil, true, err
 	}
@@ -2263,23 +2279,7 @@ func (m *valueMerger) mergeJSONAdaptive(ctx context.Context, baseField []byte, l
 	return result, false, nil
 }
 
-func mergeJSON(ctx context.Context, ns tree.NodeStore, base, left, right any) (resultDoc sql.JSONWrapper, conflict bool, err error) {
-	var baseJson, leftJson, rightJson sql.JSONWrapper
-	baseJson, err = toJsonWrapper(base)
-	if err != nil {
-		return nil, false, err
-	}
-
-	leftJson, err = toJsonWrapper(left)
-	if err != nil {
-		return nil, false, err
-	}
-
-	rightJson, err = toJsonWrapper(right)
-	if err != nil {
-		return nil, false, err
-	}
-
+func mergeJSON(ctx context.Context, ns tree.NodeStore, baseJson, leftJson, rightJson sql.JSONWrapper) (resultDoc sql.JSONWrapper, conflict bool, err error) {
 	// First, deserialize each value into JSON.
 	// We can only merge if the value at all three commits is a JSON object.
 	baseIsObject, err := tree.IsJsonObject(ctx, baseJson)
