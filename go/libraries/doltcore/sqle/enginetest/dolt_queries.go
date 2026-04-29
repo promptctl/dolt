@@ -5851,6 +5851,183 @@ func generateStringData(length int) string {
 	return b.String()
 }
 
+// JsonAdaptiveEncodingScriptTests exercises the JsonAdaptiveEnc storage path end-to-end.
+// New JSON columns use JsonAdaptiveEnc, storing small documents inline in the tuple and
+// larger documents out-of-band as raw-byte blobs.
+var JsonAdaptiveEncodingScriptTests = []queries.ScriptTest{
+	{
+		Name: "json adaptive: small document stored inline",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"a":1}'), (2, '{"b":2}')`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "select pk, j from t order by pk",
+				Expected: []sql.Row{{1, types.MustJSON(`{"a":1}`)}, {2, types.MustJSON(`{"b":2}`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: json_extract on small document",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"name":"alice","age":30}')`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    `select json_extract(j, '$.name') from t where pk = 1`,
+				Expected: []sql.Row{{types.MustJSON(`"alice"`)}},
+			},
+			{
+				Query:    `select json_extract(j, '$.age') from t where pk = 1`,
+				Expected: []sql.Row{{types.MustJSON(`30`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: update and re-read",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"x":1}')`,
+			`update t set j = json_set(j, '$.x', 99) where pk = 1`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "select j from t where pk = 1",
+				Expected: []sql.Row{{types.MustJSON(`{"x":99}`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: null json values",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			"insert into t values (1, null), (2, 'null')",
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "select pk, j from t order by pk",
+				Expected: []sql.Row{{1, nil}, {2, types.MustJSON(`null`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: large document stored out-of-band",
+		SetUpScript: func() []string {
+			// Build a JSON object large enough (> 2048 bytes) to be stored out-of-band.
+			m := make(map[string]string)
+			for i := 0; i < 50; i++ {
+				m[fmt.Sprintf("key_%02d", i)] = strings.Repeat("v", 50)
+			}
+			bs, _ := json.Marshal(m)
+			return []string{
+				"create table t (pk int primary key, j json)",
+				fmt.Sprintf(`insert into t values (1, '%s')`, string(bs)),
+			}
+		}(),
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    `select json_extract(j, '$.key_00') from t where pk = 1`,
+				Expected: []sql.Row{{types.MustJSON(fmt.Sprintf(`"%s"`, strings.Repeat("v", 50)))}},
+			},
+			{
+				Query:    "select json_length(j) from t where pk = 1",
+				Expected: []sql.Row{{50}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: delete row with json column",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"a":1}'), (2, '{"b":2}')`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "delete from t where pk = 1",
+				Expected: []sql.Row{{types.OkResult{RowsAffected: 1}}},
+			},
+			{
+				Query:    "select pk, j from t",
+				Expected: []sql.Row{{2, types.MustJSON(`{"b":2}`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: json array round-trip",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '[1,2,3]'), (2, '["a","b","c"]')`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "select pk, j from t order by pk",
+				Expected: []sql.Row{{1, types.MustJSON(`[1, 2, 3]`)}, {2, types.MustJSON(`["a", "b", "c"]`)}},
+			},
+			{
+				Query:    `select json_extract(j, '$[1]') from t where pk = 1`,
+				Expected: []sql.Row{{types.MustJSON(`2`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: dolt commit and read-back",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"committed":true}')`,
+			"call dolt_add('.')",
+			"call dolt_commit('-m', 'add json row')",
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "select j from t where pk = 1",
+				Expected: []sql.Row{{types.MustJSON(`{"committed":true}`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: filter by json_extract",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"status":"active"}'), (2, '{"status":"inactive"}'), (3, '{"status":"active"}')`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    `select pk from t where json_extract(j, '$.status') = 'active' order by pk`,
+				Expected: []sql.Row{{1}, {3}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: json_set creates new field",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"a":1}')`,
+			`update t set j = json_set(j, '$.b', 2) where pk = 1`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    "select j from t where pk = 1",
+				Expected: []sql.Row{{types.MustJSON(`{"a":1,"b":2}`)}},
+			},
+		},
+	},
+	{
+		Name: "json adaptive: nested json object",
+		SetUpScript: []string{
+			"create table t (pk int primary key, j json)",
+			`insert into t values (1, '{"outer":{"inner":{"deep":42}}}')`,
+		},
+		Assertions: []queries.ScriptTestAssertion{
+			{
+				Query:    `select json_extract(j, '$.outer.inner.deep') from t where pk = 1`,
+				Expected: []sql.Row{{types.MustJSON(`42`)}},
+			},
+		},
+	},
+}
+
 var DoltTagTestScripts = []queries.ScriptTest{
 	{
 		Name: "dolt-tag: SQL create tags",

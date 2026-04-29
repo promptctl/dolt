@@ -882,6 +882,8 @@ SQL
     [ -n "$DOLT_LEGACY_BIN" ] || skip "requires DOLT_LEGACY_BIN"
     [ -n "$DOLT_NEW_BIN" ] || skip "requires DOLT_NEW_BIN"
 
+    skip "new json encoding not compatible with older versions (can't decipher new encoding)"
+    
     # Setup: old dolt creates table with two JSON columns.
     # Row 1: both c_json and c_json2 inline (small docs).
     # Row 2: c_json inline (small), c_json2 out-of-band (large string > 64KB).

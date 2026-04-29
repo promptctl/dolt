@@ -571,6 +571,17 @@ func RunLargeJsonObjectsTest(t *testing.T, harness DoltEnginetestHarness) {
 	}
 }
 
+func RunJsonAdaptiveEncodingTests(t *testing.T, harness DoltEnginetestHarness) {
+	defer harness.Close()
+	for _, script := range JsonAdaptiveEncodingScriptTests {
+		func() {
+			h := harness.NewHarness(t)
+			defer h.Close()
+			enginetest.TestScript(t, h, script)
+		}()
+	}
+}
+
 // RunTransactionTests runs transaction tests from GMS, as well as additional Dolt specific transaction tests. If
 // |prepared| is true, then the tests will be run using prepared statements, otherwise the queries will be directly
 // executed.
