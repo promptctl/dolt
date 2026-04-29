@@ -114,6 +114,14 @@ func GetField(ctx context.Context, td *val.TupleDesc, i int, tup val.Tuple, ns N
 		}
 	case val.GeomAdaptiveEnc:
 		v, ok, err = td.GetGeomAdaptiveValue(ctx, i, ns, tup)
+		if ok {
+			switch val := v.(type) {
+			case *val.GeometryStorage:
+			// pass through, will be unwrapped as needed
+			case []byte:
+				v, err = deserializeGeometry(val)
+			}
+		}
 	case val.JsonAdaptiveEnc:
 		v, ok, err = td.GetJsonAdaptiveValue(ctx, i, ns, tup)
 		if ok {
