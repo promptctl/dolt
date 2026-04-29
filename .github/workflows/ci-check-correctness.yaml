@@ -7,13 +7,13 @@ on:
     types: [opened, labeled, unlabeled, synchronize]
 jobs:
   label:
-    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       issues: write
       pull-requests: write
     steps:
       - uses: mheap/github-action-required-labels@v5
+        if: github.actor != 'dependabot[bot]'
         with:
           mode: exactly
           count: 1
