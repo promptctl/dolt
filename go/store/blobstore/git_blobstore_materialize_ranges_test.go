@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE: this file does not exist upstream. It was added to this fork in 2026
+// by Brandon Fryslie for the links-issue-tracker (`lit`) project as the
+// regression test for patch 1; see README.lit-fork.md at the root of this fork.
+
 package blobstore
 
 import (
