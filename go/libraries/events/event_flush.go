@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package events
 
 import (
@@ -19,7 +25,7 @@ import (
 	"errors"
 	"io/fs"
 
-	"github.com/dolthub/fslock"
+	fslock "github.com/promptctl/primitives/filelock"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/dolthub/dolt/go/libraries/utils/filesys"

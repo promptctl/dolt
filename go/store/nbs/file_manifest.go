@@ -19,6 +19,12 @@
 // Licensed under the Apache License, version 2.0:
 // http://www.apache.org/licenses/LICENSE-2.0
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package nbs
 
 import (
@@ -31,7 +37,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/dolthub/fslock"
+	fslock "github.com/promptctl/primitives/filelock"
 
 	dherrors "github.com/dolthub/dolt/go/libraries/utils/errors"
 	"github.com/dolthub/dolt/go/libraries/utils/file"
