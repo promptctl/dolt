@@ -36,8 +36,8 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-	"github.com/dolthub/fslock"
 	"github.com/google/uuid"
+	fslock "github.com/promptctl/primitives/filelock"
 
 	git "github.com/dolthub/dolt/go/store/blobstore/internal/git"
 )
