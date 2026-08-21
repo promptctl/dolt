@@ -66,11 +66,10 @@ func TestKeySplitterDistribution(t *testing.T) {
 	t.Skip("unskip for metrics")
 
 	factory := newKeySplitter
-	t.Run("plot node distribution for item Size 24", func(t *testing.T) {
+	t.Run("summarize node distribution for item Size 24", func(t *testing.T) {
 		scale := 1_000_000
 		nd, ns := makeProllyTreeWithSizes(t, factory, scale, 8, 16)
 		PrintTreeSummaryByLevel(t, nd, ns)
-		plotNodeSizeDistribution(t, "prolly_8_16.png", nd, ns)
 	})
 	t.Run("summarize node distribution for item sizes (8,54)", func(t *testing.T) {
 		for sz := 8; sz <= 54; sz++ {
@@ -80,7 +79,7 @@ func TestKeySplitterDistribution(t *testing.T) {
 			fmt.Println()
 		}
 	})
-	t.Run("plot node distribution for item sizes (8,54)", func(t *testing.T) {
+	t.Run("summarize node distribution for item sizes (8,54)", func(t *testing.T) {
 		var cumulative Samples
 		for sz := 8; sz <= 54; sz++ {
 			nd, ns := makeProllyTreeWithSizes(t, factory, 100_000, sz, sz)
@@ -89,7 +88,6 @@ func TestKeySplitterDistribution(t *testing.T) {
 			cumulative = append(cumulative, data...)
 		}
 		fmt.Println(cumulative.Summary())
-		plotIntHistogram("cumulative_node_sizes_8-54.png", cumulative)
 	})
 }
 
