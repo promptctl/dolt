@@ -12,6 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+//
+// The change: the PNG-histogram helpers (plotNodeSizeDistribution,
+// plotIntHistogram) and this module's only gonum.org/v1/plot import are
+// removed. The sample statistics and the text summaries below are unchanged.
+
 package tree
 
 import (
@@ -22,9 +32,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"gonum.org/v1/plot"
-	"gonum.org/v1/plot/plotter"
-	"gonum.org/v1/plot/vg"
 )
 
 type Samples []int
@@ -96,12 +103,6 @@ func PrintTreeSummaryByLevel(t *testing.T, nd *Node, ns NodeStore) {
 	fmt.Println()
 }
 
-func plotNodeSizeDistribution(t *testing.T, name string, nd *Node, ns NodeStore) {
-	data, err := measureTreeNodes(nd, ns)
-	require.NoError(t, err)
-	plotIntHistogram(name, data)
-}
-
 func measureTreeNodes(nd *Node, ns NodeStore) (Samples, error) {
 	ctx := context.Background()
 	data := make(Samples, 0, 1024)
@@ -110,24 +111,4 @@ func measureTreeNodes(nd *Node, ns NodeStore) (Samples, error) {
 		return nil
 	})
 	return data, err
-}
-
-func plotIntHistogram(name string, data []int) {
-	var values plotter.Values
-	for _, d := range data {
-		values = append(values, float64(d))
-	}
-
-	p := plot.New()
-	p.Title.Text = "histogram plot"
-
-	hist, err := plotter.NewHist(values, 50)
-	if err != nil {
-		panic(err)
-	}
-	p.Add(hist)
-
-	if err := p.Save(3*vg.Inch, 3*vg.Inch, name); err != nil {
-		panic(err)
-	}
 }
