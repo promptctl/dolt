@@ -160,7 +160,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.2 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.0.12 // indirect
 	github.com/lestrrat-go/strftime v1.0.4 // indirect
@@ -209,3 +208,13 @@ require (
 )
 
 go 1.25.6
+
+// This mirrors the lit repository's top-level replace (see FORKS.md there).
+// Inside lit's build it is ignored — a non-main module's replace directives
+// always are — and the top-level one governs. It exists so that this fork
+// resolved STANDALONE also builds against the go-mysql-server fork, which is
+// what lit ships, and so that github.com/hashicorp/golang-lru (removed from
+// both forks) does not linger in this module's require graph via the upstream
+// go-mysql-server coordinate. Keep the pin in step with FORKS.md when the
+// forks move.
+replace github.com/dolthub/go-mysql-server => github.com/promptctl/go-mysql-server v0.20.1-0.20260821032251-ab5cb9ec3b69
