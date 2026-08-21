@@ -29,7 +29,6 @@ require (
 	github.com/rivo/uniseg v0.2.0
 	github.com/sergi/go-diff v1.1.0
 	github.com/shopspring/decimal v1.4.0
-	github.com/silvasur/buzhash v0.0.0-20160816060738-9bdec3dec7c6
 	github.com/sirupsen/logrus v1.8.3
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/stretchr/testify v1.11.1
@@ -73,7 +72,6 @@ require (
 	github.com/google/go-github/v57 v57.0.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/jmoiron/sqlx v1.3.4
-	github.com/kch42/buzhash v0.0.0-20160816060738-9bdec3dec7c6
 	github.com/kylelemons/godebug v1.1.0
 	github.com/lib/pq v1.10.0
 	github.com/mohae/uvarint v0.0.0-20160208145430-c3f9e62bf2b0

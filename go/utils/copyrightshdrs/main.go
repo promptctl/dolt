@@ -11,6 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
 
 package main
 
@@ -130,17 +136,6 @@ var CopiedNomsFiles []CopiedNomsFile = []CopiedNomsFile{
 	{Path: "store/nbs/aws_table_chunk_source_test.go", NomsPath: "go/nbs/aws_chunk_source_test.go", HadCopyrightNotice: true},
 	{Path: "store/nbs/aws_table_persister.go", NomsPath: "go/nbs/aws_table_persister.go", HadCopyrightNotice: true},
 	{Path: "store/nbs/aws_table_persister_test.go", NomsPath: "go/nbs/aws_table_persister_test.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/block_store_benchmarks.go", NomsPath: "go/nbs/benchmarks/block_store_benchmarks.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/cachedrop/drop_cache.go", NomsPath: "go/nbs/benchmarks/cachedrop/drop_cache.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/chunker/main.go", NomsPath: "go/nbs/benchmarks/chunker/main.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/data_source.go", NomsPath: "go/nbs/benchmarks/data_source.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/drop_cache_linux.go", NomsPath: "go/nbs/benchmarks/drop_cache_linux.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/drop_cache_other.go", NomsPath: "go/nbs/benchmarks/drop_cache_other.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/file_block_store.go", NomsPath: "go/nbs/benchmarks/file_block_store.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/gen/gen.go", NomsPath: "go/nbs/benchmarks/gen/gen.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/gen/rolling_value_hasher.go", NomsPath: "go/nbs/benchmarks/gen/rolling_value_hasher.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/main.go", NomsPath: "go/nbs/benchmarks/main.go", HadCopyrightNotice: true},
-	{Path: "store/nbs/benchmarks/null_block_store.go", NomsPath: "go/nbs/benchmarks/null_block_store.go", HadCopyrightNotice: true},
 	{Path: "store/nbs/block_store_test.go", NomsPath: "go/nbs/block_store_test.go", HadCopyrightNotice: true},
 	{Path: "store/nbs/conjoiner.go", NomsPath: "go/nbs/conjoiner.go", HadCopyrightNotice: true},
 	{Path: "store/nbs/conjoiner_test.go", NomsPath: "go/nbs/conjoiner_test.go", HadCopyrightNotice: true},
