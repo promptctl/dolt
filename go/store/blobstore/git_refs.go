@@ -42,8 +42,13 @@ func RemoteTrackingRef(remoteName, remoteRef, uuid string) string {
 // LastKnownRemoteRef returns the ref every GitBlobstore instance on a remote
 // publishes its view of that remote to when it closes. It is the durable
 // counterpart of the UUID-owned tracking refs: one per remote, outliving every
-// instance, so the cache always holds the newest snapshot any instance saw and
-// nothing older.
+// instance, so the cache holds one snapshot per remote — the one the last
+// instance to close saw — and nothing older. Every close publishes, so an
+// instance that closes after a later-synced one moves the ref back to an
+// earlier state; the next fetch then negotiates from that state and downloads
+// the difference again. Which of two states is later cannot be read off the
+// commits, because the blobstore severs its history chain periodically
+// (maxParentedCommits).
 //
 // It lives outside refs/dolt/remotes/ because git cannot hold a ref at a path
 // that other refs sit beneath, and RemoteTrackingRef puts every instance's ref

@@ -666,8 +666,8 @@ func (gbs *GitBlobstore) CleanupOwnedLocalRef(ctx context.Context) error {
 // only refs this repository holds, so without a durable one the next instance
 // negotiates its fetch with no haves and downloads the whole remote snapshot
 // again, and git gc is free to prune every object the cache ever fetched. With
-// it, the cache keeps exactly one snapshot per remote: the newest one any
-// closed instance saw.
+// it, the cache keeps exactly one snapshot per remote: the one the last instance
+// to close saw (LastKnownRemoteRef says what that costs).
 func (gbs *GitBlobstore) Close() error {
 	ctx := context.Background()
 
