@@ -34,6 +34,7 @@ import (
 
 	fslock "github.com/promptctl/primitives/filelock"
 
+	"github.com/dolthub/dolt/go/libraries/utils/earl"
 	"github.com/dolthub/dolt/go/libraries/utils/gitauth"
 	"github.com/dolthub/dolt/go/store/blobstore"
 	"github.com/dolthub/dolt/go/store/datas"
@@ -263,9 +264,33 @@ func cacheRepoPath(cacheBase, remoteURL, ref string) (string, error) {
 	if strings.TrimSpace(cacheBase) == "" {
 		return "", fmt.Errorf("empty git cache base")
 	}
+	return filepath.Join(cacheBase, gitCacheKey(remoteURL, ref), "repo.git"), nil
+}
+
+func gitCacheKey(remoteURL, ref string) string {
 	sum := sha256.Sum256([]byte(remoteURL + "|" + ref))
-	h := hex.EncodeToString(sum[:])
-	return filepath.Join(cacheBase, h, "repo.git"), nil
+	return hex.EncodeToString(sum[:])
+}
+
+// GitRemoteCacheKey names the directory under `<git_cache_root>/.dolt/git-remote-cache` that
+// CreateDB keeps the cache repo of the remote urlStr in, when the remote is opened with params.
+// It parses urlStr, picks the factory, and hashes exactly as CreateDB does, so a caller that
+// needs to recognize a remote's cache directory never re-derives the name. gitBacked is false,
+// with no error, when urlStr does not resolve to GitRemoteFactory: such a remote has no cache
+// directory.
+func GitRemoteCacheKey(urlStr string, params map[string]interface{}) (key string, gitBacked bool, err error) {
+	urlObj, err := earl.Parse(urlStr)
+	if err != nil {
+		return "", false, err
+	}
+	if _, ok := DBFactories[strings.ToLower(urlObj.Scheme)].(GitRemoteFactory); !ok {
+		return "", false, nil
+	}
+	remoteURL, ref, err := parseGitRemoteFactoryURL(urlObj, params)
+	if err != nil {
+		return "", false, err
+	}
+	return gitCacheKey(remoteURL.String(), ref), true, nil
 }
 
 func ensureBareRepo(ctx context.Context, gitDir string) error {
