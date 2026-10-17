@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package blobstore
 
 import (
@@ -33,11 +39,22 @@ func RemoteTrackingRef(remoteName, remoteRef, uuid string) string {
 	return fmt.Sprintf("refs/dolt/remotes/%s/%s/%s", remoteName, trimRefsPrefix(remoteRef), uuid)
 }
 
+// LastKnownRemoteRef returns the ref every GitBlobstore instance on a remote
+// publishes its view of that remote to when it closes. It is the durable
+// counterpart of the UUID-owned tracking refs: one per remote, outliving every
+// instance, so the cache always holds the newest snapshot any instance saw and
+// nothing older.
+//
+// It lives outside refs/dolt/remotes/ because git cannot hold a ref at a path
+// that other refs sit beneath, and RemoteTrackingRef puts every instance's ref
+// beneath refs/dolt/remotes/<remote>/<ref>/.
+func LastKnownRemoteRef(remoteName, remoteRef string) string {
+	return fmt.Sprintf("refs/dolt/last-known/%s/%s", remoteName, trimRefsPrefix(remoteRef))
+}
+
 // OwnedLocalRef returns a UUID-owned local ref for a GitBlobstore instance.
 //
-// Note: these UUID refs can accumulate in the local repo over time. This is
-// intentional for now; callers that want best-effort cleanup can use
-// (*GitBlobstore).CleanupOwnedLocalRef.
+// Close deletes it. One survives only if its instance is never closed.
 func OwnedLocalRef(remoteName, remoteRef, uuid string) string {
 	return fmt.Sprintf("refs/dolt/blobstore/%s/%s/%s", remoteName, trimRefsPrefix(remoteRef), uuid)
 }

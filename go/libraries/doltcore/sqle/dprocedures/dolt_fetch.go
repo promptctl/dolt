@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package dprocedures
 
 import (
@@ -22,6 +28,7 @@ import (
 	"github.com/dolthub/dolt/go/cmd/dolt/cli"
 	"github.com/dolthub/dolt/go/libraries/doltcore/branch_control"
 	"github.com/dolthub/dolt/go/libraries/doltcore/dbfactory"
+	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/env"
 	"github.com/dolthub/dolt/go/libraries/doltcore/env/actions"
 	"github.com/dolthub/dolt/go/libraries/doltcore/ref"
@@ -84,6 +91,7 @@ func doDoltFetch(ctx *sql.Context, args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
+	defer closeRemoteDB(ctx, srcDB)
 
 	err = srcDB.Rebase(ctx)
 	if err != nil {
@@ -97,6 +105,20 @@ func doDoltFetch(ctx *sql.Context, args []string) (int, error) {
 		return cmdFailure, fmt.Errorf("fetch failed: %w", err)
 	}
 	return cmdSuccess, nil
+}
+
+// closeRemoteDB closes a remote database opened without the provider's cache,
+// which GetRemoteDBWithoutCaching makes the caller's job. Left open, a
+// git-backed remote's blobstore never deletes its UUID-owned refs, and each one
+// pins a whole snapshot of the remote in the local cache repository forever.
+//
+// A failure is logged rather than returned: by the time it runs the procedure's
+// work has landed, and what a failed close leaves behind is an orphaned ref,
+// not a wrong result.
+func closeRemoteDB(ctx *sql.Context, db *doltdb.DoltDB) {
+	if err := db.Close(); err != nil {
+		ctx.GetLogger().Warnf("closing remote database: %s", err.Error())
+	}
 }
 
 // validateFetchArgs returns an error if the arguments provided aren't valid.

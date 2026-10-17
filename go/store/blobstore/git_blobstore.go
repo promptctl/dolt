@@ -15,8 +15,8 @@
 // NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
 // Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
 // upstream github.com/dolthub/dolt version. What changed, why, and what would
-// let the change be dropped are recorded as patch 1 in README.lit-fork.md at
-// the root of this fork.
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
 
 package blobstore
 
@@ -284,6 +284,9 @@ type GitBlobstore struct {
 	api               git.GitAPI
 	remoteName        string
 	remoteTrackingRef string
+	// lastKnownRef is the one ref this instance leaves behind when it closes:
+	// the remote state it last knew, shared by every instance on this remote.
+	lastKnownRef string
 	// writeMu serializes operations that mutate shared git refs and/or perform
 	// remote-managed write workflows (commit + push + cache update).
 	writeMu sync.Mutex
@@ -435,6 +438,7 @@ func NewGitBlobstoreWithOptions(gitDir, ref string, opts GitBlobstoreOptions) (*
 		api:               git.NewGitAPIImpl(r),
 		remoteName:        remoteName,
 		remoteTrackingRef: remoteTrackingRef,
+		lastKnownRef:      LastKnownRemoteRef(remoteName, remoteRef),
 		identity:          opts.Identity,
 		maxPartSize:       opts.MaxPartSize,
 		cacheObjects:      make(map[string]cachedGitObject),
@@ -654,8 +658,16 @@ func (gbs *GitBlobstore) CleanupOwnedLocalRef(ctx context.Context) error {
 	return err
 }
 
-// Close best-effort deletes this instance's UUID-owned refs and
+// Close publishes the remote state this instance last knew to the shared
+// last-known ref, best-effort deletes this instance's UUID-owned refs, and
 // periodically runs git gc to repack the cache repository.
+//
+// The publish is what makes deleting the UUID refs affordable. They are the
+// only refs this repository holds, so without a durable one the next instance
+// negotiates its fetch with no haves and downloads the whole remote snapshot
+// again, and git gc is free to prune every object the cache ever fetched. With
+// it, the cache keeps exactly one snapshot per remote: the newest one any
+// closed instance saw.
 func (gbs *GitBlobstore) Close() error {
 	ctx := context.Background()
 
@@ -684,10 +696,26 @@ func (gbs *GitBlobstore) Close() error {
 		return err
 	}
 
+	// Published before the deletes and not after them: the tracking ref is the
+	// value being published, so deleting first would leave nothing to publish.
+	publishErr := gbs.publishLastKnownLocked(ctx)
 	return errors.Join(
+		publishErr,
 		deleteIfExists(gbs.localRef),
 		deleteIfExists(gbs.remoteTrackingRef),
 	)
+}
+
+// publishLastKnownLocked points the shared last-known ref at this instance's
+// tracking ref. An instance that never synced has no tracking ref and nothing
+// to publish, so the last-known ref keeps whatever an earlier instance left.
+// The caller holds writeMu.
+func (gbs *GitBlobstore) publishLastKnownLocked(ctx context.Context) error {
+	head, ok, err := gbs.api.TryResolveRefCommit(ctx, gbs.remoteTrackingRef)
+	if err != nil || !ok {
+		return err
+	}
+	return gbs.api.UpdateRef(ctx, gbs.lastKnownRef, head, "gitblobstore: publish last-known remote state")
 }
 
 const gcInterval = 24 * time.Hour
@@ -843,6 +871,14 @@ func (gbs *GitBlobstore) remoteManagedWrite(ctx context.Context, key, msg string
 		// Push local ref to remote with lease.
 		if err := gbs.api.PushRefWithLease(ctx, gbs.remoteName, gbs.localRef, gbs.remoteRef, remoteHead); err != nil {
 			return err
+		}
+
+		// The lease push succeeded, so the remote ref now IS newCommit, and the
+		// tracking ref says so — the same thing git push does to a
+		// remote-tracking ref. Left at the pre-push head, it would hand Close a
+		// stale state to publish, and the cache would forget what it just pushed.
+		if err := gbs.api.UpdateRef(ctx, gbs.remoteTrackingRef, newCommit, msg); err != nil {
+			return backoff.Permanent(err)
 		}
 
 		// Merge cache additively to reflect the new head after a successful push.
