@@ -2034,7 +2034,16 @@ func (nbs *NomsBlockStore) addTableFilesToManifest(ctx context.Context, fileIdTo
 			return fmt.Errorf("addTableFiles, updateManifestAddFiles: %w", err)
 		} else if gcGenMismatch {
 			// A gcGenMismatch means that the store has changed out from under
-			// us as we were running these checks. We want to retry.
+			// us as we were running these checks. We want to retry, against
+			// the generation the manifest now names: the sources above were
+			// opened, and the ref check run, against this store's view, and
+			// while that view keeps the old generation every retry finds the
+			// same mismatch. Another process that collected the store, or
+			// replaced its table set, changes the manifest without touching
+			// this view.
+			if err := nbs.Rebase(ctx); err != nil {
+				return fmt.Errorf("addTableFiles, rebase onto the new GC generation: %w", err)
+			}
 			continue
 		}
 
@@ -2069,6 +2078,97 @@ func (nbs *NomsBlockStore) openChunkSourcesForAddTableFiles(ctx context.Context,
 		gcGen:   nbs.upstream.gcGen,
 		root:    nbs.upstream.root,
 	}, nil
+}
+
+// ReplaceStoreTableFiles points |store|'s manifest at exactly |tableFiles|,
+// keeping its root and starting a new GC generation, in one manifest write.
+// It is the swap at the end of a GC with the sweep done somewhere else: a
+// caller that built the set reachable from the store's root in another store
+// and wrote those table files here replaces the table set with them, and the
+// files the manifest named before are dropped.
+//
+// OverwriteStoreManifest also replaces a table set, but keeps the generation,
+// which every writer reads as "this store only grows". A writer still holding
+// the generation this ends re-checks what its own table files reference
+// against |tableFiles| before it adds them (addTableFilesToManifest), so a
+// chunk this drops is never referenced again unnoticed.
+//
+// It refuses, before writing, a view the manifest has moved past, chunks the
+// manifest does not name yet, and files that do not hold the root: the first
+// two would be dropped, and the third leaves the store unreadable.
+func ReplaceStoreTableFiles(ctx context.Context, store *NomsBlockStore, tableFiles map[hash.Hash]uint32) (err error) {
+	valctx.ValidateContext(ctx)
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	if store.memtable != nil || len(store.tables.novel) > 0 {
+		return errors.New("ReplaceStoreTableFiles: the store holds chunks its manifest does not name yet")
+	}
+
+	sources, err := store.tables.openForAdd(ctx, tableFiles, store.stats)
+	if err != nil {
+		return fmt.Errorf("ReplaceStoreTableFiles: open the table files: %w", err)
+	}
+	defer sources.close()
+	root := store.upstream.root
+	held := root.IsEmpty()
+	for _, source := range sources {
+		recs := []hasRecord{{a: &root, prefix: root.Prefix()}}
+		remaining, _, err := source.hasMany(recs, nil)
+		if err != nil {
+			return fmt.Errorf("ReplaceStoreTableFiles: look for the root %s: %w", root, err)
+		}
+		if !remaining {
+			held = true
+			break
+		}
+	}
+	if !held {
+		return fmt.Errorf("ReplaceStoreTableFiles: %w: no table file holds the root %s", ErrTableFileNotFound, root)
+	}
+
+	store.manifestMgr.LockForUpdate()
+	defer func() {
+		err = errors.Join(err, store.manifestMgr.UnlockForUpdate())
+	}()
+
+	specs := make([]tableSpec, 0, len(tableFiles))
+	for name, chunkCount := range tableFiles {
+		specs = append(specs, tableSpec{name: name, chunkCount: chunkCount})
+	}
+	newContents := manifestContents{
+		nbfVers: store.upstream.nbfVers,
+		root:    root,
+		specs:   specs,
+		gcGen:   generateLockHash(root, specs, nil, append([]byte("generation after "), store.upstream.gcGen[:]...)),
+	}
+	newContents.lock = generateLockHash(root, specs, nil, newContents.gcGen[:])
+
+	upstream, err := store.manifestMgr.UpdateGCGen(ctx, store.fatalBehavior, store.upstream.lock, newContents, store.stats, nil)
+	if err == nil && upstream.lock != newContents.lock {
+		err = errors.New("the manifest names another table set")
+	}
+	if err != nil {
+		// A manifest that moved past this view refuses the write in more than
+		// one way: a check of the root it now names, or of the cache, can fire
+		// before the lock is compared. The lock covers the root and the table
+		// set, so whichever refusal came first, a moved lock is the cause.
+		if _, current, _, fetchErr := store.manifestMgr.Fetch(ctx, store.stats); fetchErr == nil && current.lock != store.upstream.lock {
+			return fmt.Errorf("ReplaceStoreTableFiles: %w: the manifest changed since this store last read it (%v)", ErrConcurrentManifestWriteDuringOverwrite, err)
+		}
+		return fmt.Errorf("ReplaceStoreTableFiles: %w", err)
+	}
+
+	// As swapTables does: the files this dropped may have held chunks a
+	// cached presence answer still vouches for.
+	store.hasCache.Purge()
+	newTables, err := store.tables.rebase(ctx, upstream.specs, sources, store.stats)
+	if err != nil {
+		return fmt.Errorf("ReplaceStoreTableFiles: rebase onto the new table files: %w", err)
+	}
+	oldTables := store.tables
+	store.tables, store.upstream = newTables, upstream
+	return oldTables.close()
 }
 
 // PruneTableFiles deletes old table files that are no longer referenced in the manifest.
