@@ -12,12 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package ref
 
 import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/dolthub/dolt/go/store/hash"
 )
 
 // ErrUnknownRefType is the error returned when parsing a ref in the format refs/type/... where type is unknown
@@ -90,10 +98,15 @@ func PrefixForType(refType RefType) string {
 type UpdateMode struct {
 	Force bool
 	Prune bool
+	// Lease, on a push, is the commit the destination branch must still
+	// name for the update to land: git's --force-with-lease. A leased
+	// update is a forced one that refuses with datas.ErrStaleInfo when the
+	// branch has moved. Nil is an unconditional update.
+	Lease *hash.Hash
 }
 
-var ForceUpdate = UpdateMode{true, false}
-var FastForwardOnly = UpdateMode{false, false}
+var ForceUpdate = UpdateMode{Force: true}
+var FastForwardOnly = UpdateMode{}
 
 // DoltRef is a reference to a commit.
 type DoltRef interface {

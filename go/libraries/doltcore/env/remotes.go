@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package env
 
 import (
@@ -34,6 +40,7 @@ import (
 	"github.com/dolthub/dolt/go/libraries/utils/config"
 	"github.com/dolthub/dolt/go/libraries/utils/earl"
 	filesys2 "github.com/dolthub/dolt/go/libraries/utils/filesys"
+	"github.com/dolthub/dolt/go/store/hash"
 	"github.com/dolthub/dolt/go/store/types"
 )
 
@@ -352,6 +359,31 @@ func getPushTargetsAndRemoteForBranchRefs(ctx context.Context, rsrBranches *conc
 		pushOptsList = append(pushOptsList, opts)
 	}
 	return pushOptsList, remote, nil
+}
+
+// ApplyPushLease leases the one target |lease| names. |lease| is git's
+// --force-with-lease=<branch>:<commit>: the push updates <branch> only while
+// the remote's <branch> still names <commit>, and is otherwise rejected as
+// stale. Both halves are required; the branch is the destination branch's
+// name as the push writes it, and the commit a full commit hash. A lease
+// naming no destination of this push is refused rather than ignored.
+func ApplyPushLease(targets []*PushTarget, lease string) error {
+	branch, commit, ok := strings.Cut(lease, ":")
+	if !ok || branch == "" {
+		return fmt.Errorf("--force-with-lease takes <branch>:<commit>, got %q", lease)
+	}
+	expected, ok := hash.MaybeParse(commit)
+	if !ok {
+		return fmt.Errorf("--force-with-lease %q: %q is not a commit hash", lease, commit)
+	}
+	for _, target := range targets {
+		if target.DestRef.GetType() == ref.BranchRefType && target.DestRef.GetPath() == branch {
+			target.Mode.Force = true
+			target.Mode.Lease = &expected
+			return nil
+		}
+	}
+	return fmt.Errorf("--force-with-lease names branch %q, which this push does not update", branch)
 }
 
 func getPushTargetFromRefSpec(refSpec ref.RefSpec, currentBranch ref.DoltRef, remote *Remote, force, setUpstream, hasUpstream bool) (*PushTarget, error) {

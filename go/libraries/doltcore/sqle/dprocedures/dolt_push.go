@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package dprocedures
 
 import (
@@ -81,6 +87,11 @@ func doDoltPush(ctx *sql.Context, args []string) (int, string, error) {
 	targets, remote, err := env.NewPushOpts(ctx, apr, dbData.Rsr, dbData.Ddb, apr.Contains(cli.ForceFlag), apr.Contains(cli.SetUpstreamFlag), pushAutoSetUpRemote, apr.Contains(cli.AllFlag))
 	if err != nil {
 		return cmdFailure, "", err
+	}
+	if lease, ok := apr.GetValue(cli.ForceWithLeaseFlag); ok {
+		if err := env.ApplyPushLease(targets, lease); err != nil {
+			return cmdFailure, "", err
+		}
 	}
 
 	if user, hasUser := apr.GetValue(cli.UserFlag); hasUser {
