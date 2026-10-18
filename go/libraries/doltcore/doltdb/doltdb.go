@@ -984,6 +984,29 @@ func (ddb *DoltDB) SetHeadAndWorkingSetToCommit(ctx context.Context, rf ref.Dolt
 	return err
 }
 
+// SetHeadAndWorkingSetToCommitIfAt is SetHeadAndWorkingSetToCommit made
+// only while rf still names |expected|, and refused with datas.ErrStaleInfo
+// otherwise. Used for leased force pushes (--force-with-lease).
+func (ddb *DoltDB) SetHeadAndWorkingSetToCommitIfAt(ctx context.Context, rf ref.DoltRef, expected hash.Hash, cm *Commit) error {
+	addr, err := cm.HashOf()
+	if err != nil {
+		return err
+	}
+
+	wsRef, err := ref.WorkingSetRefForHead(rf)
+	if err != nil {
+		return err
+	}
+
+	ds, err := ddb.db.GetDataset(ctx, rf.String())
+	if err != nil {
+		return err
+	}
+
+	_, err = ddb.db.SetHeadIfAt(ctx, ds, expected, addr, wsRef.String())
+	return err
+}
+
 func (ddb *DoltDB) SetHead(ctx context.Context, ref ref.DoltRef, addr hash.Hash) error {
 	ds, err := ddb.db.GetDataset(ctx, ref.String())
 

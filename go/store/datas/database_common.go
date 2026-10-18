@@ -19,6 +19,12 @@
 // Licensed under the Apache License, version 2.0:
 // http://www.apache.org/licenses/LICENSE-2.0
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package datas
 
 import (
@@ -46,6 +52,10 @@ var (
 	ErrAlreadyCommitted     = errors.New("dataset head already pointing at given commit")
 	ErrDirtyWorkspace       = errors.New("target has uncommitted changes. --force required to overwrite")
 )
+
+// ErrStaleInfo is a leased head update refused because the dataset's head is
+// no longer the one the lease named: git's "stale info".
+var ErrStaleInfo = errors.New("stale info: the dataset head is not the commit the lease expected")
 
 // rootTracker is a narrowing of the ChunkStore interface, to keep Database disciplined about working directly with Chunks
 type rootTracker interface {
@@ -200,10 +210,17 @@ func (db *database) Close() error {
 }
 
 func (db *database) SetHead(ctx context.Context, ds Dataset, newHeadAddr hash.Hash, workingSetPath string) (Dataset, error) {
-	return db.doHeadUpdate(ctx, ds, func(ds Dataset) error { return db.doSetHead(ctx, ds, newHeadAddr, workingSetPath) })
+	return db.doHeadUpdate(ctx, ds, func(ds Dataset) error { return db.doSetHead(ctx, ds, nil, newHeadAddr, workingSetPath) })
 }
 
-func (db *database) doSetHead(ctx context.Context, ds Dataset, addr hash.Hash, workingSetPath string) error {
+func (db *database) SetHeadIfAt(ctx context.Context, ds Dataset, expected, newHeadAddr hash.Hash, workingSetPath string) (Dataset, error) {
+	return db.doHeadUpdate(ctx, ds, func(ds Dataset) error { return db.doSetHead(ctx, ds, &expected, newHeadAddr, workingSetPath) })
+}
+
+// doSetHead sets ds's head to addr. A non-nil |expected| makes it a
+// compare-and-swap: the update refuses with ErrStaleInfo unless the head it
+// replaces is |expected|.
+func (db *database) doSetHead(ctx context.Context, ds Dataset, expected *hash.Hash, addr hash.Hash, workingSetPath string) error {
 	newHead, err := db.readHead(ctx, addr)
 	if err != nil {
 		return err
@@ -258,6 +275,18 @@ func (db *database) doSetHead(ctx context.Context, ds Dataset, addr hash.Hash, w
 		if err != nil {
 			return prolly.AddressMap{}, err
 		}
+		h, err := newVal.Hash(db.Format())
+		if err != nil {
+			return prolly.AddressMap{}, err
+		}
+		// Read from the root this update replaces, and re-read on every
+		// optimistic-lock retry, so the lease is checked against the head
+		// actually being overwritten. A head already at |h| is what the
+		// update asks for, so it satisfies the lease: a retried push whose
+		// first attempt landed, or a peer that pushed the same commit.
+		if expected != nil && curr != *expected && curr != h {
+			return prolly.AddressMap{}, ErrStaleInfo
+		}
 		if curr != (hash.Hash{}) {
 			currHead, err := db.readHead(ctx, curr)
 			if err != nil {
@@ -267,10 +296,6 @@ func (db *database) doSetHead(ctx context.Context, ds Dataset, addr hash.Hash, w
 			if currType != headType {
 				return prolly.AddressMap{}, fmt.Errorf("cannot change type of head; currently points at %s but new value would point at %s", currType, headType)
 			}
-		}
-		h, err := newVal.Hash(db.Format())
-		if err != nil {
-			return prolly.AddressMap{}, err
 		}
 
 		var newWSHash hash.Hash

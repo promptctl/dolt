@@ -19,6 +19,12 @@
 // Licensed under the Apache License, version 2.0:
 // http://www.apache.org/licenses/LICENSE-2.0
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 // Package datas defines and implements the database layer used in Noms.
 package datas
 
@@ -148,6 +154,15 @@ type Database interface {
 	// The workingSetPath is the path to the working set that should be used for updating the working set. If one
 	// is not provided, no working set update will be performed.
 	SetHead(ctx context.Context, ds Dataset, newHeadAddr hash.Hash, workingSetPath string) (Dataset, error)
+
+	// SetHeadIfAt is SetHead made only while ds's head is |expected|: a
+	// compare-and-swap on the one dataset. The comparison runs inside the
+	// root update, against the head that update replaces, so a concurrent
+	// writer that moves ds between the caller's read and this write is
+	// refused with ErrStaleInfo rather than overwritten. A head already at
+	// |newHeadAddr| satisfies the lease, so a retry of an update that landed
+	// succeeds. A dataset with no head matches no lease.
+	SetHeadIfAt(ctx context.Context, ds Dataset, expected, newHeadAddr hash.Hash, workingSetPath string) (Dataset, error)
 
 	// FastForward takes a types.Ref to a Commit object and makes it the new
 	// Head of ds iff it is a descendant of the current Head. Intended to be

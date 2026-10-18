@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package actions
 
 import (
@@ -55,7 +61,7 @@ type ProgStopper func(cancel context.CancelFunc, wg *sync.WaitGroup, statsCh cha
 // source db.
 func Push(ctx context.Context, tempTableDir string, mode ref.UpdateMode, destRef ref.BranchRef, remoteRef ref.RemoteRef, srcDB, destDB *doltdb.DoltDB, commit *doltdb.Commit, statsCh chan pull.Stats) error {
 	var err error
-	if mode == ref.FastForwardOnly {
+	if !mode.Force && mode.Lease == nil {
 		canFF, err := destDB.CanFastForward(ctx, destRef, commit)
 
 		if err != nil {
@@ -80,14 +86,20 @@ func Push(ctx context.Context, tempTableDir string, mode ref.UpdateMode, destRef
 		return err
 	}
 
-	switch mode {
-	case ref.ForceUpdate:
+	switch {
+	case mode.Lease != nil:
+		err = destDB.SetHeadAndWorkingSetToCommitIfAt(ctx, destRef, *mode.Lease, commit)
+		if err != nil {
+			return err
+		}
+		err = srcDB.SetHeadToCommit(ctx, remoteRef, commit)
+	case mode.Force:
 		err = destDB.SetHeadAndWorkingSetToCommit(ctx, destRef, commit)
 		if err != nil {
 			return err
 		}
 		err = srcDB.SetHeadToCommit(ctx, remoteRef, commit)
-	case ref.FastForwardOnly:
+	default:
 		err = destDB.FastForwardWithWorkspaceCheck(ctx, destRef, commit)
 		if err != nil {
 			return err
@@ -103,8 +115,13 @@ func Push(ctx context.Context, tempTableDir string, mode ref.UpdateMode, destRef
 
 // DoPush returns a message about whether the push was successful for each branch or a tag.
 // This includes if there is a new remote branch created, upstream is set or push was rejected for a branch.
+//
+// A target refused because its lease went stale is reported as rejected, as
+// git reports it, and the returned error wraps datas.ErrStaleInfo so a caller
+// can tell that refusal from every other.
 func DoPush[C doltdb.Context](ctx C, pushMeta *env.PushOptions[C], progStarter ProgStarter, progStopper ProgStopper) (returnMsg string, err error) {
 	var successPush, setUpstreamPush, failedPush []string
+	var staleErr error
 	for _, targets := range pushMeta.Targets {
 		err = push(ctx, pushMeta.Rsr, pushMeta.TmpDir, pushMeta.SrcDb, pushMeta.DestDb, pushMeta.Remote, targets, progStarter, progStopper)
 		if err == nil {
@@ -118,6 +135,10 @@ func DoPush[C doltdb.Context](ctx C, pushMeta *env.PushOptions[C], progStarter P
 				successPush = append(successPush, fmt.Sprintf(" * [new branch]          %s -> %s", targets.SrcRef.GetPath(), targets.DestRef.GetPath()))
 			}
 
+		} else if errors.Is(err, datas.ErrStaleInfo) {
+			failedPush = append(failedPush, fmt.Sprintf(" ! [rejected]            %s -> %s (stale info)", targets.SrcRef.GetPath(), targets.DestRef.GetPath()))
+			staleErr = err
+			continue
 		} else if errors.Is(err, doltdb.ErrIsAhead) || errors.Is(err, ErrCantFF) || errors.Is(err, datas.ErrMergeNeeded) {
 			failedPush = append(failedPush, fmt.Sprintf(" ! [rejected]            %s -> %s (non-fast-forward)", targets.SrcRef.GetPath(), targets.DestRef.GetPath()))
 			continue
@@ -140,6 +161,9 @@ func DoPush[C doltdb.Context](ctx C, pushMeta *env.PushOptions[C], progStarter P
 	}
 
 	returnMsg, err = buildReturnMsg(successPush, setUpstreamPush, failedPush, pushMeta.Remote.Url, err)
+	if err != nil && staleErr != nil {
+		err = fmt.Errorf("%w: %w", err, staleErr)
+	}
 	return
 }
 
@@ -247,7 +271,7 @@ func PushToRemoteBranch[C doltdb.Context](ctx C, rsr env.RepoStateReader[C], tem
 	switch err {
 	case nil:
 		return nil
-	case doltdb.ErrUpToDate, doltdb.ErrIsAhead, ErrCantFF, datas.ErrMergeNeeded, datas.ErrDirtyWorkspace, ErrShallowPushImpossible:
+	case doltdb.ErrUpToDate, doltdb.ErrIsAhead, ErrCantFF, datas.ErrMergeNeeded, datas.ErrStaleInfo, datas.ErrDirtyWorkspace, ErrShallowPushImpossible:
 		return err
 	default:
 		return fmt.Errorf("%w; %s", ErrUnknownPushErr, err.Error())

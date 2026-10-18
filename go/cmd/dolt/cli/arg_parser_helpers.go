@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package cli
 
 import (
@@ -127,6 +133,7 @@ func CreatePushArgParser() *argparser.ArgParser {
 	ap.SupportsString(UserFlag, "", "user", "User name to use when authenticating with the remote. Gets password from the environment variable {{.EmphasisLeft}}DOLT_REMOTE_PASSWORD{{.EmphasisRight}}.")
 	ap.SupportsFlag(SetUpstreamFlag, "u", "For every branch that is up to date or successfully pushed, add upstream (tracking) reference, used by argument-less {{.EmphasisLeft}}dolt pull{{.EmphasisRight}} and other commands.")
 	ap.SupportsFlag(ForceFlag, "f", "Update the remote with local history, overwriting any conflicting history in the remote.")
+	ap.SupportsString(ForceWithLeaseFlag, "", "branch:commit", "Update the remote {{.LessThan}}branch{{.GreaterThan}} as {{.EmphasisLeft}}--force{{.EmphasisRight}} does, but only while it still names {{.LessThan}}commit{{.GreaterThan}}; otherwise reject the push as stale.")
 	ap.SupportsFlag(AllFlag, "", "Push all branches.")
 	ap.SupportsFlag(SilentFlag, "", "Suppress progress information.")
 	return ap
