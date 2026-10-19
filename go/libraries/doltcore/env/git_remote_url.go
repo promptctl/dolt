@@ -17,6 +17,7 @@ package env
 import (
 	"fmt"
 	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -138,8 +139,10 @@ func stripQueryAndFragment(s string) string {
 }
 
 func looksLikeLocalPath(s string) bool {
-	// Treat absolute filesystem paths as local paths, including Windows drive-letter and UNC paths.
-	if filepath.IsAbs(s) {
+	// Treat absolute filesystem paths as local paths, including Windows drive-letter and UNC paths,
+	// and a path rooted at a separator: on Windows `/srv/repo.git` has no volume, so IsAbs is false,
+	// but it names a directory on the current drive, and no host name starts with a separator.
+	if filepath.IsAbs(s) || os.IsPathSeparator(s[0]) {
 		return true
 	}
 	return strings.HasPrefix(s, "./") || strings.HasPrefix(s, "../")
