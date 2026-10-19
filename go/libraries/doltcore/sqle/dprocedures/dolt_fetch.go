@@ -91,7 +91,7 @@ func doDoltFetch(ctx *sql.Context, args []string) (int, error) {
 	if err != nil {
 		return 1, err
 	}
-	defer closeRemoteDB(ctx, srcDB)
+	defer CloseRemoteDB(ctx, srcDB)
 
 	err = srcDB.Rebase(ctx)
 	if err != nil {
@@ -107,7 +107,7 @@ func doDoltFetch(ctx *sql.Context, args []string) (int, error) {
 	return cmdSuccess, nil
 }
 
-// closeRemoteDB closes a remote database opened without the provider's cache,
+// CloseRemoteDB closes a remote database opened without the provider's cache,
 // which GetRemoteDBWithoutCaching makes the caller's job. Left open, a
 // git-backed remote's blobstore never deletes its UUID-owned refs, and each one
 // pins a whole snapshot of the remote in the local cache repository forever.
@@ -115,7 +115,7 @@ func doDoltFetch(ctx *sql.Context, args []string) (int, error) {
 // A failure is logged rather than returned: by the time it runs the procedure's
 // work has landed, and what a failed close leaves behind is an orphaned ref,
 // not a wrong result.
-func closeRemoteDB(ctx *sql.Context, db *doltdb.DoltDB) {
+func CloseRemoteDB(ctx *sql.Context, db *doltdb.DoltDB) {
 	if err := db.Close(); err != nil {
 		ctx.GetLogger().Warnf("closing remote database: %s", err.Error())
 	}
