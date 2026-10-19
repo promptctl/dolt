@@ -145,7 +145,7 @@ func doDoltPull(ctx *sql.Context, args []string) (int, int, string, error) {
 	if err != nil {
 		return noConflictsOrViolations, threeWayMerge, "", fmt.Errorf("failed to get remote db; %w", err)
 	}
-	defer closeRemoteDB(ctx, srcDB)
+	defer CloseRemoteDB(ctx, srcDB)
 
 	err = srcDB.Rebase(ctx)
 	if err != nil {

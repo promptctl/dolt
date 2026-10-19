@@ -920,7 +920,7 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	dbName, remoteName, branch, remoteUrl string,
 	depth int,
 	remoteParams map[string]string,
-) (err error) {
+) error {
 	if p.remoteDialer == nil {
 		return fmt.Errorf("unable to clone remote database; no remote dialer configured")
 	}
@@ -930,13 +930,13 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	if err != nil {
 		return err
 	}
-	// The clone owns its source: opened past the singleton map and closed when
-	// the clone returns, as DOLT_FETCH and DOLT_PULL close theirs.
+	// The clone owns its source: opened and closed as DOLT_FETCH and DOLT_PULL
+	// open and close theirs.
 	srcDB, err := r.GetRemoteDBWithoutCaching(ctx, types.Format_Default, remoteDialerWithGitCacheRoot{GRPCDialProvider: p.remoteDialer, root: destRoot})
 	if err != nil {
 		return err
 	}
-	defer func() { err = errors.Join(err, srcDB.Close()) }()
+	defer dprocedures.CloseRemoteDB(ctx, srcDB)
 
 	dEnv, err := actions.EnvForClone(ctx, srcDB.ValueReadWriter().Format(), r, dbName, p.fs, "VERSION", env.GetCurrentUserHomeDir)
 	if err != nil {
@@ -953,6 +953,9 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 		Merge:  dEnv.RepoState.Head,
 		Remote: remoteName,
 	})
+	if err != nil {
+		return err
+	}
 
 	return p.registerNewDatabase(ctx, dbName, dEnv)
 }
