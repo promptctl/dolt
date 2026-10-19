@@ -15,6 +15,7 @@
 package env
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -70,6 +71,16 @@ func TestNormalizeGitRemoteUrl(t *testing.T) {
 		require.NoError(t, err)
 		require.True(t, ok)
 		require.Equal(t, "git+file://"+p, got)
+	})
+
+	t.Run("rooted path becomes git+file on the current volume", func(t *testing.T) {
+		// On Windows a path rooted at a separator has no volume; Abs supplies the current drive's.
+		wd, err := os.Getwd()
+		require.NoError(t, err)
+		got, ok, err := NormalizeGitRemoteUrl("/srv/git/repo.git")
+		require.NoError(t, err)
+		require.True(t, ok)
+		require.Equal(t, "git+file://"+filepath.ToSlash(filepath.VolumeName(wd))+"/srv/git/repo.git", got)
 	})
 
 	t.Run("non .git url not recognized", func(t *testing.T) {

@@ -342,13 +342,16 @@ func isGitRemoteAlreadyExistsError(err error, remoteName string) bool {
 }
 
 // gitCmd builds an exec.Cmd for a git invocation with LC_ALL=C so that
-// error-message parsing works regardless of the user's locale.
+// error-message parsing works regardless of the user's locale, and with
+// core.longpaths so git for Windows opens a cache repo's paths past MAX_PATH,
+// as the blobstore's git.Runner does.
 func gitCmd(ctx context.Context, args ...string) (*exec.Cmd, error) {
 	p, err := exec.LookPath("git")
 	if err != nil {
 		return nil, fmt.Errorf("git not found on PATH: %w", err)
 	}
-	cmd := exec.CommandContext(ctx, p, args...) //nolint:gosec // controlled args
+	all := append([]string{"-c", "core.longpaths=true"}, args...)
+	cmd := exec.CommandContext(ctx, p, all...) //nolint:gosec // controlled args
 	cmd.Env = append(os.Environ(), "LC_ALL=C")
 	return cmd, nil
 }

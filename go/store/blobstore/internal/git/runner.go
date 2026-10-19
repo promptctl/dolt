@@ -116,15 +116,7 @@ func (e *CmdError) Unwrap() error { return e.Cause }
 // Run executes "git <args...>" with GIT_DIR set and returns captured combined output
 // when Stdout/Stderr are not supplied.
 func (r *Runner) Run(ctx context.Context, opts RunOptions, args ...string) ([]byte, error) {
-	cmd := exec.CommandContext(ctx, r.gitPath, args...) //nolint:gosec // args are controlled by caller; used for internal plumbing.
-	if opts.Dir != "" {
-		cmd.Dir = opts.Dir
-	}
-	cmd.Env = r.env(opts)
-
-	if opts.Stdin != nil {
-		cmd.Stdin = opts.Stdin
-	}
+	cmd := r.command(ctx, opts, args)
 
 	// Capture combined output unless caller provided destinations.
 	var buf bytes.Buffer
@@ -172,14 +164,7 @@ func (r *Runner) Run(ctx context.Context, opts RunOptions, args ...string) ([]by
 //   - The returned *exec.Cmd is provided for advanced uses (e.g. signals), but most
 //     callers should not call Wait() directly.
 func (r *Runner) Start(ctx context.Context, opts RunOptions, args ...string) (io.ReadCloser, *exec.Cmd, error) {
-	cmd := exec.CommandContext(ctx, r.gitPath, args...) //nolint:gosec // args are controlled by caller; used for internal plumbing.
-	if opts.Dir != "" {
-		cmd.Dir = opts.Dir
-	}
-	cmd.Env = r.env(opts)
-	if opts.Stdin != nil {
-		cmd.Stdin = opts.Stdin
-	}
+	cmd := r.command(ctx, opts, args)
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -234,6 +219,24 @@ func (c *cmdReadCloser) Close() error {
 		Cause:    err,
 	}
 	return gitauth.NormalizeError(cerr, cerr.Output)
+}
+
+// command builds "git <args...>" for Run and Start. core.longpaths lets git
+// for Windows open paths past MAX_PATH (260 characters), which a ref under a
+// git remote cache passes once the database sits a few directories deep; git
+// hands the setting on to the git processes it spawns, and other platforms
+// ignore the key.
+func (r *Runner) command(ctx context.Context, opts RunOptions, args []string) *exec.Cmd {
+	all := append([]string{"-c", "core.longpaths=true"}, args...)
+	cmd := exec.CommandContext(ctx, r.gitPath, all...) //nolint:gosec // args are controlled by caller; used for internal plumbing.
+	if opts.Dir != "" {
+		cmd.Dir = opts.Dir
+	}
+	cmd.Env = r.env(opts)
+	if opts.Stdin != nil {
+		cmd.Stdin = opts.Stdin
+	}
+	return cmd
 }
 
 func (r *Runner) env(opts RunOptions) []string {
