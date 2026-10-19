@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package sqle
 
 import (
@@ -559,41 +565,37 @@ func (p *DoltDatabaseProvider) GetRemoteDB(ctx context.Context, format *types.No
 	}
 
 	if withCaching {
-		// Only cache git-backed remote DBs. Other remote types (file://, aws, etc.)
-		// register their underlying NBS in a global singleton cache that is closed
-		// separately by CloseAllLocalDatabases(). Caching those here would cause a
-		// double-close panic on process exit.
-		isGitRemote := strings.HasPrefix(strings.ToLower(r.Url), "git+")
-		if isGitRemote {
-			cached := func() *doltdb.DoltDB {
-				p.mu.RLock()
-				defer p.mu.RUnlock()
-				return p.remoteDbs[r.Url]
-			}()
-			if cached != nil {
-				return cached, nil
-			}
+		// The provider owns every remote it caches, and Close closes them. Each is
+		// opened past dbfactory's process-wide singleton map, whose entries only
+		// CloseAllLocalDatabases closes, so a remote's files are held exactly as
+		// long as the engine that pushed through it, whatever the remote's kind.
+		cached := func() *doltdb.DoltDB {
+			p.mu.RLock()
+			defer p.mu.RUnlock()
+			return p.remoteDbs[r.Url]
+		}()
+		if cached != nil {
+			return cached, nil
 		}
 
-		remoteDB, err := r.GetRemoteDB(ctx, format, dialer)
+		owned := r.WithParams(map[string]string{dbfactory.DisableSingletonCacheParam: "true"})
+		remoteDB, err := owned.GetRemoteDB(ctx, format, dialer)
 		if err != nil {
 			return nil, err
 		}
 
-		if isGitRemote {
-			cached := func() *doltdb.DoltDB {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				if existing, ok := p.remoteDbs[r.Url]; ok {
-					return existing
-				}
-				p.remoteDbs[r.Url] = remoteDB
-				return nil
-			}()
-			if cached != nil {
-				_ = remoteDB.Close()
-				return cached, nil
+		cached = func() *doltdb.DoltDB {
+			p.mu.Lock()
+			defer p.mu.Unlock()
+			if existing, ok := p.remoteDbs[r.Url]; ok {
+				return existing
 			}
+			p.remoteDbs[r.Url] = remoteDB
+			return nil
+		}()
+		if cached != nil {
+			_ = remoteDB.Close()
+			return cached, nil
 		}
 		return remoteDB, nil
 	}
@@ -918,7 +920,7 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	dbName, remoteName, branch, remoteUrl string,
 	depth int,
 	remoteParams map[string]string,
-) error {
+) (err error) {
 	if p.remoteDialer == nil {
 		return fmt.Errorf("unable to clone remote database; no remote dialer configured")
 	}
@@ -928,10 +930,13 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	if err != nil {
 		return err
 	}
-	srcDB, err := r.GetRemoteDB(ctx, types.Format_Default, remoteDialerWithGitCacheRoot{GRPCDialProvider: p.remoteDialer, root: destRoot})
+	// The clone owns its source: opened past the singleton map and closed when
+	// the clone returns, as DOLT_FETCH and DOLT_PULL close theirs.
+	srcDB, err := r.GetRemoteDBWithoutCaching(ctx, types.Format_Default, remoteDialerWithGitCacheRoot{GRPCDialProvider: p.remoteDialer, root: destRoot})
 	if err != nil {
 		return err
 	}
+	defer func() { err = errors.Join(err, srcDB.Close()) }()
 
 	dEnv, err := actions.EnvForClone(ctx, srcDB.ValueReadWriter().Format(), r, dbName, p.fs, "VERSION", env.GetCurrentUserHomeDir)
 	if err != nil {
