@@ -223,9 +223,11 @@ func (c *cmdReadCloser) Close() error {
 
 // command builds "git <args...>" for Run and Start. core.longpaths lets git
 // for Windows open paths past MAX_PATH (260 characters), which a ref under a
-// git remote cache passes once the database sits a few directories deep; git
-// hands the setting on to the git processes it spawns, and other platforms
-// ignore the key.
+// git remote cache passes once the database sits a few directories deep, and
+// other platforms ignore the key. git hands -c settings on to the processes it
+// spawns on the cache repo's side of a fetch or push, but not to the
+// upload-pack or receive-pack it starts in a local remote, whose paths follow
+// that repository's own config.
 func (r *Runner) command(ctx context.Context, opts RunOptions, args []string) *exec.Cmd {
 	all := append([]string{"-c", "core.longpaths=true"}, args...)
 	cmd := exec.CommandContext(ctx, r.gitPath, all...) //nolint:gosec // args are controlled by caller; used for internal plumbing.
