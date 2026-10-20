@@ -139,7 +139,7 @@ func doDoltPush(ctx *sql.Context, args []string) (int, string, error) {
 				// before the error message. We currently cannot return success message
 				// if there was a failed push with error. So, we need to include the success
 				// message in the error message before returning.
-				err = fmt.Errorf("%s\n%s", returnMsg, err.Error())
+				err = fmt.Errorf("%s\n%w", returnMsg, err)
 			}
 			return cmdFailure, "", err
 		}

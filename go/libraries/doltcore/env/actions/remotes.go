@@ -116,12 +116,14 @@ func Push(ctx context.Context, tempTableDir string, mode ref.UpdateMode, destRef
 // DoPush returns a message about whether the push was successful for each branch or a tag.
 // This includes if there is a new remote branch created, upstream is set or push was rejected for a branch.
 //
-// A target refused because its lease went stale is reported as rejected, as
-// git reports it, and the returned error wraps datas.ErrStaleInfo so a caller
-// can tell that refusal from every other.
+// A rejected target, refused because its lease went stale or because the push
+// is not a fast-forward, is reported as rejected, as git reports it, and the
+// returned error wraps the rejection's own error (datas.ErrStaleInfo,
+// doltdb.ErrIsAhead, ErrCantFF or datas.ErrMergeNeeded) so a caller can tell
+// each refusal from every other failure.
 func DoPush[C doltdb.Context](ctx C, pushMeta *env.PushOptions[C], progStarter ProgStarter, progStopper ProgStopper) (returnMsg string, err error) {
 	var successPush, setUpstreamPush, failedPush []string
-	var staleErr error
+	var rejected []error
 	for _, targets := range pushMeta.Targets {
 		err = push(ctx, pushMeta.Rsr, pushMeta.TmpDir, pushMeta.SrcDb, pushMeta.DestDb, pushMeta.Remote, targets, progStarter, progStopper)
 		if err == nil {
@@ -137,10 +139,11 @@ func DoPush[C doltdb.Context](ctx C, pushMeta *env.PushOptions[C], progStarter P
 
 		} else if errors.Is(err, datas.ErrStaleInfo) {
 			failedPush = append(failedPush, fmt.Sprintf(" ! [rejected]            %s -> %s (stale info)", targets.SrcRef.GetPath(), targets.DestRef.GetPath()))
-			staleErr = err
+			rejected = append(rejected, err)
 			continue
 		} else if errors.Is(err, doltdb.ErrIsAhead) || errors.Is(err, ErrCantFF) || errors.Is(err, datas.ErrMergeNeeded) {
 			failedPush = append(failedPush, fmt.Sprintf(" ! [rejected]            %s -> %s (non-fast-forward)", targets.SrcRef.GetPath(), targets.DestRef.GetPath()))
+			rejected = append(rejected, err)
 			continue
 		} else if !errors.Is(err, doltdb.ErrUpToDate) {
 			// this will allow getting successful push messages along with the error of current push
@@ -161,8 +164,8 @@ func DoPush[C doltdb.Context](ctx C, pushMeta *env.PushOptions[C], progStarter P
 	}
 
 	returnMsg, err = buildReturnMsg(successPush, setUpstreamPush, failedPush, pushMeta.Remote.Url, err)
-	if err != nil && staleErr != nil {
-		err = fmt.Errorf("%w: %w", err, staleErr)
+	if err != nil && len(rejected) > 0 {
+		err = fmt.Errorf("%w: %w", err, errors.Join(rejected...))
 	}
 	return
 }
@@ -274,7 +277,7 @@ func PushToRemoteBranch[C doltdb.Context](ctx C, rsr env.RepoStateReader[C], tem
 	case doltdb.ErrUpToDate, doltdb.ErrIsAhead, ErrCantFF, datas.ErrMergeNeeded, datas.ErrStaleInfo, datas.ErrDirtyWorkspace, ErrShallowPushImpossible:
 		return err
 	default:
-		return fmt.Errorf("%w; %s", ErrUnknownPushErr, err.Error())
+		return fmt.Errorf("%w; %w", ErrUnknownPushErr, err)
 	}
 }
 
