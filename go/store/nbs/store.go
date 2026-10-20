@@ -1468,8 +1468,11 @@ func (nbs *NomsBlockStore) rebase(ctx context.Context) error {
 	}
 
 	if exists {
-		if contents.lock == nbs.upstream.lock {
-			// short-circuit if manifest is unchanged
+		if contents.lock == nbs.upstream.lock && contents.gcGen == nbs.upstream.gcGen {
+			// short-circuit if manifest is unchanged. A collection can start
+			// a new GC generation under an unchanged lock (swapTables keeps
+			// the specs' lock), and a view that kept the old one would find
+			// the same mismatch on every retry.
 			return nil
 		}
 
@@ -1905,10 +1908,46 @@ func (nbs *NomsBlockStore) WriteTableFile(ctx context.Context, fileName string, 
 	return tfp.CopyTableFile(ctx, r, fileName, sz, splitOffset)
 }
 
-// AddTableFilesToManifest adds table files to the manifest
+// AddTableFilesToManifest adds table files to the manifest. A writer whose
+// view of the store predates another process collecting it, or replacing its
+// table set, finds the store on a new GC generation, by the check before its
+// manifest write or by the write's own. It re-checks against the generation
+// the manifest now names: the files were opened, and their references
+// checked, against this store's view, and while that view keeps the old
+// generation every retry finds the same mismatch.
 func (nbs *NomsBlockStore) AddTableFilesToManifest(ctx context.Context, fileIdToNumChunks map[string]int, getAddrs chunks.GetAddrsCurry) error {
 	valctx.ValidateContext(ctx)
-	return nbs.addTableFilesToManifest(ctx, fileIdToNumChunks, getAddrs, nbs.refCheck)
+	return nbs.addTableFilesRechecking(ctx, fileIdToNumChunks, getAddrs, nbs.refCheck)
+}
+
+// addTableFilesRechecking is a writer's add: addTableFilesToManifest, again
+// against the new generation each time the store moved past the view.
+func (nbs *NomsBlockStore) addTableFilesRechecking(ctx context.Context, fileIdToNumChunks map[string]int, getAddrs chunks.GetAddrsCurry, genRefCheck func([]hasRecord) (hash.HashSet, error)) error {
+	for {
+		checked, moved, err := nbs.addTableFilesToManifest(ctx, fileIdToNumChunks, getAddrs, genRefCheck)
+		if err != nil || !moved {
+			return err
+		}
+		if err := nbs.rebaseOffGeneration(ctx, checked); err != nil {
+			return err
+		}
+	}
+}
+
+// rebaseOffGeneration rebases this store's view onto its manifest, and fails
+// when the view is still on |checked|, the generation the caller found the
+// store had moved past: a retry from there would find the same mismatch
+// again. The rebase and the judgment of it happen under one hold.
+func (nbs *NomsBlockStore) rebaseOffGeneration(ctx context.Context, checked hash.Hash) error {
+	nbs.mu.Lock()
+	defer nbs.mu.Unlock()
+	if err := nbs.rebase(ctx); err != nil {
+		return fmt.Errorf("addTableFiles, rebase onto the new GC generation: %w", err)
+	}
+	if nbs.upstream.gcGen == checked {
+		return fmt.Errorf("addTableFiles, rebase onto the new GC generation left the view on %s: %w", checked, chunks.ErrGCGenerationExpired)
+	}
+	return nil
 }
 
 // A small helper which returns a composite refCheck function combining |base| and a |hasMany| call against each source in |css|.
@@ -1986,12 +2025,16 @@ func refCheckAllSources(ctx context.Context, getAddrs chunks.GetAddrsCurry, refC
 	return checkErr
 }
 
-func (nbs *NomsBlockStore) addTableFilesToManifest(ctx context.Context, fileIdToNumChunks map[string]int, getAddrs chunks.GetAddrsCurry, genRefCheck func([]hasRecord) (hash.HashSet, error)) error {
+// addTableFilesToManifest adds the table files to the manifest in one pass
+// against this store's view. moved reports, with nothing added, that the
+// store's GC generation had moved past |checked|, the view's, before the
+// manifest write landed; what to do about that is the caller's.
+func (nbs *NomsBlockStore) addTableFilesToManifest(ctx context.Context, fileIdToNumChunks map[string]int, getAddrs chunks.GetAddrsCurry, genRefCheck func([]hasRecord) (hash.HashSet, error)) (checked hash.Hash, moved bool, err error) {
 	fileIdHashToNumChunks := make(map[hash.Hash]uint32)
 	for fileId, numChunks := range fileIdToNumChunks {
 		fileIdHash, ok := hash.MaybeParse(fileId)
 		if !ok {
-			return errors.New("invalid base32 encoded hash: " + fileId)
+			return hash.Hash{}, false, errors.New("invalid base32 encoded hash: " + fileId)
 		}
 		if numChunks > 0 {
 			fileIdHashToNumChunks[fileIdHash] = uint32(numChunks)
@@ -1999,84 +2042,62 @@ func (nbs *NomsBlockStore) addTableFilesToManifest(ctx context.Context, fileIdTo
 	}
 
 	if len(fileIdHashToNumChunks) == 0 {
-		return nil
+		return hash.Hash{}, false, nil
 	}
 
-	for {
-		// Open chunk sources for each of the fileIdHashToNumChunks files.
-		// This is done with the lock held. We also inspect |gcGen| at this
-		// time so that we can ensure our view of the store is still
-		// accurate when we add these files to the store if all the sanity
-		// checks pass.
-		sources, err := nbs.openChunkSourcesForAddTableFiles(ctx, fileIdHashToNumChunks)
-		if err != nil {
-			return fmt.Errorf("addTableFiles, openChunkSources: %w", err)
-		}
-		// If these sources get added to the store, they will get cloned.
-		// Either way, we want to close these instances when we are done.
-		defer sources.sources.close()
-
-		// If we are an uninitialized store, we do not perform
-		// this ref check.  This is a hascky solve for the
-		// case where there is a push or clone into a remote
-		// newly initialized store with no existing contents.
-		//
-		// For example, call dolt_backup(sync-url, aws://.../new_backup_path_here
-		// needs to be efficient.
-		//
-		// We should make these ref checks more efficient and
-		// more performant as well, so that incremental
-		// backups are more credible for example.
-		if !sources.root.IsEmpty() {
-			refCheck := getRefCheck(nbs, genRefCheck, sources.sources)
-			err = refCheckAllSources(ctx, getAddrs, refCheck, sources.sources, nbs.stats)
-			if err != nil {
-				// There was an error checking all references.
-				return fmt.Errorf("addTableFiles, refCheckAllSources: %w", err)
-			}
-		}
-
-		// At this point, the added files are consistent with our view of the store.
-		// We add them to the set of table files in the store.
-		_, gcGenMismatch, err := nbs.updateManifestAddFiles(ctx, fileIdHashToNumChunks, nil, &sources.gcGen, sources.sources)
-		if err != nil {
-			return fmt.Errorf("addTableFiles, updateManifestAddFiles: %w", err)
-		} else if gcGenMismatch {
-			// A gcGenMismatch means that the store has changed out from under
-			// us as we were running these checks. We want to retry, against
-			// the generation the manifest now names: the sources above were
-			// opened, and the ref check run, against this store's view, and
-			// while that view keeps the old generation every retry finds the
-			// same mismatch. Another process that collected the store, or
-			// replaced its table set, changes the manifest without touching
-			// this view.
-			if err := nbs.Rebase(ctx); err != nil {
-				return fmt.Errorf("addTableFiles, rebase onto the new GC generation: %w", err)
-			}
-			// A rebase that left the view on the generation just checked
-			// against would find the same mismatch again: the manifest it
-			// read did not show the new generation, or showed it under the
-			// lock the view already holds. Fail loudly rather than loop.
-			nbs.mu.RLock()
-			rebased := nbs.upstream.gcGen != sources.gcGen
-			nbs.mu.RUnlock()
-			if !rebased {
-				return fmt.Errorf("addTableFiles, rebase onto the new GC generation left the view on %s: %w", sources.gcGen, chunks.ErrGCGenerationExpired)
-			}
-			continue
-		}
-
-		// At this point, the files have been added to the
-		// store and the store was in a consistent state when
-		// we added them.
-		//
-		// We currently do not take any chunk dependencies
-		// for a GC process on the chunks that are added in
-		// these files. In practice, that means that all the
-		// dependencies are taken at once, in the |Commit|
-		// call setting the new root.
-		return nil
+	// Open chunk sources for each of the fileIdHashToNumChunks files.
+	// This is done with the lock held. We also inspect |gcGen| at this
+	// time so that we can ensure our view of the store is still
+	// accurate when we add these files to the store if all the sanity
+	// checks pass.
+	sources, err := nbs.openChunkSourcesForAddTableFiles(ctx, fileIdHashToNumChunks)
+	if err != nil {
+		return hash.Hash{}, false, fmt.Errorf("addTableFiles, openChunkSources: %w", err)
 	}
+	// If these sources get added to the store, they will get cloned.
+	// Either way, we want to close these instances when we are done.
+	defer sources.sources.close()
+
+	// If we are an uninitialized store, we do not perform
+	// this ref check.  This is a hascky solve for the
+	// case where there is a push or clone into a remote
+	// newly initialized store with no existing contents.
+	//
+	// For example, call dolt_backup(sync-url, aws://.../new_backup_path_here
+	// needs to be efficient.
+	//
+	// We should make these ref checks more efficient and
+	// more performant as well, so that incremental
+	// backups are more credible for example.
+	if !sources.root.IsEmpty() {
+		refCheck := getRefCheck(nbs, genRefCheck, sources.sources)
+		err = refCheckAllSources(ctx, getAddrs, refCheck, sources.sources, nbs.stats)
+		if err != nil {
+			// There was an error checking all references.
+			return sources.gcGen, false, fmt.Errorf("addTableFiles, refCheckAllSources: %w", err)
+		}
+	}
+
+	// At this point, the added files are consistent with our view of the store.
+	// We add them to the set of table files in the store.
+	_, gcGenMismatch, err := nbs.updateManifestAddFiles(ctx, fileIdHashToNumChunks, nil, &sources.gcGen, sources.sources)
+	if err != nil {
+		return sources.gcGen, false, fmt.Errorf("addTableFiles, updateManifestAddFiles: %w", err)
+	}
+	if gcGenMismatch {
+		return sources.gcGen, true, nil
+	}
+
+	// At this point, the files have been added to the
+	// store and the store was in a consistent state when
+	// we added them.
+	//
+	// We currently do not take any chunk dependencies
+	// for a GC process on the chunks that are added in
+	// these files. In practice, that means that all the
+	// dependencies are taken at once, in the |Commit|
+	// call setting the new root.
+	return sources.gcGen, false, nil
 }
 
 type openChunkSourcesForAddTableFilesResult struct {
@@ -2503,7 +2524,15 @@ func (gcf gcFinalizer) AddChunksToStore(ctx context.Context) (chunks.HasManyFunc
 	}
 	// Passing |nil| for getAddrs and |refCheck| means ref checking on
 	// this add is off.
-	return f, gcf.nbs.addTableFilesToManifest(ctx, fileIdToNumChunks, nil, nil)
+	// A collection's mark phase saw this store's view. A new generation
+	// another process started under it invalidates that mark, so the
+	// collection fails rather than rebase: swapping in its specs over the
+	// other process's table set would drop files the mark never saw.
+	_, moved, err := gcf.nbs.addTableFilesToManifest(ctx, fileIdToNumChunks, nil, nil)
+	if err == nil && moved {
+		err = fmt.Errorf("gc: another process moved the store to a new GC generation during this collection: %w", chunks.ErrGCGenerationExpired)
+	}
+	return f, err
 }
 
 func (gcf gcFinalizer) SwapChunksInStore(ctx context.Context) error {

@@ -98,6 +98,74 @@ func (s *staleManifestReads) Get(ctx context.Context, key string, br blobstore.B
 	return io.NopCloser(bytes.NewReader(s.stale)), uint64(len(s.stale)), s.version, nil
 }
 
+// collectedUnderAView is a store whose table set another process replaced
+// under a new GC generation after |view| last read it: the view's store held
+// kept and dropped, and the replacement holds kept only. reads serves the
+// view's manifest reads after the replacement by the schedule it was armed
+// with. A collection that keeps the lock rewrites the manifest under the lock
+// the view already holds and only the generation changes, as swapTables does
+// when the specs are unchanged.
+type collectedUnderAView struct {
+	view, collector *NomsBlockStore
+	bs              blobstore.Blobstore
+	reads           *staleManifestReads
+	keptOnly        string
+	gcGen           hash.Hash
+}
+
+func collectUnderAView(t *testing.T, staleReads []bool, keepTheLock bool) collectedUnderAView {
+	t.Helper()
+	ctx := context.Background()
+	bs := blobstore.NewLocalBlobstore(t.TempDir())
+	reads := &staleManifestReads{Blobstore: bs}
+	open := func(bs blobstore.Blobstore) *NomsBlockStore {
+		st, err := NewBSStore(ctx, constants.FormatDefaultString, bs, testMemTableSize, NewUnlimitedMemQuotaProvider())
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, st.Close()) })
+		return st
+	}
+	kept := chunks.NewChunk([]byte("kept"))
+	dropped := chunks.NewChunk([]byte("dropped"))
+
+	view := open(reads)
+	require.NoError(t, view.AddTableFilesToManifest(ctx, writeTableOf(t, ctx, view, kept, dropped), refsTo))
+	committed, err := view.Commit(ctx, kept.Hash(), hash.Hash{})
+	require.NoError(t, err)
+	require.True(t, committed)
+
+	reads.arm(t, ctx, staleReads...)
+	collector := open(bs)
+	before := collector.upstream.gcGen
+	if keepTheLock {
+		collected := collector.upstream
+		collected.gcGen = generateLockHash(collected.root, collected.specs, collected.appendix, []byte("a collection that kept the specs"))
+		written, err := blobstoreManifest{bs}.UpdateGCGen(ctx, collector.fatalBehavior, collector.upstream.lock, collected, collector.stats, nil)
+		require.NoError(t, err)
+		require.Equal(t, view.upstream.lock, written.lock)
+		require.NoError(t, collector.Rebase(ctx))
+		return collectedUnderAView{view: view, collector: collector, bs: bs, reads: reads, keptOnly: "", gcGen: written.gcGen}
+	}
+	keptOnly := firstKey(writeTableOf(t, ctx, collector, kept))
+	require.NoError(t, ReplaceStoreTableFiles(ctx, collector, map[hash.Hash]uint32{hash.Parse(keptOnly): 1}))
+	require.NotEqual(t, before, collector.upstream.gcGen)
+	require.Equal(t, kept.Hash(), collector.upstream.root)
+	require.Len(t, collector.upstream.specs, 1)
+	return collectedUnderAView{view: view, collector: collector, bs: bs, reads: reads, keptOnly: keptOnly, gcGen: collector.upstream.gcGen}
+}
+
+// tableNames is the set of table files the blobstore's manifest names, and
+// its GC generation.
+func tableNames(t *testing.T, bs blobstore.Blobstore) (map[string]bool, hash.Hash) {
+	t.Helper()
+	_, contents, err := manifestVersionAndContents(context.Background(), bs)
+	require.NoError(t, err)
+	names := map[string]bool{}
+	for _, spec := range contents.specs {
+		names[spec.name.String()] = true
+	}
+	return names, contents.gcGen
+}
+
 // TestAWriterThatFindsANewGCGenerationReChecksAgainstIt is a writer whose view
 // of a shared store predates another process replacing the store's table set
 // under a new GC generation. However the writer finds the new generation —
@@ -106,7 +174,8 @@ func (s *staleManifestReads) Get(ctx context.Context, key string, br blobstore.B
 // it re-checks against it: a chunk referencing one the replacement dropped
 // fails loudly and is not added, and one whose references the new generation
 // holds lands on it. A rebase that is also served the old manifest leaves the
-// view where it was, and the writer fails rather than retry forever.
+// view where it was, and the writer fails rather than retry forever. A
+// collection that kept the lock is rebased onto all the same.
 func TestAWriterThatFindsANewGCGenerationReChecksAgainstIt(t *testing.T) {
 	kept := chunks.NewChunk([]byte("kept"))
 	dropped := chunks.NewChunk([]byte("dropped"))
@@ -114,62 +183,65 @@ func TestAWriterThatFindsANewGCGenerationReChecksAgainstIt(t *testing.T) {
 		name string
 		// staleReads is the schedule of the writer's manifest reads after the
 		// replacement: the check's, the write's, the rebase's.
-		staleReads []bool
-		added      chunks.Chunk
-		wantErr    error
+		staleReads  []bool
+		keepTheLock bool
+		added       chunks.Chunk
+		wantErr     error
 	}{
-		{"the check finds it; a dropped reference", nil, referencing(dropped), ErrTableFileNotFound},
-		{"the check finds it; a kept reference", nil, referencing(kept), nil},
-		{"only the write finds it; a dropped reference", []bool{true}, referencing(dropped), ErrTableFileNotFound},
-		{"only the write finds it; a kept reference", []bool{true}, referencing(kept), nil},
-		{"the rebase misses it", []bool{true, false, true}, referencing(kept), chunks.ErrGCGenerationExpired},
+		{"the check finds it; a dropped reference", nil, false, referencing(dropped), ErrTableFileNotFound},
+		{"the check finds it; a kept reference", nil, false, referencing(kept), nil},
+		{"only the write finds it; a dropped reference", []bool{true}, false, referencing(dropped), ErrTableFileNotFound},
+		{"only the write finds it; a kept reference", []bool{true}, false, referencing(kept), nil},
+		{"the rebase misses it", []bool{true, false, true}, false, referencing(kept), chunks.ErrGCGenerationExpired},
+		{"the collection kept the lock", nil, true, referencing(kept), nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.Background()
-			bs := blobstore.NewLocalBlobstore(t.TempDir())
-			reads := &staleManifestReads{Blobstore: bs}
-			open := func(bs blobstore.Blobstore) *NomsBlockStore {
-				st, err := NewBSStore(ctx, constants.FormatDefaultString, bs, testMemTableSize, NewUnlimitedMemQuotaProvider())
-				require.NoError(t, err)
-				t.Cleanup(func() { require.NoError(t, st.Close()) })
-				return st
-			}
-
-			writer := open(reads)
-			require.NoError(t, writer.AddTableFilesToManifest(ctx, writeTableOf(t, ctx, writer, kept, dropped), refsTo))
-			committed, err := writer.Commit(ctx, kept.Hash(), hash.Hash{})
-			require.NoError(t, err)
-			require.True(t, committed)
-
-			reads.arm(t, ctx, tc.staleReads...)
-			collector := open(bs)
-			keptOnly := writeTableOf(t, ctx, collector, kept)
-			before := collector.upstream.gcGen
-			require.NoError(t, ReplaceStoreTableFiles(ctx, collector, map[hash.Hash]uint32{hash.Parse(firstKey(keptOnly)): 1}))
-			require.NotEqual(t, before, collector.upstream.gcGen)
-			require.Equal(t, kept.Hash(), collector.upstream.root)
-			require.Len(t, collector.upstream.specs, 1)
-
+			store := collectUnderAView(t, tc.staleReads, tc.keepTheLock)
+			before, _ := tableNames(t, store.bs)
 			bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
 			defer cancel()
-			added := writeTableOf(t, ctx, writer, tc.added)
-			err = writer.AddTableFilesToManifest(bounded, added, refsTo)
-			require.Empty(t, reads.schedule, "the writer read the manifest fewer times than the case schedules, so it did not reach the case")
+			added := firstKey(writeTableOf(t, ctx, store.view, tc.added))
+			err := store.view.AddTableFilesToManifest(bounded, map[string]int{added: 1}, refsTo)
+			require.Empty(t, store.reads.schedule, "the writer read the manifest fewer times than the case schedules, so it did not reach the case")
 			require.NoError(t, bounded.Err())
-			_, contents, mErr := manifestVersionAndContents(ctx, bs)
-			require.NoError(t, mErr)
-			require.Equal(t, collector.upstream.gcGen, contents.gcGen)
-			names := map[string]bool{}
-			for _, spec := range contents.specs {
-				names[spec.name.String()] = true
-			}
+			names, gcGen := tableNames(t, store.bs)
+			require.Equal(t, store.gcGen, gcGen)
 			if tc.wantErr != nil {
 				require.ErrorIs(t, err, tc.wantErr)
-				require.Equal(t, map[string]bool{firstKey(keptOnly): true}, names, "a refused table file was added to the manifest")
+				require.Equal(t, before, names, "a refused table file was added to the manifest")
 				return
 			}
 			require.NoError(t, err)
-			require.Equal(t, map[string]bool{firstKey(keptOnly): true, firstKey(added): true}, names)
+			before[added] = true
+			require.Equal(t, before, names)
+		})
+	}
+}
+
+// TestACollectionFailsWhenAnotherProcessStartsANewGCGenerationUnderIt is a
+// collection whose mark phase read this store's view before another process
+// replaced its table set. Its add finds the new generation, by the check or
+// only by the write's read, and fails instead of rebasing: swapping its specs
+// in over the replacement would drop table files its mark never saw.
+func TestACollectionFailsWhenAnotherProcessStartsANewGCGenerationUnderIt(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		staleReads []bool
+	}{
+		{"the check finds it", nil},
+		{"only the write finds it", []bool{true}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			store := collectUnderAView(t, tc.staleReads, false)
+			marked := writeTableOf(t, ctx, store.view, chunks.NewChunk([]byte("kept")))
+			_, err := gcFinalizer{nbs: store.view, specs: []tableSpec{{name: hash.Parse(firstKey(marked)), chunkCount: 1}}}.AddChunksToStore(ctx)
+			require.Empty(t, store.reads.schedule, "the collection read the manifest fewer times than the case schedules, so it did not reach the case")
+			require.ErrorIs(t, err, chunks.ErrGCGenerationExpired)
+			names, gcGen := tableNames(t, store.bs)
+			require.Equal(t, store.gcGen, gcGen)
+			require.Equal(t, map[string]bool{store.keptOnly: true}, names)
 		})
 	}
 }

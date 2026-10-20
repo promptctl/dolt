@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package nbs
 
 import (
@@ -431,7 +437,7 @@ func (gcs *GenerationalNBS) WriteTableFile(ctx context.Context, fileId string, s
 
 // AddTableFilesToManifest adds table files to the manifest of the newgen cs
 func (gcs *GenerationalNBS) AddTableFilesToManifest(ctx context.Context, fileIdToNumChunks map[string]int, getAddrs chunks.GetAddrsCurry) error {
-	return gcs.newGen.addTableFilesToManifest(ctx, fileIdToNumChunks, getAddrs, gcs.refCheck)
+	return gcs.newGen.addTableFilesRechecking(ctx, fileIdToNumChunks, getAddrs, gcs.refCheck)
 }
 
 // PruneTableFiles deletes old table files that are no longer referenced in the manifest of the new or old gen chunkstores
