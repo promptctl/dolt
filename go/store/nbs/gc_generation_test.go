@@ -146,44 +146,63 @@ func (s *staleManifestOnce) Get(ctx context.Context, key string, br blobstore.Bl
 // the read it checks the generation by is served the manifest from before
 // the replacement, and only the manifest write's own read finds the new
 // generation. The write's refusal is the same fact the check would have
-// found, so the writer re-checks against the new generation and lands on it.
+// found, so the writer re-checks against the new generation: a chunk
+// referencing one the replacement dropped fails loudly, and one whose
+// references it holds lands on it.
 func TestAWriterThatReadAManifestBeforeItsGCReChecksAgainstTheNewGeneration(t *testing.T) {
-	ctx := context.Background()
-	bs := blobstore.NewLocalBlobstore(t.TempDir())
-	stale := &staleManifestOnce{Blobstore: bs}
-	open := func(bs blobstore.Blobstore) *NomsBlockStore {
-		st, err := NewBSStore(ctx, constants.FormatDefaultString, bs, testMemTableSize, NewUnlimitedMemQuotaProvider())
-		require.NoError(t, err)
-		t.Cleanup(func() { require.NoError(t, st.Close()) })
-		return st
-	}
 	kept := chunks.NewChunk([]byte("kept"))
 	dropped := chunks.NewChunk([]byte("dropped"))
+	for _, tc := range []struct {
+		name    string
+		added   chunks.Chunk
+		wantErr error
+	}{
+		{"a reference the new generation dropped", referencing(dropped), ErrTableFileNotFound},
+		{"a reference the new generation holds", referencing(kept), nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx := context.Background()
+			bs := blobstore.NewLocalBlobstore(t.TempDir())
+			stale := &staleManifestOnce{Blobstore: bs}
+			open := func(bs blobstore.Blobstore) *NomsBlockStore {
+				st, err := NewBSStore(ctx, constants.FormatDefaultString, bs, testMemTableSize, NewUnlimitedMemQuotaProvider())
+				require.NoError(t, err)
+				t.Cleanup(func() { require.NoError(t, st.Close()) })
+				return st
+			}
 
-	writer := open(stale)
-	require.NoError(t, writer.AddTableFilesToManifest(ctx, writeTableOf(t, ctx, writer, kept, dropped), refsTo))
-	committed, err := writer.Commit(ctx, kept.Hash(), hash.Hash{})
-	require.NoError(t, err)
-	require.True(t, committed)
+			writer := open(stale)
+			require.NoError(t, writer.AddTableFilesToManifest(ctx, writeTableOf(t, ctx, writer, kept, dropped), refsTo))
+			committed, err := writer.Commit(ctx, kept.Hash(), hash.Hash{})
+			require.NoError(t, err)
+			require.True(t, committed)
 
-	stale.arm(t, ctx)
-	collector := open(bs)
-	keptOnly := writeTableOf(t, ctx, collector, kept)
-	require.NoError(t, ReplaceStoreTableFiles(ctx, collector, map[hash.Hash]uint32{hash.Parse(firstKey(keptOnly)): 1}))
+			stale.arm(t, ctx)
+			collector := open(bs)
+			keptOnly := writeTableOf(t, ctx, collector, kept)
+			require.NoError(t, ReplaceStoreTableFiles(ctx, collector, map[hash.Hash]uint32{hash.Parse(firstKey(keptOnly)): 1}))
 
-	bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-	landed := writeTableOf(t, ctx, writer, referencing(kept))
-	require.NoError(t, writer.AddTableFilesToManifest(bounded, landed, refsTo))
-	require.Nil(t, stale.stale, "the writer never read the stale manifest, so the test did not reach the case")
-	_, contents, err := manifestVersionAndContents(ctx, bs)
-	require.NoError(t, err)
-	require.Equal(t, collector.upstream.gcGen, contents.gcGen)
-	names := map[string]bool{}
-	for _, spec := range contents.specs {
-		names[spec.name.String()] = true
+			bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+			added := writeTableOf(t, ctx, writer, tc.added)
+			err = writer.AddTableFilesToManifest(bounded, added, refsTo)
+			require.Nil(t, stale.stale, "the writer never read the stale manifest, so the test did not reach the case")
+			require.NoError(t, bounded.Err())
+			if tc.wantErr != nil {
+				require.ErrorIs(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			_, contents, err := manifestVersionAndContents(ctx, bs)
+			require.NoError(t, err)
+			require.Equal(t, collector.upstream.gcGen, contents.gcGen)
+			names := map[string]bool{}
+			for _, spec := range contents.specs {
+				names[spec.name.String()] = true
+			}
+			require.Equal(t, map[string]bool{firstKey(keptOnly): true, firstKey(added): true}, names)
+		})
 	}
-	require.Equal(t, map[string]bool{firstKey(keptOnly): true, firstKey(landed): true}, names)
 }
 
 // TestReplaceStoreTableFilesRefusesWhatItWouldBreak is ReplaceStoreTableFiles
