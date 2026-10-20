@@ -115,6 +115,77 @@ func TestAWriterThatFindsANewGCGenerationReChecksAgainstIt(t *testing.T) {
 	require.Equal(t, map[string]bool{firstKey(keptOnly): true, firstKey(landed): true}, names)
 }
 
+// staleManifestOnce is a blobstore that, once armed, answers the next read of
+// the manifest with the manifest as it stood when it was armed. A git
+// remote's blobstore does the same within its read TTL: it skips the fetch
+// and serves the manifest it last synced.
+type staleManifestOnce struct {
+	blobstore.Blobstore
+	stale   []byte
+	version string
+}
+
+func (s *staleManifestOnce) arm(t *testing.T, ctx context.Context) {
+	t.Helper()
+	stale, version, err := blobstore.GetBytes(ctx, s.Blobstore, manifestFile, blobstore.AllRange)
+	require.NoError(t, err)
+	s.stale, s.version = stale, version
+}
+
+func (s *staleManifestOnce) Get(ctx context.Context, key string, br blobstore.BlobRange) (io.ReadCloser, uint64, string, error) {
+	if key != manifestFile || s.stale == nil {
+		return s.Blobstore.Get(ctx, key, br)
+	}
+	stale, version := s.stale, s.version
+	s.stale = nil
+	return io.NopCloser(bytes.NewReader(stale)), uint64(len(stale)), version, nil
+}
+
+// TestAWriterThatReadAManifestBeforeItsGCReChecksAgainstTheNewGeneration is
+// the writer of TestAWriterThatFindsANewGCGenerationReChecksAgainstIt when
+// the read it checks the generation by is served the manifest from before
+// the replacement, and only the manifest write's own read finds the new
+// generation. The write's refusal is the same fact the check would have
+// found, so the writer re-checks against the new generation and lands on it.
+func TestAWriterThatReadAManifestBeforeItsGCReChecksAgainstTheNewGeneration(t *testing.T) {
+	ctx := context.Background()
+	bs := blobstore.NewLocalBlobstore(t.TempDir())
+	stale := &staleManifestOnce{Blobstore: bs}
+	open := func(bs blobstore.Blobstore) *NomsBlockStore {
+		st, err := NewBSStore(ctx, constants.FormatDefaultString, bs, testMemTableSize, NewUnlimitedMemQuotaProvider())
+		require.NoError(t, err)
+		t.Cleanup(func() { require.NoError(t, st.Close()) })
+		return st
+	}
+	kept := chunks.NewChunk([]byte("kept"))
+	dropped := chunks.NewChunk([]byte("dropped"))
+
+	writer := open(stale)
+	require.NoError(t, writer.AddTableFilesToManifest(ctx, writeTableOf(t, ctx, writer, kept, dropped), refsTo))
+	committed, err := writer.Commit(ctx, kept.Hash(), hash.Hash{})
+	require.NoError(t, err)
+	require.True(t, committed)
+
+	stale.arm(t, ctx)
+	collector := open(bs)
+	keptOnly := writeTableOf(t, ctx, collector, kept)
+	require.NoError(t, ReplaceStoreTableFiles(ctx, collector, map[hash.Hash]uint32{hash.Parse(firstKey(keptOnly)): 1}))
+
+	bounded, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	landed := writeTableOf(t, ctx, writer, referencing(kept))
+	require.NoError(t, writer.AddTableFilesToManifest(bounded, landed, refsTo))
+	require.Nil(t, stale.stale, "the writer never read the stale manifest, so the test did not reach the case")
+	_, contents, err := manifestVersionAndContents(ctx, bs)
+	require.NoError(t, err)
+	require.Equal(t, collector.upstream.gcGen, contents.gcGen)
+	names := map[string]bool{}
+	for _, spec := range contents.specs {
+		names[spec.name.String()] = true
+	}
+	require.Equal(t, map[string]bool{firstKey(keptOnly): true, firstKey(landed): true}, names)
+}
+
 // TestReplaceStoreTableFilesRefusesWhatItWouldBreak is ReplaceStoreTableFiles
 // declining to write: a view another process's write has moved the manifest
 // past and chunks the manifest does not name yet, both of which it would drop,

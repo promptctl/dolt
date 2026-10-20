@@ -516,6 +516,14 @@ func (nbs *NomsBlockStore) updateManifestAddFiles(ctx context.Context, updates m
 		contents.lock = generateLockHash(contents.root, contents.specs, contents.appendix, nil)
 
 		updatedContents, err = nbs.manifestMgr.Update(ctx, nbs.fatalBehavior, originalLock, contents, nbs.stats, nil)
+		if gcGen != nil && errors.Is(err, chunks.ErrGCGenerationExpired) {
+			// The manifest write found the generation the check above
+			// compares against has moved: the read the check ran on was
+			// served a manifest older than the one the write read, as a
+			// git remote's blobstore does within its read TTL. It is the
+			// check's own finding, so it gets the check's answer.
+			return manifestContents{}, true, nil
+		}
 		if err != nil {
 			return manifestContents{}, false, err
 		}
