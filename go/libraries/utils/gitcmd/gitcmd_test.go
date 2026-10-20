@@ -33,6 +33,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/dolthub/dolt/go/libraries/utils/proctree"
 )
 
 // blackHole accepts connections and never answers, as a remote that has
@@ -141,6 +143,38 @@ func TestGitThatExitsOnItsOwnIsNotCancelled(t *testing.T) {
 	}
 	if !strings.HasPrefix(string(out), "git version ") {
 		t.Fatalf("output = %q, want git's version", out)
+	}
+}
+
+// A run is the cancel's when its context is done and it did not finish:
+// killed, cut, or failed. A git the interrupt reached before the kill did is
+// the last: dead of SIGINT, with nothing for the kill to end.
+func TestCancelledRun(t *testing.T) {
+	exit := errors.New("signal: interrupt")
+	for _, tc := range []struct {
+		name      string
+		cause     error
+		exit      error
+		kill      proctree.Kill
+		cut       bool
+		cancelled bool
+	}{
+		{name: "interrupted before the kill", cause: context.Canceled, exit: exit, cancelled: true},
+		{name: "killed", cause: context.Canceled, exit: exit, kill: proctree.Kill{Processes: 2}, cancelled: true},
+		{name: "output cut after a clean exit", cause: context.DeadlineExceeded, cut: true, cancelled: true},
+		{name: "finished before the cancel", cause: context.Canceled},
+		{name: "failed with its context live", exit: exit},
+		{name: "finished with its context live"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := cancelledRun(tc.cause, tc.exit, tc.kill, tc.cut)
+			if (got != nil) != tc.cancelled {
+				t.Fatalf("cancelledRun = %v, want cancelled %v", got, tc.cancelled)
+			}
+			if got != nil && (got.Cause != tc.cause || got.Exit != tc.exit || got.Kill.Processes != tc.kill.Processes || got.OutputCut != tc.cut) {
+				t.Fatalf("cancelledRun = %+v, want the readings it was given", got)
+			}
+		})
 	}
 }
 

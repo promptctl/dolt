@@ -51,6 +51,13 @@ const LongPaths = "core.longpaths=true"
 // so an uncancelled git's output is read to the end; a done context bounds it.
 const outputBound = time.Second
 
+// CancelBound is the longest a cancelled run takes to return once git itself
+// has exited: proctree's ExitBound for the processes the kill ended, then
+// outputBound for their output. A caller that bounds its own shutdown gives a
+// cancelled git at least this, or the run's *Cancelled never reaches its
+// observer. [LAW:no-ambient-temporal-coupling]
+const CancelBound = proctree.ExitBound + outputBound
+
 // Spec is how a git command runs, apart from its arguments.
 type Spec struct {
 	// Dir is the working directory; "" is the caller's.
@@ -167,23 +174,35 @@ func (c *Cmd) start(out *outputs) (*proctree.Tree, error) {
 }
 
 // wait waits for git, settles its tree, and waits for its output, every run
-// the same way. The run is a *Cancelled when its context ended anything:
-// git's process tree, or git's output, cut outputBound after the context was
-// done. Otherwise it is exec's result, or the first copy error, with the
-// output complete. Wait reports a Cancel failure only for a process that
-// exited cleanly, and a cancelled git died of the kill, so the *Cancelled
-// carries the kill's record. [LAW:no-silent-failure]
+// the same way. A run its context ended is handed to the context's observer
+// and returned. Otherwise the run is exec's result, or the first copy error,
+// with the output complete.
 func (c *Cmd) wait(tree *proctree.Tree, out *outputs) error {
 	err := c.cmd.Wait()
 	kill := tree.Settle()
 	cut, copyErr := out.drain(c.ctx)
-	if kill.Processes == 0 && !cut {
-		// A failed git's error already explains why its output stopped.
-		return cmp.Or(err, copyErr)
+	if cancelled := cancelledRun(c.ctx.Err(), err, kill, cut); cancelled != nil {
+		observerOf(c.ctx)(cancelled)
+		return cancelled
 	}
-	cancelled := &Cancelled{Cause: c.ctx.Err(), Exit: err, Kill: kill, OutputCut: cut}
-	observerOf(c.ctx)(cancelled)
-	return cancelled
+	// A failed git's error already explains why its output stopped.
+	return cmp.Or(err, copyErr)
+}
+
+// cancelledRun is the run its context ended, or nil when the context did not
+// end it. A run whose context is done did not finish when the kill ended
+// git's process tree, when its output was cut outputBound after the context
+// was done, or when git exited non-zero. The last is a git the interrupt
+// reached before the kill did: Ctrl-C signals the terminal's foreground
+// process group, git included, so git can die of SIGINT with nothing left for
+// the kill to end. Wait reports a Cancel failure only for a process that
+// exited cleanly, and a cancelled git died of the kill, so the *Cancelled
+// carries the kill's record. [LAW:no-silent-failure]
+func cancelledRun(cause, exit error, kill proctree.Kill, cut bool) *Cancelled {
+	if cause == nil || (exit == nil && kill.Processes == 0 && !cut) {
+		return nil
+	}
+	return &Cancelled{Cause: cause, Exit: exit, Kill: kill, OutputCut: cut}
 }
 
 // outputs is the pipes gitcmd copies git's stdout and stderr through. Each

@@ -45,7 +45,7 @@ type Kill struct {
 	// tree, because once it has exited no process table places anything
 	// under it.
 	Processes int
-	// Survivors is how many of them were still running exitBound after the
+	// Survivors is how many of them were still running ExitBound after the
 	// kill. Non-zero means the kill did not end the tree. Nil means no count
 	// was taken: nothing was killed, or the process table could not be read,
 	// and Err says why.
@@ -55,10 +55,10 @@ type Kill struct {
 	Err error
 }
 
-// exitBound is how long Settle waits for the processes a kill ended to exit.
+// ExitBound is how long Settle waits for the processes a kill ended to exit.
 // The wait ends when the last of them exits, so only a process that does not
 // die (one stuck in uninterruptible I/O) costs the whole bound.
-const exitBound = 5 * time.Second
+const ExitBound = 5 * time.Second
 
 // exitPoll is how often Settle looks again for a killed process still running.
 // It sets how soon Settle notices the last exit, never whether it does.
@@ -81,14 +81,14 @@ func Start(cmd *exec.Cmd) (*Tree, error) {
 
 // Settle reports what the cancel did, if one ended anything, and releases
 // what the tree held. Call it once, after Wait has returned. Its readings are
-// taken once the killed processes have exited, or exitBound after the kill,
+// taken once the killed processes have exited, or ExitBound after the kill,
 // so a process still dying is not counted as surviving.
 // [LAW:no-ambient-temporal-coupling]
 func (t *Tree) Settle() Kill {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.record.Processes > 0 {
-		survivors, err := awaitExit(t.running, exitBound)
+		survivors, err := awaitExit(t.running, ExitBound)
 		t.record.Survivors = survivors
 		t.record.Err = errors.Join(t.record.Err, err)
 	}
