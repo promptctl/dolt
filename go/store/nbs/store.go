@@ -2053,6 +2053,16 @@ func (nbs *NomsBlockStore) addTableFilesToManifest(ctx context.Context, fileIdTo
 			if err := nbs.Rebase(ctx); err != nil {
 				return fmt.Errorf("addTableFiles, rebase onto the new GC generation: %w", err)
 			}
+			// A rebase that left the view on the generation just checked
+			// against would find the same mismatch again: the manifest it
+			// read did not show the new generation, or showed it under the
+			// lock the view already holds. Fail loudly rather than loop.
+			nbs.mu.RLock()
+			rebased := nbs.upstream.gcGen != sources.gcGen
+			nbs.mu.RUnlock()
+			if !rebased {
+				return fmt.Errorf("addTableFiles, rebase onto the new GC generation left the view on %s: %w", sources.gcGen, chunks.ErrGCGenerationExpired)
+			}
 			continue
 		}
 
