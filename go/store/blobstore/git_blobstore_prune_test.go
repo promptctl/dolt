@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package blobstore
 
 import (
@@ -56,7 +62,7 @@ func TestGitBlobstore_Prune_RemovesUnreferencedEntries(t *testing.T) {
 	_, err = localRunner.Run(ctx, git.RunOptions{}, "remote", "add", "origin", remoteRepo.GitDir)
 	require.NoError(t, err)
 
-	bs, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
+	bs, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
 		RemoteName: "origin",
 		Identity:   testIdentity(),
 	})
@@ -116,7 +122,7 @@ func TestGitBlobstore_Prune_CreatesOrphanCommit(t *testing.T) {
 	_, err = localRunner.Run(ctx, git.RunOptions{}, "remote", "add", "origin", remoteRepo.GitDir)
 	require.NoError(t, err)
 
-	bs, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
+	bs, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
 		RemoteName: "origin",
 		Identity:   testIdentity(),
 	})
@@ -165,7 +171,7 @@ func TestGitBlobstore_Prune_NoPruneWhenAllReferenced(t *testing.T) {
 	_, err = localRunner.Run(ctx, git.RunOptions{}, "remote", "add", "origin", remoteRepo.GitDir)
 	require.NoError(t, err)
 
-	bs, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
+	bs, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
 		RemoteName: "origin",
 		Identity:   testIdentity(),
 	})
@@ -222,7 +228,7 @@ func TestGitBlobstore_Prune_ChunkedAndSuffixedEntries(t *testing.T) {
 	_, err = localRunner.Run(ctx, git.RunOptions{}, "remote", "add", "origin", remoteRepo.GitDir)
 	require.NoError(t, err)
 
-	bs, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
+	bs, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{
 		RemoteName: "origin",
 		Identity:   testIdentity(),
 	})

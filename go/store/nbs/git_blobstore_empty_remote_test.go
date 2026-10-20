@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package nbs
 
 import (
@@ -70,7 +76,7 @@ func TestNBS_GitBlobstore_EmptyRemote_FirstManifestUpdateBootstrapsRef(t *testin
 	out, err := cmd.CombinedOutput()
 	require.NoError(t, err, "git remote add failed: %s", string(out))
 
-	bs, err := blobstore.NewGitBlobstore(localRepo.GitDir, blobstore.DoltDataRef)
+	bs, err := blobstore.NewGitBlobstore(context.Background(), localRepo.GitDir, blobstore.DoltDataRef)
 	require.NoError(t, err)
 
 	// Write a valid v5 manifest into the empty remote via the blobstore manifest updater.
