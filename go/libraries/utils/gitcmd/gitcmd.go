@@ -347,7 +347,7 @@ func (e *Cancelled) Error() string {
 		msg += fmt.Sprintf(", kill failed: %v", e.Kill.Err)
 	}
 	if e.OutputCut {
-		msg += fmt.Sprintf(", output cut: still open %s after the cancel", outputBound)
+		msg += fmt.Sprintf(", output cut: still open %s after the tree ended", outputBound)
 	}
 	if e.Exit != nil {
 		msg += ": " + e.Exit.Error()
