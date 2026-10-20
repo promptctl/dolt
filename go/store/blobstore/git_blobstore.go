@@ -277,6 +277,13 @@ func (c *concatReadCloser) Close() error {
 //     as immutable and its mapping is not overwritten by later fetches.
 //   - The manifest is the exception: it is mutable and may be updated on fetch/merge.
 type GitBlobstore struct {
+	// closeCtx is the opener's context without its cancellation. Close has
+	// none of its own, and runs its git on this one: the opener's values,
+	// such as the observer a cancelled git is reported to, reach Close's git,
+	// and a cancel that ended the opener's work does not stop Close's.
+	closeCtx context.Context
+	// gcTimeout bounds the periodic gc Close runs.
+	gcTimeout         time.Duration
 	gitDir            string
 	remoteRef         string
 	localRef          string
@@ -386,14 +393,14 @@ func (gbs *GitBlobstore) cacheListChildren(dir string) ([]git.TreeEntry, bool) {
 
 // NewGitBlobstore creates a new GitBlobstore rooted at |gitDir| and |ref|.
 // |gitDir| should point at a bare repo directory or a .git directory.
-func NewGitBlobstore(gitDir, ref string) (*GitBlobstore, error) {
-	return NewGitBlobstoreWithOptions(gitDir, ref, GitBlobstoreOptions{})
+func NewGitBlobstore(ctx context.Context, gitDir, ref string) (*GitBlobstore, error) {
+	return NewGitBlobstoreWithOptions(ctx, gitDir, ref, GitBlobstoreOptions{})
 }
 
 // NewGitBlobstoreWithIdentity creates a GitBlobstore rooted at |gitDir| and |ref|, optionally
 // forcing an author/committer identity for write paths.
-func NewGitBlobstoreWithIdentity(gitDir, ref string, identity *git.Identity) (*GitBlobstore, error) {
-	return NewGitBlobstoreWithOptions(gitDir, ref, GitBlobstoreOptions{Identity: identity})
+func NewGitBlobstoreWithIdentity(ctx context.Context, gitDir, ref string, identity *git.Identity) (*GitBlobstore, error) {
+	return NewGitBlobstoreWithOptions(ctx, gitDir, ref, GitBlobstoreOptions{Identity: identity})
 }
 
 // GitBlobstoreOptions configures optional behaviors of GitBlobstore.
@@ -415,7 +422,7 @@ type GitBlobstoreOptions struct {
 // so this only affects read-path callers (Get/Exists).
 const defaultSyncForReadTTL = 1 * time.Second
 
-func NewGitBlobstoreWithOptions(gitDir, ref string, opts GitBlobstoreOptions) (*GitBlobstore, error) {
+func NewGitBlobstoreWithOptions(ctx context.Context, gitDir, ref string, opts GitBlobstoreOptions) (*GitBlobstore, error) {
 	r, err := git.NewRunner(gitDir)
 	if err != nil {
 		return nil, err
@@ -431,6 +438,8 @@ func NewGitBlobstoreWithOptions(gitDir, ref string, opts GitBlobstoreOptions) (*
 	localRef := OwnedLocalRef(remoteName, remoteRef, instanceID)
 
 	return &GitBlobstore{
+		closeCtx:          context.WithoutCancel(ctx),
+		gcTimeout:         5 * time.Minute,
 		gitDir:            gitDir,
 		remoteRef:         remoteRef,
 		localRef:          localRef,
@@ -669,7 +678,7 @@ func (gbs *GitBlobstore) CleanupOwnedLocalRef(ctx context.Context) error {
 // it, the cache keeps exactly one snapshot per remote: the one the last instance
 // to close saw (LastKnownRemoteRef says what that costs).
 func (gbs *GitBlobstore) Close() error {
-	ctx := context.Background()
+	ctx := gbs.closeCtx
 
 	// Best-effort periodic GC to repack the cache repo. Runs outside the
 	// write lock so a slow gc cannot serialize other writers. maybeRunGC
@@ -752,7 +761,7 @@ func (gbs *GitBlobstore) maybeRunGC() {
 		}
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	ctx, cancel := context.WithTimeout(gbs.closeCtx, gbs.gcTimeout)
 	defer cancel()
 	_, _ = gbs.runner.Run(ctx, git.RunOptions{}, "gc", "--prune=now")
 	_ = os.WriteFile(markerPath, nil, 0644)

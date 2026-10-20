@@ -42,9 +42,9 @@ import (
 
 	"cloud.google.com/go/storage"
 	"github.com/dustin/go-humanize"
-	lru "github.com/promptctl/primitives/lru"
 	"github.com/oracle/oci-go-sdk/v65/common"
 	"github.com/oracle/oci-go-sdk/v65/objectstorage"
+	lru "github.com/promptctl/primitives/lru"
 	"github.com/sirupsen/logrus"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -695,7 +695,7 @@ func NewGitStore(ctx context.Context, nbfVerStr string, gitDir string, ref strin
 		opts.MaxPartSize = defaultGitBlobstoreMaxPartSize
 	}
 
-	bs, err := blobstore.NewGitBlobstoreWithOptions(gitDir, ref, opts)
+	bs, err := blobstore.NewGitBlobstoreWithOptions(ctx, gitDir, ref, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -714,7 +714,7 @@ func NewNoConjoinGitStore(ctx context.Context, nbfVerStr string, gitDir string, 
 		opts.MaxPartSize = defaultGitBlobstoreMaxPartSize
 	}
 
-	bs, err := blobstore.NewGitBlobstoreWithOptions(gitDir, ref, opts)
+	bs, err := blobstore.NewGitBlobstoreWithOptions(ctx, gitDir, ref, opts)
 	if err != nil {
 		return nil, err
 	}

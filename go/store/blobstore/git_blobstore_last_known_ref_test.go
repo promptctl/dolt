@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 // NOTICE: this file does not exist upstream. It was added to this fork in 2026
 // by Brandon Fryslie for the links-issue-tracker (`lit`) project as the
 // regression test for patch 7; see the patch ledger README.lit-fork.md at the
@@ -47,7 +53,7 @@ func TestGitBlobstore_Close_LeavesOnlyTheLastKnownRef(t *testing.T) {
 	head, err := remoteRepo.SetRefToTree(ctx, DoltDataRef, map[string][]byte{"manifest": []byte("seed\n")}, "seed")
 	require.NoError(t, err)
 
-	bs, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
+	bs, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
 	require.NoError(t, err)
 	ok, err := bs.Exists(ctx, "manifest")
 	require.NoError(t, err)
@@ -66,7 +72,7 @@ func TestGitBlobstore_Close_PublishesWhatTheInstancePushed(t *testing.T) {
 	before, err := remoteRepo.SetRefToTree(ctx, DoltDataRef, map[string][]byte{"manifest": []byte("seed\n")}, "seed")
 	require.NoError(t, err)
 
-	bs, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin", Identity: testIdentity()})
+	bs, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin", Identity: testIdentity()})
 	require.NoError(t, err)
 	// The manifest, because only a manifest write pushes; any other key is
 	// queued until the next one.
@@ -92,13 +98,13 @@ func TestGitBlobstore_Close_WithoutSyncKeepsAnEarlierLastKnownRef(t *testing.T) 
 	head, err := remoteRepo.SetRefToTree(ctx, DoltDataRef, map[string][]byte{"manifest": []byte("seed\n")}, "seed")
 	require.NoError(t, err)
 
-	reader, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
+	reader, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
 	require.NoError(t, err)
 	_, err = reader.Exists(ctx, "manifest")
 	require.NoError(t, err)
 	require.NoError(t, reader.Close())
 
-	idle, err := NewGitBlobstoreWithOptions(localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
+	idle, err := NewGitBlobstoreWithOptions(context.Background(), localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
 	require.NoError(t, err)
 	require.NoError(t, idle.Close())
 

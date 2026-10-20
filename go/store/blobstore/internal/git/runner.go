@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 // Package git provides helpers for invoking git plumbing commands against a bare
 // repository or .git directory without a working tree checkout.
 package git
@@ -27,6 +33,7 @@ import (
 	"strings"
 
 	"github.com/dolthub/dolt/go/libraries/utils/gitauth"
+	"github.com/dolthub/dolt/go/libraries/utils/gitcmd"
 )
 
 const maxCapturedOutputBytes = 64 * 1024
@@ -34,27 +41,17 @@ const maxCapturedOutputBytes = 64 * 1024
 // Runner executes git commands with GIT_DIR set (and optionally GIT_INDEX_FILE).
 // It is intended for git plumbing usage and should not require a working tree.
 type Runner struct {
-	gitPath string
-	gitDir  string
+	gitDir string
 	// extraEnv is appended to os.Environ() for every command.
 	extraEnv []string
 }
 
 // NewRunner creates a Runner using the git binary on PATH.
 func NewRunner(gitDir string) (*Runner, error) {
-	p, err := exec.LookPath("git")
-	if err != nil {
+	if _, err := exec.LookPath("git"); err != nil {
 		return nil, fmt.Errorf("git not found on PATH: %w", err)
 	}
-	return NewRunnerWithGitPath(gitDir, p), nil
-}
-
-// NewRunnerWithGitPath creates a Runner using an explicit git binary path.
-func NewRunnerWithGitPath(gitDir, gitPath string) *Runner {
-	return &Runner{
-		gitPath: gitPath,
-		gitDir:  gitDir,
-	}
+	return &Runner{gitDir: gitDir}, nil
 }
 
 // WithExtraEnv returns a copy of r that appends env entries (e.g. "K=V") to all commands.
@@ -116,26 +113,18 @@ func (e *CmdError) Unwrap() error { return e.Cause }
 // Run executes "git <args...>" with GIT_DIR set and returns captured combined output
 // when Stdout/Stderr are not supplied.
 func (r *Runner) Run(ctx context.Context, opts RunOptions, args ...string) ([]byte, error) {
-	cmd := r.command(ctx, opts, args)
-
 	// Capture combined output unless caller provided destinations.
 	var buf bytes.Buffer
-	if opts.Stdout == nil && opts.Stderr == nil {
-		cmd.Stdout = &buf
-		cmd.Stderr = &buf
-	} else {
-		if opts.Stdout != nil {
-			cmd.Stdout = opts.Stdout
-		}
-		if opts.Stderr != nil {
-			cmd.Stderr = opts.Stderr
-		} else if opts.Stdout != nil {
-			// Reasonable default: if only Stdout is set, send stderr there too.
-			cmd.Stderr = opts.Stdout
-		}
+	stdout, stderr := opts.Stdout, opts.Stderr
+	switch {
+	case stdout == nil && stderr == nil:
+		stdout, stderr = &buf, &buf
+	case stderr == nil:
+		// Reasonable default: if only Stdout is set, send stderr there too.
+		stderr = stdout
 	}
 
-	err := cmd.Run()
+	err := r.command(ctx, opts, args).Run(stdout, stderr)
 	out := buf.Bytes()
 	if err == nil {
 		return out, nil
@@ -148,7 +137,7 @@ func (r *Runner) Run(ctx context.Context, opts RunOptions, args ...string) ([]by
 	}
 	cerr := &CmdError{
 		Args:     append([]string(nil), args...),
-		Dir:      cmd.Dir,
+		Dir:      opts.Dir,
 		ExitCode: exitCode,
 		Output:   out,
 		Cause:    err,
@@ -156,43 +145,25 @@ func (r *Runner) Run(ctx context.Context, opts RunOptions, args ...string) ([]by
 	return out, gitauth.NormalizeError(cerr, out)
 }
 
-// Start starts "git <args...>" and returns a ReadCloser for stdout.
-//
-// Resource management:
-//   - Call Close() on the returned ReadCloser to ensure the underlying git process
-//     is waited (cmd.Wait()) and resources are released.
-//   - The returned *exec.Cmd is provided for advanced uses (e.g. signals), but most
-//     callers should not call Wait() directly.
-func (r *Runner) Start(ctx context.Context, opts RunOptions, args ...string) (io.ReadCloser, *exec.Cmd, error) {
-	cmd := r.command(ctx, opts, args)
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, nil, err
-	}
+// Start starts "git <args...>" and returns a ReadCloser for stdout. Close
+// waits for git, so call it even when bailing early, and returns how git ended.
+func (r *Runner) Start(ctx context.Context, opts RunOptions, args ...string) (io.ReadCloser, error) {
 	// Capture stderr into a buffer so failures have actionable output.
 	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-
-	if err := cmd.Start(); err != nil {
-		_ = stdout.Close()
-		return nil, nil, err
+	stdout, err := r.command(ctx, opts, args).Stream(&stderr)
+	if err != nil {
+		return nil, err
 	}
-
-	// Wrap stdout so that Close also waits to avoid zombies if callers bail early.
-	rc := &cmdReadCloser{
+	return &cmdReadCloser{
 		r:      stdout,
-		cmd:    cmd,
 		stderr: &stderr,
 		args:   append([]string(nil), args...),
-		dir:    cmd.Dir,
-	}
-	return rc, cmd, nil
+		dir:    opts.Dir,
+	}, nil
 }
 
 type cmdReadCloser struct {
 	r      io.ReadCloser
-	cmd    *exec.Cmd
 	stderr *bytes.Buffer
 	args   []string
 	dir    string
@@ -201,8 +172,7 @@ type cmdReadCloser struct {
 func (c *cmdReadCloser) Read(p []byte) (int, error) { return c.r.Read(p) }
 
 func (c *cmdReadCloser) Close() error {
-	_ = c.r.Close()
-	err := c.cmd.Wait()
+	err := c.r.Close()
 	if err == nil {
 		return nil
 	}
@@ -221,24 +191,10 @@ func (c *cmdReadCloser) Close() error {
 	return gitauth.NormalizeError(cerr, cerr.Output)
 }
 
-// command builds "git <args...>" for Run and Start. core.longpaths lets git
-// for Windows open paths past MAX_PATH (260 characters), which a ref under a
-// git remote cache passes once the database sits a few directories deep, and
-// other platforms ignore the key. git hands -c settings on to the processes it
-// spawns on the cache repo's side of a fetch or push, but not to the
-// upload-pack or receive-pack it starts in a local remote, whose paths follow
-// that repository's own config.
-func (r *Runner) command(ctx context.Context, opts RunOptions, args []string) *exec.Cmd {
-	all := append([]string{"-c", "core.longpaths=true"}, args...)
-	cmd := exec.CommandContext(ctx, r.gitPath, all...) //nolint:gosec // args are controlled by caller; used for internal plumbing.
-	if opts.Dir != "" {
-		cmd.Dir = opts.Dir
-	}
-	cmd.Env = r.env(opts)
-	if opts.Stdin != nil {
-		cmd.Stdin = opts.Stdin
-	}
-	return cmd
+// command builds "git <args...>" for Run and Start, through gitcmd, the one
+// way lit and Dolt start git.
+func (r *Runner) command(ctx context.Context, opts RunOptions, args []string) *gitcmd.Cmd {
+	return gitcmd.Command(ctx, gitcmd.Spec{Dir: opts.Dir, Env: r.env(opts), Stdin: opts.Stdin}, args...)
 }
 
 func (r *Runner) env(opts RunOptions) []string {
