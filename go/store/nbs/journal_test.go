@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package nbs
 
 import (
@@ -36,7 +42,7 @@ func makeTestChunkJournal(t *testing.T) *ChunkJournal {
 	dir, err := os.MkdirTemp("", "")
 	require.NoError(t, err)
 	t.Cleanup(func() { file.RemoveAll(dir) })
-	m, err := newJournalManifest(ctx, dir, false)
+	m, err := newJournalManifest(ctx, dir, JournalLockOrReadOnly)
 	require.NoError(t, err)
 	q := NewUnlimitedMemQuotaProvider()
 	p := newFSTablePersister(dir, q, false)
@@ -48,7 +54,7 @@ func makeTestChunkJournal(t *testing.T) *ChunkJournal {
 }
 
 func openTestChunkJournal(t *testing.T, dir string) *ChunkJournal {
-	m, err := newJournalManifest(t.Context(), dir, false)
+	m, err := newJournalManifest(t.Context(), dir, JournalLockOrReadOnly)
 	require.NoError(t, err)
 	q := NewUnlimitedMemQuotaProvider()
 	p := newFSTablePersister(dir, q, false)
@@ -104,7 +110,7 @@ func TestChunkJournalReadOnly(t *testing.T) {
 		rw := makeTestChunkJournal(t)
 		assert.Equal(t, chunks.ExclusiveAccessMode(chunks.ExclusiveAccessMode_Exclusive), rw.AccessMode())
 
-		_, err := newJournalManifest(t.Context(), rw.backing.dir, true)
+		_, err := newJournalManifest(t.Context(), rw.backing.dir, JournalLockOrFail)
 		require.Error(t, err)
 		require.ErrorIs(t, err, ErrDatabaseLocked)
 	})

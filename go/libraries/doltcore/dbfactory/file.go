@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package dbfactory
 
 import (
@@ -70,6 +76,11 @@ const (
 	//
 	// Intended for embedded-driver usage so higher layers can implement their own retry/backoff policy.
 	FailOnJournalLockTimeoutParam = "fail_on_journal_lock_timeout"
+
+	// JournalReadOnlyParam opens the journaling store read-only without trying the exclusive journal manifest
+	// lock, so the open neither waits on a writer nor keeps one out, and writes nothing to the database's files.
+	// It contradicts FailOnJournalLockTimeoutParam; an open given both fails.
+	JournalReadOnlyParam = "journal_read_only"
 )
 
 // DoltDataDir is the directory where noms files will be stored
@@ -200,15 +211,13 @@ func (fact FileFactory) CreateDbNoCache(ctx context.Context, nbf *types.NomsBinF
 	var newGenSt *nbs.NomsBlockStore
 	q := nbs.NewUnlimitedMemQuotaProvider()
 	if useJournal && chunkJournalFeatureFlag {
-		// Allow higher layers (e.g. embedded driver) to opt into fail-fast lock behavior instead of
-		// falling back to read-only mode on lock timeout.
-		opts := nbs.JournalingStoreOptions{}
-		if params != nil {
-			if _, ok := params[FailOnJournalLockTimeoutParam]; ok {
-				opts.FailOnLockTimeout = true
-			}
+		// Allow higher layers (e.g. embedded driver) to choose how the store treats the journal lock.
+		var lock nbs.JournalLock
+		lock, err = journalLockFromParams(params)
+		if err != nil {
+			return nil, nil, nil, err
 		}
-		newGenSt, err = nbs.NewLocalJournalingStoreWithOptions(ctx, nbf.VersionString(), path, q, mmapArchiveIndexes, recCb, opts)
+		newGenSt, err = nbs.NewLocalJournalingStoreWithOptions(ctx, nbf.VersionString(), path, q, mmapArchiveIndexes, recCb, nbs.JournalingStoreOptions{Lock: lock})
 	} else {
 		newGenSt, err = nbs.NewLocalStore(ctx, nbf.VersionString(), path, defaultMemTableSize, q, mmapArchiveIndexes)
 	}
@@ -268,4 +277,22 @@ func validateDir(path string) error {
 	}
 
 	return nil
+}
+
+// journalLockFromParams reads the one journal lock policy |params| asks for.
+// The params map can name two policies at once; that is refused here, where
+// it is read, so the store is only ever handed one.
+func journalLockFromParams(params map[string]interface{}) (nbs.JournalLock, error) {
+	_, failFast := params[FailOnJournalLockTimeoutParam]
+	_, readOnly := params[JournalReadOnlyParam]
+	switch {
+	case failFast && readOnly:
+		return 0, fmt.Errorf("dbfactory: %s and %s both set: a journaling store either fails on a held lock or never takes it", FailOnJournalLockTimeoutParam, JournalReadOnlyParam)
+	case failFast:
+		return nbs.JournalLockOrFail, nil
+	case readOnly:
+		return nbs.JournalReadOnly, nil
+	default:
+		return nbs.JournalLockOrReadOnly, nil
+	}
 }

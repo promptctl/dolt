@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// NOTICE (Apache License 2.0, section 4(b)): this file was modified in 2026 by
+// Brandon Fryslie for the links-issue-tracker (`lit`) project. It is not the
+// upstream github.com/dolthub/dolt version. What changed, why, and what would
+// let the change be dropped are recorded in the patch ledger that
+// README.lit-fork.md at the root of this fork points to.
+
 package nbs
 
 import (
@@ -103,6 +109,28 @@ func openJournalWriter(ctx context.Context, path string) (wr *journalWriter, exi
 	}, true, nil
 }
 
+// openReadOnlyJournal opens the journal at |path| for reading only: the
+// journal of a store that does not hold the manifest lock, which another
+// process may be appending to. The writer it returns has no buffer to build
+// records in, and its file refuses writes.
+func openReadOnlyJournal(ctx context.Context, path string) (wr *journalWriter, exists bool, err error) {
+	if path, err = filepath.Abs(path); err != nil {
+		return nil, false, err
+	}
+	f, err := os.Open(path)
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, false, nil
+	} else if err != nil {
+		return nil, false, err
+	}
+	if info, err := f.Stat(); err != nil {
+		return nil, true, errors.Join(err, f.Close())
+	} else if info.IsDir() {
+		return nil, true, errors.Join(fmt.Errorf("expected file %s found directory", chunkJournalName), f.Close())
+	}
+	return &journalWriter{journal: f, path: path}, true, nil
+}
+
 func createJournalWriter(ctx context.Context, path string) (wr *journalWriter, err error) {
 	var f *os.File
 	if path, err = filepath.Abs(path); err != nil {
@@ -155,60 +183,66 @@ type journalWriter struct {
 
 var _ io.Closer = &journalWriter{}
 
-// bootstrapJournal reads in records from the journal file and the journal index file, initializing
-// the state of the journalWriter. Root hashes read from root update records in the journal are written
-// to |reflogRingBuffer|, which maintains the most recently updated roots which are used to generate the
-// reflog. This function returns the most recent root hash for the journal as well as any error encountered.
-// The journal index will be truncated to the last valid batch of lookups. Lookups with offsets
-// larger than the position of the last valid lookup metadata are rewritten to the index as they
-// are added to the novel ranges map. If the number of novel lookups exceeds |wr.maxNovel|, we
-// extend the journal index with one metadata flush before existing this function to save indexing
-// progress.
-func (wr *journalWriter) bootstrapJournal(ctx context.Context, canWrite bool, reflogRingBuffer *reflogRingBuffer, warningsCb func(error)) (last hash.Hash, err error) {
-	wr.lock.Lock()
-	defer wr.lock.Unlock()
+// journalFindings is what a read of a journal and its index found, before
+// anything acts on it. It is the whole result of the read pass: a read-only
+// journal adopts it as it is, and a writable one first repairs the files to
+// match it (repairJournal).
+type journalFindings struct {
+	ranges rangeIndex
+	// indexed is the journal offset the index's valid batches cover.
+	indexed int64
+	// indexEnd is the index file offset just past its last valid batch.
+	indexEnd int64
+	// tail holds a lookup for each chunk record past |indexed|, in journal
+	// order: the lookups the index does not yet hold.
+	tail []lookup
+	// end is the journal offset just past its last valid record.
+	end     int64
+	uncmpSz uint64
+	// last is the root of the journal's last root hash record, and
+	// lastOffset that record's offset.
+	last       hash.Hash
+	lastOffset int64
+	// roots are the journal's root hash records past |indexed|, in journal
+	// order, for the reflog.
+	roots []reflogRootHashEntry
+}
 
-	if wr.maxNovel == 0 {
-		wr.maxNovel = journalIndexDefaultMaxNovel
-	}
-	wr.ranges = newRangeIndex()
+// errCorruptJournalIndex marks a read pass that failed on the journal index
+// rather than on the journal: the index can be discarded and rebuilt from the
+// journal, which is the source of truth.
+var errCorruptJournalIndex = errors.New("corrupt journal index")
 
-	p := filepath.Join(filepath.Dir(wr.path), journalIndexFileName)
-	var ok bool
-	ok, err = fileExists(p)
-	if err != nil {
-		return
-	} else if ok {
-		wr.index, err = os.OpenFile(p, os.O_RDWR, 0666)
-	} else {
-		wr.index, err = os.OpenFile(p, os.O_RDWR|os.O_CREATE, 0666)
-	}
-	if err != nil {
-		return
-	}
-	wr.indexWriter = bufio.NewWriterSize(wr.index, journalIndexDefaultMaxNovel)
+// readJournal reads |index| (nil when there is none) up to its last valid
+// batch, then |journal| from the offset that batch covers to its last valid
+// record, and returns what it found. It writes nothing, to either file: what
+// to do about a garbage tail, an index tail or an index past its last valid
+// batch is repairJournal's, and only a journal that holds the manifest lock
+// runs it.
+func readJournal(ctx context.Context, journal *os.File, index *os.File, warningsCb func(error)) (f journalFindings, err error) {
+	f.ranges = newRangeIndex()
 
-	if ok {
+	if index != nil {
 		var info os.FileInfo
-		if info, err = wr.index.Stat(); err != nil {
-			return hash.Hash{}, err
+		if info, err = index.Stat(); err != nil {
+			return journalFindings{}, err
 		}
 
 		// initialize range index with enough capacity to
 		// avoid rehashing during bootstrapping
 		cnt := estimateRangeCount(info)
-		wr.ranges.cached = make(map[addr16]Range, cnt)
+		f.ranges.cached = make(map[addr16]Range, cnt)
 
 		eg, ectx := errgroup.WithContext(ctx)
 		ch := make(chan []lookup, 4)
 
 		// process the indexed portion of the journal
-		var safeIndexOffset int64
 		var prev int64
 
 		eg.Go(func() error {
 			defer close(ch)
-			safeIndexOffset, err = processIndexRecords(bufio.NewReader(wr.index), info.Size(), func(m lookupMeta, batch []lookup, batchChecksum uint32) error {
+			var perr error
+			f.indexEnd, perr = processIndexRecords(bufio.NewReader(index), info.Size(), func(m lookupMeta, batch []lookup, batchChecksum uint32) error {
 				if m.checkSum != batchChecksum {
 					return fmt.Errorf("invalid index checksum (%d != %d)", batchChecksum, m.checkSum)
 				}
@@ -218,9 +252,9 @@ func (wr *journalWriter) bootstrapJournal(ctx context.Context, canWrite bool, re
 				}
 				prev = m.batchEnd
 
-				// |r.end| is expected to point to a root hash record in |wr.journal|
+				// |r.end| is expected to point to a root hash record in |journal|
 				// containing a hash equal to |r.lastRoot|, validate this here
-				if h, err := peekRootHashAt(wr.journal, int64(m.batchEnd)); err != nil {
+				if h, err := peekRootHashAt(journal, int64(m.batchEnd)); err != nil {
 					return err
 				} else if h != m.latestHash {
 					return fmt.Errorf("invalid index record hash (%s != %s)", h.String(), m.latestHash.String())
@@ -231,11 +265,11 @@ func (wr *journalWriter) bootstrapJournal(ctx context.Context, canWrite bool, re
 					return ectx.Err()
 				case ch <- batch:
 					// record a high-water-mark for the indexed portion of the journal
-					wr.indexed = int64(m.batchEnd)
+					f.indexed = int64(m.batchEnd)
 				}
 				return nil
 			})
-			return err
+			return perr
 		})
 		// populate range hashmap
 		eg.Go(func() error {
@@ -248,60 +282,42 @@ func (wr *journalWriter) bootstrapJournal(ctx context.Context, canWrite bool, re
 						return nil
 					}
 					for _, l := range ll {
-						wr.ranges.putCached(l.a, l.r)
+						f.ranges.putCached(l.a, l.r)
 					}
 				}
 			}
 		})
 
-		err = eg.Wait()
-		if err != nil {
-			err = fmt.Errorf("error bootstrapping chunk journal: %s", err.Error())
-			if cerr := wr.corruptIndexRecovery(); cerr != nil {
-				err = fmt.Errorf("error recovering corrupted chunk journal index: %s", err.Error())
+		if err = eg.Wait(); err != nil {
+			// A cancelled read says nothing about the index.
+			if cerr := context.Cause(ctx); cerr != nil {
+				return journalFindings{}, cerr
 			}
-			return hash.Hash{}, err
+			return journalFindings{}, fmt.Errorf("error bootstrapping chunk journal: %s: %w", err.Error(), errCorruptJournalIndex)
 		}
-
-		// rewind index to last safe point. Note that |safeIndexOffset| refers
-		// to a location in the index file, while |wr.indexed| refers to a position
-		// in the journal file.
-		if err := wr.truncateIndex(safeIndexOffset); err != nil {
-			return hash.Hash{}, err
-		}
-		wr.ranges = wr.ranges.flatten(ctx)
+		f.ranges = f.ranges.flatten(ctx)
 	}
 
-	var lastOffset int64
-
-	// process the non-indexed portion of the journal starting at |wr.indexed|,
+	// process the non-indexed portion of the journal starting at |f.indexed|,
 	// at minimum the non-indexed portion will include a root hash record.
-	// Index lookups are added to the ongoing batch to re-synchronize.
-	wr.off, err = processJournalRecords(ctx, wr.journal, canWrite, wr.indexed, func(o int64, r journalRec) error {
+	f.end, err = processJournalRecords(ctx, journal, false /* tryTruncate */, f.indexed, func(o int64, r journalRec) error {
 		switch r.kind {
 		case chunkJournalRecKind:
 			rng := Range{
 				Offset: uint64(o) + uint64(r.payloadOffset()),
 				Length: uint32(len(r.payload)),
 			}
-			wr.ranges.put(r.address, rng)
-			wr.uncmpSz += r.uncompressedPayloadSize()
-
-			a := toAddr16(r.address)
-			if err := writeIndexLookup(wr.indexWriter, lookup{a: a, r: rng}); err != nil {
-				return err
-			}
-			wr.batchCrc = crc32.Update(wr.batchCrc, crcTable, a[:])
+			f.ranges.put(r.address, rng)
+			f.uncmpSz += r.uncompressedPayloadSize()
+			f.tail = append(f.tail, lookup{a: toAddr16(r.address), r: rng})
 
 		case rootHashJournalRecKind:
-			lastOffset = o
-			last = r.address
-			if !reflogDisabled && reflogRingBuffer != nil {
-				reflogRingBuffer.Push(reflogRootHashEntry{
-					root:      r.address.String(),
-					timestamp: r.timestamp,
-				})
-			}
+			f.lastOffset = o
+			f.last = r.address
+			f.roots = append(f.roots, reflogRootHashEntry{
+				root:      r.address.String(),
+				timestamp: r.timestamp,
+			})
 
 		default:
 			return fmt.Errorf("unknown journal record kind (%d)", r.kind)
@@ -309,31 +325,143 @@ func (wr *journalWriter) bootstrapJournal(ctx context.Context, canWrite bool, re
 		return nil
 	}, warningsCb)
 	if err != nil {
-		return hash.Hash{}, err
+		return journalFindings{}, err
 	}
-
-	if wr.ranges.novelCount() > wr.maxNovel {
-		// save bootstrap progress
-		if err := wr.flushIndexRecord(ctx, last, lastOffset); err != nil {
-			return hash.Hash{}, err
-		}
-	}
-
-	wr.currentRoot = last
-
-	return
+	return f, nil
 }
 
-// corruptIndexRecovery handles a corrupted or malformed journal index by truncating
-// the index file and restarting the journal bootstrapping process without an index.
-// todo: make backup file?
-func (wr *journalWriter) corruptIndexRecovery() error {
-	if err := wr.truncateIndex(0); err != nil {
+// adopt takes |f| as the writer's state: the ranges it can serve, the journal
+// offset it appends at, and the root it last committed. The roots |f| read
+// are pushed to |reflogRingBuffer|, which maintains the most recently updated
+// roots used to generate the reflog.
+func (wr *journalWriter) adopt(f journalFindings, reflogRingBuffer *reflogRingBuffer) {
+	if !reflogDisabled && reflogRingBuffer != nil {
+		for _, r := range f.roots {
+			reflogRingBuffer.Push(r)
+		}
+	}
+	if wr.maxNovel == 0 {
+		wr.maxNovel = journalIndexDefaultMaxNovel
+	}
+	wr.ranges = f.ranges
+	wr.indexed = f.indexed
+	wr.off = f.end
+	wr.uncmpSz = f.uncmpSz
+	wr.currentRoot = f.last
+}
+
+// bootstrapJournal opens the journal index read-write (creating it when there
+// is none), reads both files (readJournal) and repairs them to match what it
+// found (repairJournal): the bootstrap of a journal that holds the manifest
+// lock. It returns the most recent root hash for the journal.
+func (wr *journalWriter) bootstrapJournal(ctx context.Context, reflogRingBuffer *reflogRingBuffer, warningsCb func(error)) (last hash.Hash, err error) {
+	wr.lock.Lock()
+	defer wr.lock.Unlock()
+
+	p := filepath.Join(filepath.Dir(wr.path), journalIndexFileName)
+	var ok bool
+	ok, err = fileExists(p)
+	if err != nil {
+		return
+	}
+	if wr.index, err = os.OpenFile(p, os.O_RDWR|os.O_CREATE, 0666); err != nil {
+		return
+	}
+	wr.indexWriter = bufio.NewWriterSize(wr.index, journalIndexDefaultMaxNovel)
+	// A newly created index holds nothing to read.
+	readFrom := wr.index
+	if !ok {
+		readFrom = nil
+	}
+
+	f, err := readJournal(ctx, wr.journal, readFrom, warningsCb)
+	if errors.Is(err, errCorruptJournalIndex) {
+		// The open fails, as it always has, and the index it could not read is
+		// emptied so the next open rebuilds it from the journal.
+		if cerr := wr.truncateIndex(0); cerr != nil {
+			return hash.Hash{}, fmt.Errorf("error recovering corrupted chunk journal index: %s", err.Error())
+		}
+		return hash.Hash{}, err
+	} else if err != nil {
+		return hash.Hash{}, err
+	}
+	wr.adopt(f, reflogRingBuffer)
+	if err = wr.repairJournal(ctx, f); err != nil {
+		return hash.Hash{}, err
+	}
+	return f.last, nil
+}
+
+// bootstrapReadOnlyJournal reads the journal and its index, if there is one,
+// and adopts what it found: the bootstrap of a journal that does not hold the
+// manifest lock. Both files are read through read-only handles, and the index
+// handle is closed before it returns, so the writer it leaves holds no index
+// writer: nothing this journal does can write either file. An index it cannot
+// read is passed over and the journal read whole, since the journal is the
+// source of truth and the index is only an accelerator.
+func (wr *journalWriter) bootstrapReadOnlyJournal(ctx context.Context, reflogRingBuffer *reflogRingBuffer, warningsCb func(error)) (last hash.Hash, err error) {
+	wr.lock.Lock()
+	defer wr.lock.Unlock()
+
+	index, err := os.Open(filepath.Join(filepath.Dir(wr.path), journalIndexFileName))
+	if errors.Is(err, os.ErrNotExist) {
+		index, err = nil, nil
+	} else if err != nil {
+		return hash.Hash{}, err
+	} else {
+		defer func() {
+			if cerr := index.Close(); err == nil {
+				err = cerr
+			}
+		}()
+	}
+
+	f, err := readJournal(ctx, wr.journal, index, warningsCb)
+	if errors.Is(err, errCorruptJournalIndex) {
+		if warningsCb != nil {
+			warningsCb(fmt.Errorf("a read-only journal open passed over its index and read the whole journal: %w", err))
+		}
+		f, err = readJournal(ctx, wr.journal, nil, warningsCb)
+	}
+	if err != nil {
+		return hash.Hash{}, err
+	}
+	wr.adopt(f, reflogRingBuffer)
+	return f.last, nil
+}
+
+// repairJournal makes the journal and its index match |f|, which readJournal
+// found in them: it truncates whatever follows the journal's last valid
+// record (historically null bytes, sometimes garbage; readJournal has already
+// refused a tail that looks like lost data) and syncs, rewinds the index to
+// its last valid batch, writes the lookups the index does not yet hold, and
+// saves that progress as an index record once there are more than
+// |wr.maxNovel| of them. Only a journal that holds the manifest lock runs it.
+func (wr *journalWriter) repairJournal(ctx context.Context, f journalFindings) error {
+	if err := wr.journal.Truncate(f.end); err != nil {
 		return err
 	}
-	// reset bootstrapping state
-	wr.off, wr.indexed, wr.uncmpSz = 0, 0, 0
-	wr.ranges = newRangeIndex()
+	if err := wr.journal.Sync(); err != nil {
+		return err
+	}
+	// rewind index to last safe point. Note that |f.indexEnd| refers
+	// to a location in the index file, while |f.indexed| refers to a position
+	// in the journal file.
+	if err := wr.truncateIndex(f.indexEnd); err != nil {
+		return err
+	}
+	for _, l := range f.tail {
+		if err := writeIndexLookup(wr.indexWriter, l); err != nil {
+			return err
+		}
+		wr.batchCrc = crc32.Update(wr.batchCrc, crcTable, l.a[:])
+	}
+	if wr.ranges.novelCount() > wr.maxNovel {
+		// save bootstrap progress
+		if err := wr.flushIndexRecord(ctx, f.last, f.lastOffset); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -631,8 +759,12 @@ func (wr *journalWriter) Close() (err error) {
 		_ = wr.indexWriter.Flush()
 		_ = wr.index.Close()
 	}
-	if cerr := wr.journal.Sync(); cerr != nil {
-		err = cerr
+	// Only what was written since the last sync needs one: a journal that
+	// wrote nothing, a read-only one always among them, closes without it.
+	if wr.unsyncd > 0 {
+		if cerr := wr.journal.Sync(); cerr != nil {
+			err = cerr
+		}
 	}
 	if cerr := wr.journal.Close(); cerr != nil {
 		err = cerr
