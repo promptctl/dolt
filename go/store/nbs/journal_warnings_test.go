@@ -48,23 +48,23 @@ func captureLogrus(t *testing.T) *bytes.Buffer {
 }
 
 // TestJournalWarningsCb pins that a store opened under an observer reports a
-// warning to it and logs nothing, and that one opened without an observer logs
+// warning to it, naming the store, and logs nothing, and that one opened without an observer logs
 // it, as upstream does.
 func TestJournalWarningsCb(t *testing.T) {
 	warning := errors.New("invalid journal record length")
 
-	t.Run("an observer receives the warning and nothing is logged", func(t *testing.T) {
+	t.Run("an observer receives the warning with its store and nothing is logged", func(t *testing.T) {
 		logged := captureLogrus(t)
-		var observed []error
-		ctx := WithJournalWarningObserver(context.Background(), func(err error) { observed = append(observed, err) })
-		JournalWarningsCb(ctx)(warning)
-		assert.Equal(t, []error{warning}, observed)
+		var observed []JournalWarning
+		ctx := WithJournalWarningObserver(context.Background(), func(w JournalWarning) { observed = append(observed, w) })
+		JournalWarningsCb(ctx, "/db/.dolt/noms")(warning)
+		assert.Equal(t, []JournalWarning{{Store: "/db/.dolt/noms", Err: warning}}, observed)
 		assert.Empty(t, logged.String())
 	})
 
 	t.Run("without an observer the warning is logged", func(t *testing.T) {
 		logged := captureLogrus(t)
-		JournalWarningsCb(context.Background())(warning)
+		JournalWarningsCb(context.Background(), "/db/.dolt/noms")(warning)
 		assert.Contains(t, logged.String(), warning.Error())
 	})
 }
