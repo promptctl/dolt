@@ -156,7 +156,7 @@ func (fact FileFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFormat, 
 	// bypass the in-process singleton cache and always create a new underlying store.
 	if params != nil {
 		if _, ok := params[DisableSingletonCacheParam]; ok {
-			return fact.CreateDbNoCache(ctx, nbf, urlObj, params, nbs.JournalParserLoggingWarningsCb)
+			return fact.CreateDbNoCache(ctx, nbf, urlObj, params, nbs.JournalWarningsCb(ctx))
 		}
 	}
 
@@ -167,7 +167,7 @@ func (fact FileFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFormat, 
 		return s.ddb, s.vrw, s.ns, nil
 	}
 
-	ddb, vrw, ns, err := fact.CreateDbNoCache(ctx, nbf, urlObj, params, nbs.JournalParserLoggingWarningsCb)
+	ddb, vrw, ns, err := fact.CreateDbNoCache(ctx, nbf, urlObj, params, nbs.JournalWarningsCb(ctx))
 	if err != nil {
 		return nil, nil, nil, err
 	}

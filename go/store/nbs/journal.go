@@ -75,6 +75,10 @@ type ChunkJournal struct {
 	reflogRingBuffer *reflogRingBuffer
 	path             string
 	contents         manifestContents
+	// warningsCb is the callback the journal was constructed with, and every
+	// bootstrap of it reports through it, the eager one at construction and a
+	// lazy one at the first Persist or Open alike.
+	warningsCb func(error)
 }
 
 var _ tablePersister = &ChunkJournal{}
@@ -89,7 +93,7 @@ func newChunkJournal(ctx context.Context, nbfVers, dir string, m *journalManifes
 		return nil, err
 	}
 
-	j := &ChunkJournal{path: path, backing: m, persister: p}
+	j := &ChunkJournal{path: path, backing: m, persister: p, warningsCb: warningsCb}
 	j.contents.nbfVers = nbfVers
 	j.reflogRingBuffer = newReflogRingBuffer(reflogBufferSize())
 
@@ -99,7 +103,7 @@ func newChunkJournal(ctx context.Context, nbfVers, dir string, m *journalManifes
 	} else if ok {
 		// only bootstrap journalWriter if the journal file exists,
 		// otherwise we wait to open in case we're cloning
-		if err = j.bootstrapJournalWriter(ctx, warningsCb); err != nil {
+		if err = j.bootstrapJournalWriter(ctx); err != nil {
 			return nil, err
 		}
 	}
@@ -108,6 +112,30 @@ func newChunkJournal(ctx context.Context, nbfVers, dir string, m *journalManifes
 
 func JournalParserLoggingWarningsCb(err error) {
 	logrus.Error(err.Error())
+}
+
+type journalWarningObserverKey struct{}
+
+// WithJournalWarningObserver returns ctx carrying observe, which a journaling
+// store opened under it reports its recoverable journal problems to instead
+// of logging them: a journal tail it could not parse, or an index a read-only
+// open passed over to read the whole journal. An embedder that records each
+// unit of work as one event installs observe once, on the context its work
+// runs under, as it does gitcmd.WithObserver.
+func WithJournalWarningObserver(ctx context.Context, observe func(error)) context.Context {
+	return context.WithValue(ctx, journalWarningObserverKey{}, observe)
+}
+
+// JournalWarningsCb is the warnings callback for a store opened under ctx: the
+// observer ctx carries, or JournalParserLoggingWarningsCb when it carries none.
+// A store keeps the callback it was opened with for its lifetime, so a store
+// shared through dbfactory's singleton cache reports to the observer of
+// whichever context first opened it.
+func JournalWarningsCb(ctx context.Context) func(error) {
+	if observe, ok := ctx.Value(journalWarningObserverKey{}).(func(error)); ok {
+		return observe
+	}
+	return JournalParserLoggingWarningsCb
 }
 
 // reflogBufferSize returns the size of the ring buffer to allocate to store in-memory roots references when
@@ -150,9 +178,9 @@ func reflogBufferSize() int {
 // As we process journal records, we keep track of the latest root hash record we see
 // and update the manifest file with the last root hash we saw.
 //
-// |warningsCb| is a callback function invoked if a recoverable parse error is encountered. Usually used
+// |j.warningsCb| is a callback function invoked if a recoverable parse error is encountered. Usually used
 // for printing an error message to the user, but also used for fsck to report the error and exit with an error.
-func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context, warningsCb func(error)) (err error) {
+func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context) (err error) {
 	var ok bool
 	ok, err = fileExists(j.path)
 	if err != nil {
@@ -167,7 +195,7 @@ func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context, warningsCb fu
 			return err
 		}
 
-		_, err = j.wr.bootstrapJournal(ctx, j.reflogRingBuffer, warningsCb)
+		_, err = j.wr.bootstrapJournal(ctx, j.reflogRingBuffer, j.warningsCb)
 		if err != nil {
 			return err
 		}
@@ -203,7 +231,7 @@ func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context, warningsCb fu
 	}
 
 	// parse existing journal file
-	root, err := bootstrap(j.wr, ctx, j.reflogRingBuffer, warningsCb)
+	root, err := bootstrap(j.wr, ctx, j.reflogRingBuffer, j.warningsCb)
 	if err != nil {
 		return err
 	}
@@ -276,7 +304,7 @@ func (j *ChunkJournal) IterateRoots(f func(root string, timestamp *time.Time) er
 func (j *ChunkJournal) Persist(ctx context.Context, behavior dherrors.FatalBehavior, mt *memTable, haver chunkReader, keeper keeperF, stats *Stats) (chunkSource, gcBehavior, error) {
 	if j.backing.readOnly() {
 		return nil, gcBehavior_Continue, errReadOnlyManifest
-	} else if err := j.maybeInit(ctx, JournalParserLoggingWarningsCb); err != nil {
+	} else if err := j.maybeInit(ctx); err != nil {
 		return nil, gcBehavior_Continue, err
 	}
 
@@ -314,7 +342,7 @@ func (j *ChunkJournal) ConjoinAll(ctx context.Context, behavior dherrors.FatalBe
 // Open implements tablePersister.
 func (j *ChunkJournal) Open(ctx context.Context, name hash.Hash, chunkCount uint32, stats *Stats) (chunkSource, error) {
 	if name == journalAddr {
-		if err := j.maybeInit(ctx, JournalParserLoggingWarningsCb); err != nil {
+		if err := j.maybeInit(ctx); err != nil {
 			return nil, err
 		}
 		return journalChunkSource{journal: j.wr}, nil
@@ -493,9 +521,9 @@ func (j *ChunkJournal) ParseIfExists(ctx context.Context, stats *Stats, readHook
 	return
 }
 
-func (j *ChunkJournal) maybeInit(ctx context.Context, warningsCb func(error)) (err error) {
+func (j *ChunkJournal) maybeInit(ctx context.Context) (err error) {
 	if j.wr == nil {
-		err = j.bootstrapJournalWriter(ctx, warningsCb)
+		err = j.bootstrapJournalWriter(ctx)
 	}
 	return
 }
