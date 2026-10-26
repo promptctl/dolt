@@ -609,14 +609,18 @@ func newJournalManifest(ctx context.Context, dir string, policy JournalLock) (m 
 	if err != nil {
 		return nil, err
 	}
-	m = &journalManifest{dir: dir, lock: lock}
+	// opened outlives the named result, which a failing return sets to nil
+	// before the deferred release reads it.
+	opened := &journalManifest{dir: dir, lock: lock, observer: journalLockObserverFrom(ctx)}
+	if lock != nil {
+		opened.observer.Taken()
+	}
+	m = opened
 
 	var f *os.File
 	f, err = openIfExists(filepath.Join(dir, manifestFileName))
 	if err != nil {
-		if lock != nil {
-			_ = lock.Unlock()
-		}
+		_ = opened.unlock()
 		return nil, err
 	} else if f == nil {
 		return m, nil
@@ -626,26 +630,47 @@ func newJournalManifest(ctx context.Context, dir string, policy JournalLock) (m 
 			err = cerr // keep first error
 		}
 		if err != nil {
-			if lock != nil {
-				_ = lock.Unlock()
-			}
+			_ = opened.unlock()
 		}
 	}()
 
 	var ok bool
-	ok, _, err = m.ParseIfExists(ctx, &Stats{}, nil)
+	ok, _, err = opened.ParseIfExists(ctx, &Stats{}, nil)
 	if err != nil {
-		if lock != nil {
-			_ = lock.Unlock()
-		}
 		return nil, err
 	} else if !ok {
-		if lock != nil {
-			_ = lock.Unlock()
-		}
 		return nil, ErrUnreadableManifest
 	}
 	return
+}
+
+// JournalLockObserver is told when a journaling store takes its directory's
+// file lock and when it lets the lock go: Taken right after the lock is held,
+// Released right after it is let go, on Close and on every failure of the
+// manifest's own open that releases it. A store that never takes the lock
+// (read-only, or one that lost the race) tells it nothing. An embedder that
+// reports on the lock's holder installs one on the context it opens the store
+// under, as it does WithJournalWarningObserver.
+type JournalLockObserver struct {
+	Taken    func()
+	Released func()
+}
+
+type journalLockObserverKey struct{}
+
+// WithJournalLockObserver returns ctx carrying observer, which a journaling
+// store opened under it tells about its file lock. Both funcs must be set.
+func WithJournalLockObserver(ctx context.Context, observer JournalLockObserver) context.Context {
+	return context.WithValue(ctx, journalLockObserverKey{}, observer)
+}
+
+// journalLockObserverFrom is the observer ctx carries, or one that does
+// nothing when it carries none.
+func journalLockObserverFrom(ctx context.Context) JournalLockObserver {
+	if observer, ok := ctx.Value(journalLockObserverKey{}).(JournalLockObserver); ok {
+		return observer
+	}
+	return JournalLockObserver{Taken: func() {}, Released: func() {}}
 }
 
 // JournalLock is how a journaling store treats the file lock that makes it
@@ -689,8 +714,22 @@ func takeJournalLock(path string, policy JournalLock) (*fslock.Lock, error) {
 }
 
 type journalManifest struct {
-	lock *fslock.Lock
-	dir  string
+	lock     *fslock.Lock
+	dir      string
+	observer JournalLockObserver
+}
+
+// unlock lets the file lock go, if this manifest holds it, and tells the
+// observer. It is the one place a journal manifest releases its lock, and a
+// second call does nothing.
+func (jm *journalManifest) unlock() error {
+	if jm.lock == nil {
+		return nil
+	}
+	err := jm.lock.Unlock()
+	jm.lock = nil
+	jm.observer.Released()
+	return err
 }
 
 func (jm *journalManifest) readOnly() bool {
@@ -761,12 +800,8 @@ func updateGCGenManifestCheck(upstream, contents manifestContents) error {
 	return nil
 }
 
-func (jm *journalManifest) Close() (err error) {
-	if jm.lock != nil {
-		err = jm.lock.Unlock()
-		jm.lock = nil
-	}
-	return
+func (jm *journalManifest) Close() error {
+	return jm.unlock()
 }
 
 func containsJournalSpec(specs []tableSpec) (ok bool) {
