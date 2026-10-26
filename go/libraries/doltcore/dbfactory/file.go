@@ -152,11 +152,17 @@ func (fact FileFactory) PrepareDB(ctx context.Context, nbf *types.NomsBinFormat,
 
 // CreateDB creates a local filesys backed database
 func (fact FileFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFormat, urlObj *url.URL, params map[string]interface{}) (datas.Database, types.ValueReadWriter, tree.NodeStore, error) {
+	dir, err := storeDir(urlObj)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	warningsCb := nbs.JournalWarningsCb(ctx, dir)
+
 	// Some embedded-driver use-cases require deterministic reopen semantics. When this flag is set,
 	// bypass the in-process singleton cache and always create a new underlying store.
 	if params != nil {
 		if _, ok := params[DisableSingletonCacheParam]; ok {
-			return fact.CreateDbNoCache(ctx, nbf, urlObj, params, nbs.JournalWarningsCb(ctx, urlObj.Path))
+			return fact.CreateDbNoCache(ctx, nbf, urlObj, params, warningsCb)
 		}
 	}
 
@@ -167,7 +173,7 @@ func (fact FileFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFormat, 
 		return s.ddb, s.vrw, s.ns, nil
 	}
 
-	ddb, vrw, ns, err := fact.CreateDbNoCache(ctx, nbf, urlObj, params, nbs.JournalWarningsCb(ctx, urlObj.Path))
+	ddb, vrw, ns, err := fact.CreateDbNoCache(ctx, nbf, urlObj, params, warningsCb)
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -181,6 +187,17 @@ func (fact FileFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFormat, 
 	return ddb, vrw, ns, nil
 }
 
+// storeDir is the directory on this filesystem that urlObj names: its path,
+// unescaped and in the OS's separators, after its host, which holds the
+// volume of a Windows path.
+func storeDir(urlObj *url.URL) (string, error) {
+	path, err := url.PathUnescape(urlObj.Path)
+	if err != nil {
+		return "", err
+	}
+	return urlObj.Host + filepath.FromSlash(path), nil
+}
+
 // CreateDbNoCache creates a local filesys backed database without using the singleton cache. This is used for a very specific
 // case: the `dolt fsck` command. Since database loading happens before subcommand execution, and `dolt fsck` needs to report
 // journal issues, it needs to load the database without simply printing an error to the log for journal issues.
@@ -188,13 +205,10 @@ func (fact FileFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFormat, 
 // Furthermore, regular database loading uses this code path to construct the GenerationalCS, which is desired because we
 // want the same underlying implementation.
 func (fact FileFactory) CreateDbNoCache(ctx context.Context, nbf *types.NomsBinFormat, urlObj *url.URL, params map[string]interface{}, recCb func(error)) (datas.Database, types.ValueReadWriter, tree.NodeStore, error) {
-	path, err := url.PathUnescape(urlObj.Path)
+	path, err := storeDir(urlObj)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-
-	path = filepath.FromSlash(path)
-	path = urlObj.Host + path
 
 	err = validateDir(path)
 	if err != nil {

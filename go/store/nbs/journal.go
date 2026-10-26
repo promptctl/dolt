@@ -117,8 +117,7 @@ func JournalParserLoggingWarningsCb(err error) {
 type journalWarningObserverKey struct{}
 
 // JournalWarning is one recoverable problem a journaling store's journal
-// reported, and the store it belongs to: the location dbfactory knows it by,
-// the key of its singleton cache.
+// reported, and the store it belongs to: its directory on this filesystem.
 type JournalWarning struct {
 	Store string
 	Err   error
