@@ -23,6 +23,7 @@ package nbs
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -166,7 +167,7 @@ func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context, warningsCb fu
 			return err
 		}
 
-		_, err = j.wr.bootstrapJournal(ctx, canCreate, j.reflogRingBuffer, warningsCb)
+		_, err = j.wr.bootstrapJournal(ctx, j.reflogRingBuffer, warningsCb)
 		if err != nil {
 			return err
 		}
@@ -188,7 +189,13 @@ func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context, warningsCb fu
 		return
 	}
 
-	j.wr, ok, err = openJournalWriter(ctx, j.path)
+	// A journal that holds the manifest lock opens the file to write and
+	// repairs it to what it reads; one that does not only reads it.
+	open, bootstrap := openJournalWriter, (*journalWriter).bootstrapJournal
+	if !canCreate {
+		open, bootstrap = openReadOnlyJournal, (*journalWriter).bootstrapReadOnlyJournal
+	}
+	j.wr, ok, err = open(ctx, j.path)
 	if err != nil {
 		return err
 	} else if !ok {
@@ -196,7 +203,7 @@ func (j *ChunkJournal) bootstrapJournalWriter(ctx context.Context, warningsCb fu
 	}
 
 	// parse existing journal file
-	root, err := j.wr.bootstrapJournal(ctx, canCreate, j.reflogRingBuffer, warningsCb)
+	root, err := bootstrap(j.wr, ctx, j.reflogRingBuffer, warningsCb)
 	if err != nil {
 		return err
 	}
@@ -557,20 +564,12 @@ func (c journalConjoiner) chooseConjoinees(upstream []tableSpec) (conjoinees, ke
 	return
 }
 
-// newJournalManifest makes a new file manifest.
-// When failOnTimeout is true, callers want a hard error instead of falling back to read-only mode.
-// (The behavior change is implemented separately; this is the plumbing flag.)
-func newJournalManifest(ctx context.Context, dir string, failOnTimeout bool) (m *journalManifest, err error) {
-	lock := fslock.New(filepath.Join(dir, lockFileName))
-	// try to take the file lock. if we fail, make the manifest read-only.
-	// if we succeed, hold the file lock until we close the journalManifest
-	err = lock.LockWithTimeout(lockFileTimeout)
-	if errors.Is(err, fslock.ErrTimeout) {
-		if failOnTimeout {
-			return nil, ErrDatabaseLocked
-		}
-		lock, err = nil, nil // read only
-	} else if err != nil {
+// newJournalManifest makes a new file manifest, taking the file lock as
+// |policy| says: a manifest that holds it may write, and one that does not is
+// read-only.
+func newJournalManifest(ctx context.Context, dir string, policy JournalLock) (m *journalManifest, err error) {
+	lock, err := takeJournalLock(filepath.Join(dir, lockFileName), policy)
+	if err != nil {
 		return nil, err
 	}
 	m = &journalManifest{dir: dir, lock: lock}
@@ -610,6 +609,46 @@ func newJournalManifest(ctx context.Context, dir string, failOnTimeout bool) (m 
 		return nil, ErrUnreadableManifest
 	}
 	return
+}
+
+// JournalLock is how a journaling store treats the file lock that makes it
+// the one store on its directory that may write.
+type JournalLock int
+
+const (
+	// JournalLockOrReadOnly tries the lock for |lockFileTimeout| and opens
+	// read-only when another store holds it.
+	JournalLockOrReadOnly JournalLock = iota
+	// JournalLockOrFail tries the lock for |lockFileTimeout| and fails with
+	// ErrDatabaseLocked when another store holds it.
+	JournalLockOrFail
+	// JournalReadOnly opens read-only without trying the lock, so the store
+	// neither waits on a writer nor keeps one out.
+	JournalReadOnly
+)
+
+// takeJournalLock takes the lock at |path| as |policy| says, returning the
+// held lock, or nil for a read-only store. If it is taken, it is held until
+// the journalManifest closes.
+func takeJournalLock(path string, policy JournalLock) (*fslock.Lock, error) {
+	switch policy {
+	case JournalReadOnly:
+		return nil, nil
+	case JournalLockOrReadOnly, JournalLockOrFail:
+	default:
+		return nil, fmt.Errorf("unknown journal lock policy %d", policy)
+	}
+	lock := fslock.New(path)
+	err := lock.LockWithTimeout(lockFileTimeout)
+	if errors.Is(err, fslock.ErrTimeout) {
+		if policy == JournalLockOrFail {
+			return nil, ErrDatabaseLocked
+		}
+		return nil, nil
+	} else if err != nil {
+		return nil, err
+	}
+	return lock, nil
 }
 
 type journalManifest struct {
