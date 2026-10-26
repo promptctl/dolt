@@ -116,26 +116,36 @@ func JournalParserLoggingWarningsCb(err error) {
 
 type journalWarningObserverKey struct{}
 
+// JournalWarning is one recoverable problem a journaling store's journal
+// reported, and the store it belongs to: the location dbfactory knows it by,
+// the key of its singleton cache.
+type JournalWarning struct {
+	Store string
+	Err   error
+}
+
 // WithJournalWarningObserver returns ctx carrying observe, which a journaling
 // store opened under it reports its recoverable journal problems to instead
 // of logging them: a journal tail it could not parse, or an index a read-only
 // open passed over to read the whole journal. An embedder that records each
 // unit of work as one event installs observe once, on the context its work
 // runs under, as it does gitcmd.WithObserver.
-func WithJournalWarningObserver(ctx context.Context, observe func(error)) context.Context {
+func WithJournalWarningObserver(ctx context.Context, observe func(JournalWarning)) context.Context {
 	return context.WithValue(ctx, journalWarningObserverKey{}, observe)
 }
 
-// JournalWarningsCb is the warnings callback for a store opened under ctx: the
-// observer ctx carries, or JournalParserLoggingWarningsCb when it carries none.
-// A store keeps the callback it was opened with for its lifetime, so a store
-// shared through dbfactory's singleton cache reports to the observer of
-// whichever context first opened it.
-func JournalWarningsCb(ctx context.Context) func(error) {
-	if observe, ok := ctx.Value(journalWarningObserverKey{}).(func(error)); ok {
-		return observe
+// JournalWarningsCb is the warnings callback for the store at store, opened
+// under ctx: one that hands each warning to the observer ctx carries, or
+// JournalParserLoggingWarningsCb when it carries none. A store keeps the
+// callback it was opened with for its lifetime, so a store shared through
+// dbfactory's singleton cache reports to the observer of whichever context
+// first opened it.
+func JournalWarningsCb(ctx context.Context, store string) func(error) {
+	observe, ok := ctx.Value(journalWarningObserverKey{}).(func(JournalWarning))
+	if !ok {
+		return JournalParserLoggingWarningsCb
 	}
-	return JournalParserLoggingWarningsCb
+	return func(err error) { observe(JournalWarning{Store: store, Err: err}) }
 }
 
 // reflogBufferSize returns the size of the ring buffer to allocate to store in-memory roots references when
