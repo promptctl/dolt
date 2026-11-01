@@ -433,16 +433,22 @@ func (wr *journalWriter) bootstrapReadOnlyJournal(ctx context.Context, reflogRin
 // repairJournal makes the journal and its index match |f|, which readJournal
 // found in them: it truncates whatever follows the journal's last valid
 // record (historically null bytes, sometimes garbage; readJournal has already
-// refused a tail that looks like lost data) and syncs, rewinds the index to
+// refused a tail that looks like lost data) and syncs if there was one, rewinds the index to
 // its last valid batch, writes the lookups the index does not yet hold, and
 // saves that progress as an index record once there are more than
 // |wr.maxNovel| of them. Only a journal that holds the manifest lock runs it.
 func (wr *journalWriter) repairJournal(ctx context.Context, f journalFindings) error {
-	if err := wr.journal.Truncate(f.end); err != nil {
+	info, err := wr.journal.Stat()
+	if err != nil {
 		return err
 	}
-	if err := wr.journal.Sync(); err != nil {
-		return err
+	if info.Size() > f.end {
+		if err := wr.journal.Truncate(f.end); err != nil {
+			return err
+		}
+		if err := wr.journal.Sync(); err != nil {
+			return err
+		}
 	}
 	// rewind index to last safe point. Note that |f.indexEnd| refers
 	// to a location in the index file, while |f.indexed| refers to a position
