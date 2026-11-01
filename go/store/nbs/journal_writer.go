@@ -436,7 +436,10 @@ func (wr *journalWriter) bootstrapReadOnlyJournal(ctx context.Context, reflogRin
 // refused a tail that looks like lost data) and syncs if there was one, rewinds the index to
 // its last valid batch, writes the lookups the index does not yet hold, and
 // saves that progress as an index record once there are more than
-// |wr.maxNovel| of them. Only a journal that holds the manifest lock runs it.
+// |wr.maxNovel| of them. A process killed before its sync can leave a clean
+// tail that never reached the disk, so that save syncs the journal first, the
+// order |commitRootHashUnlocked| keeps: an index record never names bytes a
+// power cut could take. Only a journal that holds the manifest lock runs it.
 func (wr *journalWriter) repairJournal(ctx context.Context, f journalFindings) error {
 	info, err := wr.journal.Stat()
 	if err != nil {
@@ -464,6 +467,9 @@ func (wr *journalWriter) repairJournal(ctx context.Context, f journalFindings) e
 	}
 	if wr.ranges.novelCount() > wr.maxNovel {
 		// save bootstrap progress
+		if err := wr.journal.Sync(); err != nil {
+			return err
+		}
 		if err := wr.flushIndexRecord(ctx, f.last, f.lastOffset); err != nil {
 			return err
 		}
