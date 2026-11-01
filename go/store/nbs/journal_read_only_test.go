@@ -253,8 +253,8 @@ func writeTestJournalingStore(t *testing.T, dir string, n int) []chunks.Chunk {
 // TestReadOnlyJournalingStoreWritesNothing pins the store-level contract a
 // JournalReadOnly open makes, and that the fallback a held lock forces makes
 // the same one: open, read, close, and every file in the directory is
-// unchanged. Its detector is the default open with the lock free, which
-// rewrites the manifest and the journal's bookkeeping.
+// unchanged. Its detector is the default open with the lock free, which repairs
+// the journal's tail.
 func TestReadOnlyJournalingStoreWritesNothing(t *testing.T) {
 	ctx := context.Background()
 	dir := t.TempDir()
@@ -298,13 +298,14 @@ func TestReadOnlyJournalingStoreWritesNothing(t *testing.T) {
 		assert.ErrorIs(t, err, os.ErrNotExist)
 	})
 	t.Run("detector: the default open with the lock free writes", func(t *testing.T) {
+		appendGarbage(t, filepath.Join(dir, chunkJournalName))
 		before := readFileState(t, dir)
 		waitPastMtimeGranularity()
 		st := openTestJournalingStore(t, dir, JournalLockOrReadOnly)
 		readAll(t, st)
 		require.NoError(t, st.Close())
 		after := readFileState(t, dir)
-		assert.False(t, before[manifestFileName].mtime.Equal(after[manifestFileName].mtime), "the manifest is rewritten")
+		assert.Less(t, len(after[chunkJournalName].data), len(before[chunkJournalName].data), "the journal's tail is cut")
 	})
 }
 

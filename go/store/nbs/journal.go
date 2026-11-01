@@ -185,7 +185,7 @@ func reflogBufferSize() int {
 // resident chunks. Processing journal records is potentially accelerated by an index
 // file (see indexRec). The journal file is the source of truth for latest root hash.
 // As we process journal records, we keep track of the latest root hash record we see
-// and update the manifest file with the last root hash we saw.
+// and serve that root; the manifest file's root may stand behind it.
 //
 // |j.warningsCb| is a callback function invoked if a recoverable parse error is encountered. Usually used
 // for printing an error message to the user, but also used for fsck to report the error and exit with an error.
@@ -279,6 +279,13 @@ func trueUpBackingManifest(ctx context.Context, behavior dherrors.FatalBehavior,
 	prev := mc.lock
 	next := generateLockHash(mc.root, mc.specs, mc.appendix, nil)
 	mc.lock = next
+
+	// A journal that holds a root answers for it at every open, so the manifest
+	// need not follow it. One that holds none has only the manifest to agree
+	// with, since |*ChunkJournal.ParseIfExists| forwards there.
+	if !root.IsEmpty() {
+		return mc, nil
+	}
 
 	mc, err = backing.Update(ctx, behavior, prev, mc, &Stats{}, nil)
 	if err != nil {
@@ -503,6 +510,20 @@ func (j *ChunkJournal) flushToBackingManifest(ctx context.Context, behavior dher
 	return nil
 }
 
+// closeBackingManifest leaves the backing manifest as it is when it already
+// names this journal's table set: the root it would otherwise take is in the
+// journal, which every open reads.
+func (j *ChunkJournal) closeBackingManifest(ctx context.Context) error {
+	ok, prev, err := j.backing.ParseIfExists(ctx, &Stats{}, nil)
+	if err != nil {
+		return err
+	}
+	if ok && equalSpecs(prev.specs, j.contents.specs) {
+		return nil
+	}
+	return j.flushToBackingManifest(ctx, dherrors.FatalBehaviorError, j.contents, &Stats{})
+}
+
 func (j *ChunkJournal) dropJournalWriter(ctx context.Context) error {
 	curr := j.wr
 	if j.wr == nil {
@@ -541,10 +562,9 @@ func (j *ChunkJournal) maybeInit(ctx context.Context) (err error) {
 func (j *ChunkJournal) Close() (err error) {
 	if j.wr != nil {
 		err = j.wr.Close()
-		// flush the latest root to the backing manifest
 		if !j.backing.readOnly() {
 			// Let caller implement FatalBehavior.
-			cerr := j.flushToBackingManifest(context.Background(), dherrors.FatalBehaviorError, j.contents, &Stats{})
+			cerr := j.closeBackingManifest(context.Background())
 			if err == nil {
 				err = cerr
 			}
