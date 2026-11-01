@@ -122,6 +122,43 @@ func TestWritableOpenOfACleanJournalLeavesItAlone(t *testing.T) {
 	assert.Less(t, len(repaired[chunkJournalName].data), len(withTail[chunkJournalName].data), "the tail was cut")
 }
 
+// TestCloseRecordsATableSetItsManifestDoesNotHold pins the one write Close keeps:
+// a manifest that is missing, or that names another table set, takes the
+// journal's, because the journal cannot rebuild a table set the way it answers
+// for a root.
+func TestCloseRecordsATableSetItsManifestDoesNotHold(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		split func(t *testing.T, dir string, j *ChunkJournal)
+	}{
+		{"a manifest that is missing", func(t *testing.T, dir string, _ *ChunkJournal) {
+			require.NoError(t, os.Remove(filepath.Join(dir, manifestFileName)))
+		}},
+		{"a manifest naming another table set", func(_ *testing.T, _ string, j *ChunkJournal) {
+			j.contents.specs = append(j.contents.specs, tableSpec{name: hash.Of([]byte("rolled back")), chunkCount: 1})
+		}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			dir := t.TempDir()
+			writeTestJournalingStore(t, dir, 4)
+			st := openTestJournalingStore(t, dir, JournalLockOrFail)
+			c := commitTestChunk(t, st, 9)
+			j := st.persister.(*ChunkJournal)
+			tc.split(t, dir, j)
+			specs := j.contents.specs
+			require.NoError(t, st.Close())
+
+			f, err := os.Open(filepath.Join(dir, manifestFileName))
+			require.NoError(t, err)
+			defer f.Close()
+			onDisk, err := parseManifest(f)
+			require.NoError(t, err)
+			assert.True(t, equalSpecs(specs, onDisk.specs), "the manifest holds %v, want %v", onDisk.specs, specs)
+			assert.Equal(t, c.Hash(), onDisk.root)
+		})
+	}
+}
+
 // TestRootlessJournalAgreesWithItsManifest pins the open of a journal holding no
 // root record, which a process that died before its first root leaves. The
 // manifest takes the journal's empty root, so the block store and the journal
