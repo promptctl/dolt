@@ -110,9 +110,7 @@ func ReleaseCloneEnv(ctx context.Context, dEnv *env.DoltEnv) {
 	if _, uncached := dEnv.DBLoadParams[dbfactory.DisableSingletonCacheParam]; !uncached {
 		return
 	}
-	if ddb := dEnv.DoltDB(ctx); ddb != nil {
-		_ = ddb.Close()
-	}
+	_ = dEnv.DoltDB(ctx).Close()
 }
 
 func clonePrint(eventCh <-chan pull.TableFileEvent) {
