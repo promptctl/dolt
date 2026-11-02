@@ -920,7 +920,7 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	dbName, remoteName, branch, remoteUrl string,
 	depth int,
 	remoteParams map[string]string,
-) error {
+) (err error) {
 	if p.remoteDialer == nil {
 		return fmt.Errorf("unable to clone remote database; no remote dialer configured")
 	}
@@ -938,11 +938,18 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	}
 	defer dprocedures.CloseRemoteDB(ctx, srcDB)
 
-	dEnv, err := actions.EnvForClone(ctx, srcDB.ValueReadWriter().Format(), r, dbName, p.fs, "VERSION", env.GetCurrentUserHomeDir)
+	// The destination database is opened with the provider's load params, so it is never cached when the
+	// provider owns its databases, and a clone that fails before registerNewDatabase hands it to the provider
+	// closes it: nothing else would, and its files would stay open past the failure.
+	dEnv, err := actions.EnvForCloneWithParams(ctx, srcDB.ValueReadWriter().Format(), r, dbName, p.fs, "VERSION", env.GetCurrentUserHomeDir, p.dbLoadParams)
 	if err != nil {
 		return err
 	}
-	p.applyDBLoadParamsToEnv(dEnv)
+	defer func() {
+		if err != nil {
+			actions.ReleaseCloneEnv(ctx, dEnv)
+		}
+	}()
 
 	err = actions.CloneRemote(ctx, srcDB, remoteName, branch, false, depth, dEnv)
 	if err != nil {

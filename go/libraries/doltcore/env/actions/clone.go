@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"sort"
 	"strings"
 	"sync"
@@ -25,6 +26,7 @@ import (
 	"github.com/dustin/go-humanize"
 
 	"github.com/dolthub/dolt/go/cmd/dolt/cli"
+	"github.com/dolthub/dolt/go/libraries/doltcore/dbfactory"
 	"github.com/dolthub/dolt/go/libraries/doltcore/doltdb"
 	"github.com/dolthub/dolt/go/libraries/doltcore/env"
 	"github.com/dolthub/dolt/go/libraries/doltcore/ref"
@@ -56,6 +58,14 @@ var ErrCloneFailed = errors.New("clone failed")
 
 // EnvForClone creates a new DoltEnv and configures it with repo state from the specified remote. The returned DoltEnv is ready for content to be cloned into it. The directory used for the new DoltEnv is determined by resolving the specified dir against the specified Filesys.
 func EnvForClone(ctx context.Context, nbf *types.NomsBinFormat, r env.Remote, dir string, fs filesys.Filesys, version string, homeProvider env.HomeDirProvider) (*env.DoltEnv, error) {
+	return EnvForCloneWithParams(ctx, nbf, r, dir, fs, version, homeProvider, nil)
+}
+
+// EnvForCloneWithParams is EnvForClone with dbLoadParams applied to the new env before its database is
+// opened, so the open honors them: a caller that sets dbfactory.DisableSingletonCacheParam gets a database no
+// process-wide cache holds, and owns it. On an error return nothing of the new database is left open; on
+// success the caller owns it, and ReleaseCloneEnv closes it should the clone fail afterward.
+func EnvForCloneWithParams(ctx context.Context, nbf *types.NomsBinFormat, r env.Remote, dir string, fs filesys.Filesys, version string, homeProvider env.HomeDirProvider, dbLoadParams map[string]interface{}) (*env.DoltEnv, error) {
 	canCreate, err := env.CanCreateDatabaseAtPath(fs, dir)
 	if !canCreate {
 		if errors.Is(err, env.ErrCannotCreateDoltDirAlreadyExists) {
@@ -74,6 +84,7 @@ func EnvForClone(ctx context.Context, nbf *types.NomsBinFormat, r env.Remote, di
 	}
 
 	dEnv := env.Load(ctx, homeProvider, newFs, doltdb.LocalDirDoltDB, version)
+	dEnv.DBLoadParams = maps.Clone(dbLoadParams)
 	err = dEnv.InitRepoWithNoData(ctx, nbf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init repo: %w", err)
@@ -83,11 +94,25 @@ func EnvForClone(ctx context.Context, nbf *types.NomsBinFormat, r env.Remote, di
 	if !env.IsEmptyRemote(r) {
 		dEnv.RepoState, err = env.CloneRepoState(dEnv.FS, r)
 		if err != nil {
+			ReleaseCloneEnv(ctx, dEnv)
 			return nil, fmt.Errorf("%w: %s; %s", ErrFailedToCreateRepoStateWithRemote, r.Name, err.Error())
 		}
 	}
 
 	return dEnv, nil
+}
+
+// ReleaseCloneEnv closes the database of an env EnvForCloneWithParams returned, for a clone that failed before
+// the database was handed on. It closes only a database opened past the singleton cache: the env's own load
+// params say so, and a cached database belongs to the cache, which a close here would leave serving a closed
+// store. Safe to call once per env, on the failure path only.
+func ReleaseCloneEnv(ctx context.Context, dEnv *env.DoltEnv) {
+	if _, uncached := dEnv.DBLoadParams[dbfactory.DisableSingletonCacheParam]; !uncached {
+		return
+	}
+	if ddb := dEnv.DoltDB(ctx); ddb != nil {
+		_ = ddb.Close()
+	}
 }
 
 func clonePrint(eventCh <-chan pull.TableFileEvent) {
