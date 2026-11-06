@@ -120,6 +120,24 @@ exec "`+realGit+`" "$@"
 	require.FileExists(t, marker)
 }
 
+// A gc lock Close cannot take, for a reason other than another process
+// holding it, is a GCFailure, not a gc skipped in silence on every Close.
+func TestGitBlobstore_Close_ReportsAGCLockItCouldNotTake(t *testing.T) {
+	requireGitOnPath(t)
+	ctx := context.Background()
+	_, localRepo, _ := newRemoteAndLocalRepos(t, ctx)
+	// A directory where the lock file goes makes opening it fail.
+	require.NoError(t, os.Mkdir(filepath.Join(localRepo.GitDir, ".dolt-gc.lock"), 0o755))
+
+	var observed []GCFailure
+	opener := WithGCFailureObserver(ctx, func(f GCFailure) { observed = append(observed, f) })
+	bs, err := NewGitBlobstoreWithOptions(opener, localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
+	require.NoError(t, err)
+	require.NoError(t, bs.Close())
+	require.Len(t, observed, 1)
+	require.ErrorContains(t, observed[0].Err, "take gc lock")
+}
+
 // A gc marker Close cannot write is a GCFailure, not a silent rerun of gc on
 // every later Close.
 func TestGitBlobstore_Close_ReportsAGCMarkerItCouldNotWrite(t *testing.T) {

@@ -736,10 +736,11 @@ const gcInterval = 24 * time.Hour
 const maxParentedCommits = 64
 
 // GCFailure is a gc Close ran that failed: Mirror is the git dir it ran in,
-// ExitCode and Output are git's exit status and its captured output, and Err
-// is why the run ended. A gc its timeout ended is one, which gitcmd also
-// reports to its own observer as a cancel. A gc marker Close could not write
-// is one with only Mirror and Err.
+// ExitCode and Output are git's exit status and its captured output, capped
+// as a CmdError prints it, and Err is why the run ended. A gc its timeout
+// ended is one, which gitcmd also reports to its own observer as a cancel. A
+// gc lock Close could not take for a reason other than its being held, and a
+// gc marker it could not write, are each one with only Mirror and Err.
 type GCFailure struct {
 	Mirror   string
 	ExitCode int
@@ -764,7 +765,7 @@ func reportGCFailure(ctx context.Context, mirror string, err error) {
 	failure := GCFailure{Mirror: mirror, Err: err}
 	var cmdErr *git.CmdError
 	if errors.As(err, &cmdErr) {
-		failure.ExitCode, failure.Output, failure.Err = cmdErr.ExitCode, string(cmdErr.Output), cmdErr.Cause
+		failure.ExitCode, failure.Output, failure.Err = cmdErr.ExitCode, cmdErr.OutputText(), cmdErr.Cause
 	}
 	observe(failure)
 }
@@ -801,7 +802,10 @@ func (gbs *GitBlobstore) maybeRunGC() {
 
 	lockPath := filepath.Join(gbs.gitDir, ".dolt-gc.lock")
 	lck := fslock.New(lockPath)
-	if err := lck.LockWithTimeout(0); err != nil {
+	if err := lck.TryLock(); err != nil {
+		if !errors.Is(err, fslock.ErrLocked) {
+			reportGCFailure(gbs.closeCtx, gbs.gitDir, fmt.Errorf("take gc lock: %w", err))
+		}
 		return // another process holds the lock, skip
 	}
 	defer lck.Unlock()
