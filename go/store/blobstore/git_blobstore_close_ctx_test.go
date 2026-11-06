@@ -69,13 +69,15 @@ exec "`+realGit+`" "$@"
 	require.GreaterOrEqual(t, observed[0].Kill.Processes, 2, "the shim and its sleep")
 	require.Len(t, failures, 1, "a gc its timeout ended is a gc failure too")
 	require.ErrorIs(t, failures[0].Err, context.DeadlineExceeded)
-	require.FileExists(t, filepath.Join(localRepo.GitDir, ".dolt-gc-failed"))
+	info, err := os.Stat(filepath.Join(localRepo.GitDir, ".dolt-gc-last"))
+	require.NoError(t, err)
+	require.WithinDuration(t, time.Now(), info.ModTime(), time.Minute, "a gc its timeout ended waits a full day")
 }
 
 // A gc that fails reaches the opener's GCFailure observer with its exit status
-// and output, and writes no completion marker, so gc stays owed: a Close
-// within the hour leaves it, one after the hour runs it again. A gc that
-// succeeds writes the marker and reports nothing.
+// and output, and stays owed: a Close within the hour leaves it, one after the
+// hour runs it again. A gc that succeeds reports nothing and is not owed for a
+// day.
 func TestGitBlobstore_Close_ReportsAFailedGCAndLeavesItOwed(t *testing.T) {
 	requireGitOnPath(t)
 	realGit, err := exec.LookPath("git")
@@ -106,18 +108,21 @@ exec "`+realGit+`" "$@"
 	require.Equal(t, localRepo.GitDir, observed[0].Mirror)
 	require.Equal(t, 3, observed[0].ExitCode)
 	require.Contains(t, observed[0].Output, "gc refused")
-	require.NoFileExists(t, marker)
+	info, err := os.Stat(marker)
+	require.NoError(t, err)
+	require.WithinDuration(t, time.Now().Add(gcRetryInterval-gcInterval), info.ModTime(), time.Minute, "owed again an hour from now")
 
-	failed := filepath.Join(localRepo.GitDir, ".dolt-gc-failed")
 	closeOnce()
 	require.Len(t, observed, 1, "a gc that failed within the hour is not tried again yet")
 
-	anHourAgo := time.Now().Add(-gcRetryInterval - time.Minute)
-	require.NoError(t, os.Chtimes(failed, anHourAgo, anHourAgo))
+	anHourOn := info.ModTime().Add(-gcRetryInterval - time.Minute)
+	require.NoError(t, os.Chtimes(marker, anHourOn, anHourOn))
 	require.NoError(t, os.Remove(failsFlag))
 	closeOnce()
 	require.Len(t, observed, 1, "a gc that succeeds reports nothing")
-	require.FileExists(t, marker)
+	info, err = os.Stat(marker)
+	require.NoError(t, err)
+	require.WithinDuration(t, time.Now(), info.ModTime(), time.Minute, "a gc that completed is not owed for a day")
 }
 
 // A gc lock Close cannot take, for a reason other than another process
@@ -138,8 +143,8 @@ func TestGitBlobstore_Close_ReportsAGCLockItCouldNotTake(t *testing.T) {
 	require.ErrorContains(t, observed[0].Err, "take gc lock")
 }
 
-// A gc marker Close cannot write is a GCFailure, not a silent rerun of gc on
-// every later Close.
+// A gc marker Close cannot set is a GCFailure: gc then runs on every later
+// Close, and each says so.
 func TestGitBlobstore_Close_ReportsAGCMarkerItCouldNotWrite(t *testing.T) {
 	requireGitOnPath(t)
 	ctx := context.Background()
@@ -156,5 +161,5 @@ func TestGitBlobstore_Close_ReportsAGCMarkerItCouldNotWrite(t *testing.T) {
 	require.NoError(t, bs.Close())
 	require.Len(t, observed, 1)
 	require.Equal(t, localRepo.GitDir, observed[0].Mirror)
-	require.ErrorContains(t, observed[0].Err, "write gc marker .dolt-gc-last")
+	require.ErrorContains(t, observed[0].Err, "set gc marker")
 }
