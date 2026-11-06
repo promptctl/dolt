@@ -39,6 +39,7 @@ import (
 	"github.com/google/uuid"
 	fslock "github.com/promptctl/primitives/filelock"
 
+	"github.com/dolthub/dolt/go/libraries/utils/gitcmd"
 	git "github.com/dolthub/dolt/go/store/blobstore/internal/git"
 )
 
@@ -735,10 +736,49 @@ const gcInterval = 24 * time.Hour
 // git push enough parents for efficient incremental delta computation.
 const maxParentedCommits = 64
 
+// GCFailure is a gc Close ran that failed without being cancelled: Mirror is
+// the git dir it ran in, ExitCode and Output are git's exit status and its
+// captured output, and Err is why the run ended. A gc its context cancelled
+// is not one: gitcmd reports that to its own observer.
+type GCFailure struct {
+	Mirror   string
+	ExitCode int
+	Output   string
+	Err      error
+}
+
+type gcFailureObserverKey struct{}
+
+// WithGCFailureObserver returns ctx carrying observe, which a GitBlobstore
+// opened under it hands each failed gc to, as nbs.WithJournalWarningObserver
+// does for a journal's warnings. A context without one drops the failure.
+func WithGCFailureObserver(ctx context.Context, observe func(GCFailure)) context.Context {
+	return context.WithValue(ctx, gcFailureObserverKey{}, observe)
+}
+
+func reportGCFailure(ctx context.Context, mirror string, err error) {
+	var cancelled *gitcmd.Cancelled
+	if errors.As(err, &cancelled) {
+		return
+	}
+	observe, ok := ctx.Value(gcFailureObserverKey{}).(func(GCFailure))
+	if !ok {
+		return
+	}
+	failure := GCFailure{Mirror: mirror, Err: err}
+	var cmdErr *git.CmdError
+	if errors.As(err, &cmdErr) {
+		failure.ExitCode, failure.Output, failure.Err = cmdErr.ExitCode, string(cmdErr.Output), cmdErr.Cause
+	}
+	observe(failure)
+}
+
 // maybeRunGC runs git gc --prune=now if >24h have elapsed since the last GC.
 // Uses a file lock so only one process GCs at a time, and a marker file whose
-// mtime records when GC last completed. All errors are silently ignored — GC
-// is an optimization, not a correctness requirement.
+// mtime records when GC last completed, so a gc that fails writes none and the
+// next Close tries again. A failed gc goes to the opener's GCFailure observer
+// rather than to Close's error: gc is an optimization, not a correctness
+// requirement, and the close it runs in has still done its work.
 func (gbs *GitBlobstore) maybeRunGC() {
 	markerPath := filepath.Join(gbs.gitDir, ".dolt-gc-last")
 	if info, err := os.Stat(markerPath); err == nil {
@@ -763,7 +803,10 @@ func (gbs *GitBlobstore) maybeRunGC() {
 
 	ctx, cancel := context.WithTimeout(gbs.closeCtx, gbs.gcTimeout)
 	defer cancel()
-	_, _ = gbs.runner.Run(ctx, git.RunOptions{}, "gc", "--prune=now")
+	if _, err := gbs.runner.Run(ctx, git.RunOptions{}, "gc", "--prune=now"); err != nil {
+		reportGCFailure(gbs.closeCtx, gbs.gitDir, err)
+		return
+	}
 	_ = os.WriteFile(markerPath, nil, 0644)
 }
 
