@@ -770,31 +770,27 @@ func reportGCFailure(ctx context.Context, mirror string, err error) {
 	observe(failure)
 }
 
-// gcRetryInterval is how long a gc that failed waits before a Close tries it
-// again, so a mirror whose gc keeps failing or timing out costs a close that
-// gc at most once an hour, not on every close.
+// gcRetryInterval is how long a gc that failed, other than by its timeout,
+// waits before a Close tries it again. A gc its timeout ended waits the full
+// gcInterval: each try costs a Close gcTimeout, and one that ran out of time
+// once is no likelier to finish an hour later.
 const gcRetryInterval = time.Hour
 
-// gcDue reports whether gc is owed: the mtime of .dolt-gc-last, when gc last
-// completed, is older than gcInterval, and the mtime of .dolt-gc-failed, when
-// gc last failed, is older than gcRetryInterval.
+// gcDue reports whether gc is owed: .dolt-gc-last, whose mtime plus
+// gcInterval is when the next gc is owed, is missing or that old.
 func gcDue(gitDir string) bool {
-	for marker, interval := range map[string]time.Duration{".dolt-gc-last": gcInterval, ".dolt-gc-failed": gcRetryInterval} {
-		if info, err := os.Stat(filepath.Join(gitDir, marker)); err == nil && time.Since(info.ModTime()) < interval {
-			return false
-		}
-	}
-	return true
+	info, err := os.Stat(filepath.Join(gitDir, ".dolt-gc-last"))
+	return err != nil || time.Since(info.ModTime()) >= gcInterval
 }
 
 // maybeRunGC runs git gc --prune=now when gcDue says it is owed, under a file
-// lock so only one process GCs at a time. A gc that completes writes
-// .dolt-gc-last. One that fails, its timeout included (closeCtx carries no
-// cancellation, so only gcTimeout ends it early), writes .dolt-gc-failed and
-// stays owed. A failed gc, and a marker that could not be written, go to the
-// opener's GCFailure observer rather than to Close's error: gc is an
-// optimization, not a correctness requirement, and the close it runs in has
-// still done its work.
+// lock so only one process GCs at a time, and sets .dolt-gc-last for when the
+// next is owed: a day after a gc that completed or that its timeout ended
+// (closeCtx carries no cancellation, so only gcTimeout ends it early), and
+// gcRetryInterval after one that failed otherwise. A failed gc, and a lock or
+// marker it could not take or set, go to the opener's GCFailure observer
+// rather than to Close's error: gc is an optimization, not a correctness
+// requirement, and the close it runs in has still done its work.
 func (gbs *GitBlobstore) maybeRunGC() {
 	if !gcDue(gbs.gitDir) {
 		return
@@ -817,13 +813,20 @@ func (gbs *GitBlobstore) maybeRunGC() {
 
 	ctx, cancel := context.WithTimeout(gbs.closeCtx, gbs.gcTimeout)
 	defer cancel()
-	marker := ".dolt-gc-last"
+	next := time.Now()
 	if _, err := gbs.runner.Run(ctx, git.RunOptions{}, "gc", "--prune=now"); err != nil {
 		reportGCFailure(gbs.closeCtx, gbs.gitDir, err)
-		marker = ".dolt-gc-failed"
+		if ctx.Err() == nil {
+			next = next.Add(gcRetryInterval - gcInterval)
+		}
 	}
-	if err := os.WriteFile(filepath.Join(gbs.gitDir, marker), nil, 0644); err != nil {
-		reportGCFailure(gbs.closeCtx, gbs.gitDir, fmt.Errorf("write gc marker %s: %w", marker, err))
+	marker := filepath.Join(gbs.gitDir, ".dolt-gc-last")
+	err := os.WriteFile(marker, nil, 0644)
+	if err == nil {
+		err = os.Chtimes(marker, next, next)
+	}
+	if err != nil {
+		reportGCFailure(gbs.closeCtx, gbs.gitDir, fmt.Errorf("set gc marker: %w", err))
 	}
 }
 
