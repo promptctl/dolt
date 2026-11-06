@@ -110,6 +110,10 @@ func (e *CmdError) Error() string {
 
 func (e *CmdError) Unwrap() error { return e.Cause }
 
+// OutputText is the command's captured output as Error prints it: trailing
+// newlines trimmed and capped at its last maxCapturedOutputBytes.
+func (e *CmdError) OutputText() string { return formatOutput(e.Output) }
+
 // Run executes "git <args...>" with GIT_DIR set and returns captured combined output
 // when Stdout/Stderr are not supplied.
 func (r *Runner) Run(ctx context.Context, opts RunOptions, args ...string) ([]byte, error) {
