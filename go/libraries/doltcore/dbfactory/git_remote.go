@@ -48,7 +48,13 @@ const (
 	// GitCacheRootParam is the absolute path to the local Dolt repository root (the directory that contains `.dolt/`).
 	// Required for git remotes. GitRemoteFactory stores its local cache repo under:
 	// `<git_cache_root>/.dolt/git-remote-cache/<sha256(remoteURL|remoteRef)>/repo.git`.
-	GitCacheRootParam    = "git_cache_root"
+	GitCacheRootParam = "git_cache_root"
+	// GitCacheBaseParam, when present, is the absolute directory GitRemoteFactory keeps its cache
+	// repos in, as `<git_cache_base>/<sha256(remoteURL|remoteRef)>/repo.git`, in place of
+	// `<git_cache_root>/.dolt/git-remote-cache`. An embedder sets it to keep the cache at a path
+	// whose length does not grow with the repository's depth: git refuses a GIT_DIR longer than
+	// PATH_MAX-40, which on Windows is 220 characters.
+	GitCacheBaseParam    = "git_cache_base"
 	GitRefParam          = "git_ref"
 	GitRemoteNameParam   = "git_remote_name"
 	defaultGitRef        = "refs/dolt/data"
@@ -56,6 +62,13 @@ const (
 )
 
 var ErrGitRemoteHasNoBranches = errors.New("git remote has no branches")
+
+// GitCacheBaseProvider provides the directory a repo's git remote caches live in, when the
+// embedder keeps them outside the repo (see GitCacheBaseParam). Implementations should return
+// ok=false to keep the caches under the repo root.
+type GitCacheBaseProvider interface {
+	GitCacheBase() (string, bool)
+}
 
 // GitCacheRootProvider provides the local Dolt repo root for per-repo git remote caches.
 // Implementations should return ok=false when no repo root is available.
@@ -106,14 +119,10 @@ func (fact GitRemoteFactory) CreateDB(ctx context.Context, nbf *types.NomsBinFor
 		return nil, nil, nil, err
 	}
 
-	cacheRoot, ok, err := resolveGitCacheRoot(params)
+	cacheBase, err := resolveGitCacheBase(params)
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	if !ok {
-		return nil, nil, nil, fmt.Errorf("%s is required for git remotes", GitCacheRootParam)
-	}
-	cacheBase := filepath.Join(cacheRoot, DoltDir, "git-remote-cache")
 
 	cacheRepo, err := cacheRepoPath(cacheBase, remoteURL.String(), ref)
 	if err != nil {
@@ -261,6 +270,29 @@ func resolveGitCacheRoot(params map[string]interface{}) (root string, ok bool, e
 	return s, true, nil
 }
 
+// resolveGitCacheBase is the directory CreateDB keeps cache repos in: GitCacheBaseParam when
+// present, else `<GitCacheRootParam>/.dolt/git-remote-cache`. One of the two is required.
+func resolveGitCacheBase(params map[string]interface{}) (string, error) {
+	if v, ok := params[GitCacheBaseParam]; ok && v != nil {
+		s, ok := v.(string)
+		if !ok {
+			return "", fmt.Errorf("%s must be a string", GitCacheBaseParam)
+		}
+		if strings.TrimSpace(s) == "" {
+			return "", fmt.Errorf("%s cannot be empty", GitCacheBaseParam)
+		}
+		return s, nil
+	}
+	cacheRoot, ok, err := resolveGitCacheRoot(params)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", fmt.Errorf("%s or %s is required for git remotes", GitCacheBaseParam, GitCacheRootParam)
+	}
+	return filepath.Join(cacheRoot, DoltDir, "git-remote-cache"), nil
+}
+
 func cacheRepoPath(cacheBase, remoteURL, ref string) (string, error) {
 	if strings.TrimSpace(cacheBase) == "" {
 		return "", fmt.Errorf("empty git cache base")
@@ -273,7 +305,7 @@ func gitCacheKey(remoteURL, ref string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// GitRemoteCacheKey names the directory under `<git_cache_root>/.dolt/git-remote-cache` that
+// GitRemoteCacheKey names the directory under the git cache base (see resolveGitCacheBase) that
 // CreateDB keeps the cache repo of the remote urlStr in, when the remote is opened with params.
 // It parses urlStr, picks the factory, and hashes exactly as CreateDB does, so a caller that
 // needs to recognize a remote's cache directory never re-derives the name. gitBacked is false,

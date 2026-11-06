@@ -153,6 +153,40 @@ func TestGitRemoteFactory_GitFile_CachesUnderRepoDoltDirAndCanWrite(t *testing.T
 	require.NoError(t, err, "git rev-parse failed: %s", strings.TrimSpace(string(out)))
 }
 
+// A cache base keeps the cache repo at a path that does not grow with the repo root's depth:
+// git refuses a GIT_DIR longer than PATH_MAX-40, 220 characters on Windows.
+func TestGitRemoteFactory_GitFile_CacheBaseHoldsTheCacheRepoAtAnyRootDepth(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not found on PATH")
+	}
+
+	ctx := context.Background()
+	remoteRepo, err := gitrepo.InitBare(ctx, filepath.Join(shortTempDir(t), "remote.git"))
+	require.NoError(t, err)
+	_, err = remoteRepo.SetRefToTree(ctx, "refs/heads/main", map[string][]byte{"README": []byte("seed\n")}, "seed")
+	require.NoError(t, err)
+
+	deepRoot := filepath.Join(shortTempDir(t), strings.Repeat("d", 200), strings.Repeat("e", 200))
+	cacheBase := shortTempDir(t)
+	urlStr := "git+file://" + filepath.ToSlash(remoteRepo.GitDir)
+	params := map[string]interface{}{
+		GitCacheRootParam: deepRoot,
+		GitCacheBaseParam: cacheBase,
+	}
+
+	db, _, _, err := CreateDB(ctx, types.Format_Default, urlStr, params)
+	require.NoError(t, err)
+	require.NoError(t, db.Close())
+
+	key, gitBacked, err := GitRemoteCacheKey(urlStr, params)
+	require.NoError(t, err)
+	require.True(t, gitBacked)
+	_, err = os.Stat(filepath.Join(cacheBase, key, "repo.git", "HEAD"))
+	require.NoError(t, err)
+	_, err = os.Stat(deepRoot)
+	require.ErrorIs(t, err, os.ErrNotExist, "nothing is written under the root when a cache base is given")
+}
+
 func TestGitRemoteCacheKey_NamesTheDirectoryCreateDBWrites(t *testing.T) {
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not found on PATH")

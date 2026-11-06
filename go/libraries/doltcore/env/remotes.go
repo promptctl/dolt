@@ -104,6 +104,26 @@ func (r *Remote) GetParamOrDefault(pName, defVal string) string {
 	return val
 }
 
+// addGitParams adds to params what dbfactory needs to open r when it is a git remote: its name,
+// and where its cache repo lives, from whatever dialer provides.
+func (r *Remote) addGitParams(params map[string]interface{}, dialer dbfactory.GRPCDialProvider) {
+	u, err := earl.Parse(r.Url)
+	if err != nil || u == nil || !strings.HasPrefix(strings.ToLower(u.Scheme), "git+") {
+		return
+	}
+	params[dbfactory.GitRemoteNameParam] = r.Name
+	if p, ok := dialer.(dbfactory.GitCacheRootProvider); ok {
+		if root, ok := p.GitCacheRoot(); ok {
+			params[dbfactory.GitCacheRootParam] = root
+		}
+	}
+	if p, ok := dialer.(dbfactory.GitCacheBaseProvider); ok {
+		if base, ok := p.GitCacheBase(); ok {
+			params[dbfactory.GitCacheBaseParam] = base
+		}
+	}
+}
+
 func (r *Remote) GetRemoteDB(ctx context.Context, nbf *types.NomsBinFormat, dialer dbfactory.GRPCDialProvider) (*doltdb.DoltDB, error) {
 	params := make(map[string]interface{})
 	for k, v := range r.Params {
@@ -111,14 +131,7 @@ func (r *Remote) GetRemoteDB(ctx context.Context, nbf *types.NomsBinFormat, dial
 	}
 
 	params[dbfactory.GRPCDialProviderParam] = dialer
-	if u, err := earl.Parse(r.Url); err == nil && u != nil && strings.HasPrefix(strings.ToLower(u.Scheme), "git+") {
-		params[dbfactory.GitRemoteNameParam] = r.Name
-		if p, ok := dialer.(dbfactory.GitCacheRootProvider); ok {
-			if root, ok := p.GitCacheRoot(); ok {
-				params[dbfactory.GitCacheRootParam] = root
-			}
-		}
-	}
+	r.addGitParams(params, dialer)
 
 	return doltdb.LoadDoltDBWithParams(ctx, nbf, r.Url, filesys2.LocalFS, params)
 }
@@ -132,14 +145,7 @@ func (r *Remote) Prepare(ctx context.Context, nbf *types.NomsBinFormat, dialer d
 	}
 
 	params[dbfactory.GRPCDialProviderParam] = dialer
-	if u, err := earl.Parse(r.Url); err == nil && u != nil && strings.HasPrefix(strings.ToLower(u.Scheme), "git+") {
-		params[dbfactory.GitRemoteNameParam] = r.Name
-		if p, ok := dialer.(dbfactory.GitCacheRootProvider); ok {
-			if root, ok := p.GitCacheRoot(); ok {
-				params[dbfactory.GitCacheRootParam] = root
-			}
-		}
-	}
+	r.addGitParams(params, dialer)
 
 	return dbfactory.PrepareDB(ctx, nbf, r.Url, params)
 }
@@ -164,14 +170,7 @@ func (r *Remote) GetRemoteDBWithoutCaching(ctx context.Context, nbf *types.NomsB
 	params[dbfactory.DisableSingletonCacheParam] = "true"
 	params[dbfactory.NoCachingParameter] = "true"
 	params[dbfactory.GRPCDialProviderParam] = dialer
-	if u, err := earl.Parse(r.Url); err == nil && u != nil && strings.HasPrefix(strings.ToLower(u.Scheme), "git+") {
-		params[dbfactory.GitRemoteNameParam] = r.Name
-		if p, ok := dialer.(dbfactory.GitCacheRootProvider); ok {
-			if root, ok := p.GitCacheRoot(); ok {
-				params[dbfactory.GitCacheRootParam] = root
-			}
-		}
-	}
+	r.addGitParams(params, dialer)
 
 	return doltdb.LoadDoltDBWithParams(ctx, nbf, r.Url, filesys2.LocalFS, params)
 }

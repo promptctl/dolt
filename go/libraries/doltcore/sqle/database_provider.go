@@ -58,6 +58,9 @@ import (
 type DoltDatabaseProvider struct {
 	fs           filesys.Filesys
 	remoteDialer dbfactory.GRPCDialProvider // TODO: why isn't this a method defined on the remote object
+	// gitCacheBaseFor, when set, names the directory a database's git remote caches live in, given
+	// the database's root; nil keeps them under the root.
+	gitCacheBaseFor func(root string) string
 
 	// dbLoadParams are optional parameters to apply when loading local file-backed databases created
 	// via provider-managed code paths (e.g. CREATE DATABASE / dolt_clone / undrop). These should match
@@ -91,6 +94,26 @@ type DoltDatabaseProvider struct {
 type remoteDialerWithGitCacheRoot struct {
 	dbfactory.GRPCDialProvider
 	root string
+	// base is where the root's git remote caches live, when the embedder keeps them outside the
+	// root (see dbfactory.GitCacheBaseParam); empty keeps them under the root.
+	base string
+}
+
+func (d remoteDialerWithGitCacheRoot) GitCacheBase() (string, bool) {
+	if strings.TrimSpace(d.base) == "" {
+		return "", false
+	}
+	return d.base, true
+}
+
+// gitRemoteDialer is the remote dialer for a git remote opened on behalf of the database rooted
+// at root: it carries root, and the cache base gitCacheBaseFor names for it.
+func (p *DoltDatabaseProvider) gitRemoteDialer(root string) remoteDialerWithGitCacheRoot {
+	d := remoteDialerWithGitCacheRoot{GRPCDialProvider: p.remoteDialer, root: root}
+	if p.gitCacheBaseFor != nil {
+		d.base = p.gitCacheBaseFor(root)
+	}
+	return d
 }
 
 func (d remoteDialerWithGitCacheRoot) GitCacheRoot() (string, bool) {
@@ -217,6 +240,14 @@ func (p *DoltDatabaseProvider) RegisterProcedure(procedure sql.ExternalStoredPro
 func (p *DoltDatabaseProvider) WithDbFactoryUrl(url string) *DoltDatabaseProvider {
 	cp := *p
 	cp.dbFactoryUrl = url
+	return &cp
+}
+
+// WithGitCacheBaseFor returns a copy of this provider that keeps each database's git remote
+// caches in the directory fn names for the database's root.
+func (p *DoltDatabaseProvider) WithGitCacheBaseFor(fn func(root string) string) *DoltDatabaseProvider {
+	cp := *p
+	cp.gitCacheBaseFor = fn
 	return &cp
 }
 
@@ -559,7 +590,7 @@ func (p *DoltDatabaseProvider) GetRemoteDB(ctx context.Context, format *types.No
 		p.mu.RUnlock()
 		if ok && dbLoc != nil {
 			if root, err := dbLoc.Abs("."); err == nil && strings.TrimSpace(root) != "" {
-				dialer = remoteDialerWithGitCacheRoot{GRPCDialProvider: p.remoteDialer, root: root}
+				dialer = p.gitRemoteDialer(root)
 			}
 		}
 	}
@@ -932,7 +963,7 @@ func (p *DoltDatabaseProvider) cloneDatabaseFromRemote(
 	}
 	// The clone owns its source: opened and closed as DOLT_FETCH and DOLT_PULL
 	// open and close theirs.
-	srcDB, err := r.GetRemoteDBWithoutCaching(ctx, types.Format_Default, remoteDialerWithGitCacheRoot{GRPCDialProvider: p.remoteDialer, root: destRoot})
+	srcDB, err := r.GetRemoteDBWithoutCaching(ctx, types.Format_Default, p.gitRemoteDialer(destRoot))
 	if err != nil {
 		return err
 	}

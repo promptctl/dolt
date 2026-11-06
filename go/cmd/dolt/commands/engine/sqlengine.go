@@ -96,6 +96,10 @@ type SqlEngineConfig struct {
 	// Intended for embedded-driver use-cases that need to influence dbfactory / storage open behavior.
 	DBLoadParams map[string]interface{}
 
+	// GitCacheBaseFor, when set, names the directory a database's git remote caches live in, given
+	// the database's root (see dbfactory.GitCacheBaseParam). Nil keeps them under the root.
+	GitCacheBaseFor func(root string) string
+
 	FatalBehavior dherrors.FatalBehavior
 }
 
@@ -188,7 +192,7 @@ func NewSqlEngine(
 	if err != nil {
 		return nil, err
 	}
-	pro = pro.WithRemoteDialer(mrEnv.RemoteDialProvider())
+	pro = pro.WithRemoteDialer(mrEnv.RemoteDialProvider()).WithGitCacheBaseFor(config.GitCacheBaseFor)
 	if config != nil && len(config.DBLoadParams) > 0 {
 		pro.SetDBLoadParams(config.DBLoadParams)
 	}
