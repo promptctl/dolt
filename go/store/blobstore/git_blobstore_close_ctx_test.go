@@ -66,3 +66,44 @@ exec "`+realGit+`" "$@"
 	require.ErrorIs(t, observed[0], context.DeadlineExceeded)
 	require.GreaterOrEqual(t, observed[0].Kill.Processes, 2, "the shim and its sleep")
 }
+
+// A gc that fails reaches the opener's GCFailure observer with its exit status
+// and output, and writes no marker, so the next Close runs gc again. A gc that
+// succeeds writes the marker and reports nothing.
+func TestGitBlobstore_Close_ReportsAFailedGCAndLeavesItOwed(t *testing.T) {
+	requireGitOnPath(t)
+	realGit, err := exec.LookPath("git")
+	require.NoError(t, err)
+	shim := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(shim, "git"), []byte(`#!/bin/sh
+for a in "$@"; do [ "$a" = gc ] && [ -e "$GC_FAILS" ] && { echo "gc refused" >&2; exit 3; }; done
+exec "`+realGit+`" "$@"
+`), 0o755))
+	t.Setenv("PATH", shim+string(os.PathListSeparator)+os.Getenv("PATH"))
+	failsFlag := filepath.Join(t.TempDir(), "fails")
+	require.NoError(t, os.WriteFile(failsFlag, nil, 0o644))
+	t.Setenv("GC_FAILS", failsFlag)
+
+	ctx := context.Background()
+	_, localRepo, _ := newRemoteAndLocalRepos(t, ctx)
+	var observed []GCFailure
+	opener := WithGCFailureObserver(ctx, func(f GCFailure) { observed = append(observed, f) })
+	marker := filepath.Join(localRepo.GitDir, ".dolt-gc-last")
+	closeOnce := func() {
+		bs, err := NewGitBlobstoreWithOptions(opener, localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
+		require.NoError(t, err)
+		require.NoError(t, bs.Close())
+	}
+
+	closeOnce()
+	require.Len(t, observed, 1)
+	require.Equal(t, localRepo.GitDir, observed[0].Mirror)
+	require.Equal(t, 3, observed[0].ExitCode)
+	require.Contains(t, observed[0].Output, "gc refused")
+	require.NoFileExists(t, marker)
+
+	require.NoError(t, os.Remove(failsFlag))
+	closeOnce()
+	require.Len(t, observed, 1, "a gc that succeeds reports nothing")
+	require.FileExists(t, marker)
+}
