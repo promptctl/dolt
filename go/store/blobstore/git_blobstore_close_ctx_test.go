@@ -53,7 +53,9 @@ exec "`+realGit+`" "$@"
 	ctx := context.Background()
 	_, localRepo, _ := newRemoteAndLocalRepos(t, ctx)
 	var observed []*gitcmd.Cancelled
-	opener, cancel := context.WithCancel(gitcmd.WithObserver(ctx, func(c *gitcmd.Cancelled) { observed = append(observed, c) }))
+	var failures []GCFailure
+	opener := WithGCFailureObserver(ctx, func(f GCFailure) { failures = append(failures, f) })
+	opener, cancel := context.WithCancel(gitcmd.WithObserver(opener, func(c *gitcmd.Cancelled) { observed = append(observed, c) }))
 	bs, err := NewGitBlobstoreWithOptions(opener, localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
 	require.NoError(t, err)
 	bs.gcTimeout = 200 * time.Millisecond
@@ -65,10 +67,14 @@ exec "`+realGit+`" "$@"
 	require.Len(t, observed, 1)
 	require.ErrorIs(t, observed[0], context.DeadlineExceeded)
 	require.GreaterOrEqual(t, observed[0].Kill.Processes, 2, "the shim and its sleep")
+	require.Len(t, failures, 1, "a gc its timeout ended is a gc failure too")
+	require.ErrorIs(t, failures[0].Err, context.DeadlineExceeded)
+	require.FileExists(t, filepath.Join(localRepo.GitDir, ".dolt-gc-failed"))
 }
 
 // A gc that fails reaches the opener's GCFailure observer with its exit status
-// and output, and writes no marker, so the next Close runs gc again. A gc that
+// and output, and writes no completion marker, so gc stays owed: a Close
+// within the hour leaves it, one after the hour runs it again. A gc that
 // succeeds writes the marker and reports nothing.
 func TestGitBlobstore_Close_ReportsAFailedGCAndLeavesItOwed(t *testing.T) {
 	requireGitOnPath(t)
@@ -102,8 +108,35 @@ exec "`+realGit+`" "$@"
 	require.Contains(t, observed[0].Output, "gc refused")
 	require.NoFileExists(t, marker)
 
+	failed := filepath.Join(localRepo.GitDir, ".dolt-gc-failed")
+	closeOnce()
+	require.Len(t, observed, 1, "a gc that failed within the hour is not tried again yet")
+
+	anHourAgo := time.Now().Add(-gcRetryInterval - time.Minute)
+	require.NoError(t, os.Chtimes(failed, anHourAgo, anHourAgo))
 	require.NoError(t, os.Remove(failsFlag))
 	closeOnce()
 	require.Len(t, observed, 1, "a gc that succeeds reports nothing")
 	require.FileExists(t, marker)
+}
+
+// A gc marker Close cannot write is a GCFailure, not a silent rerun of gc on
+// every later Close.
+func TestGitBlobstore_Close_ReportsAGCMarkerItCouldNotWrite(t *testing.T) {
+	requireGitOnPath(t)
+	ctx := context.Background()
+	_, localRepo, _ := newRemoteAndLocalRepos(t, ctx)
+	// A directory where the marker goes makes the write fail.
+	require.NoError(t, os.Mkdir(filepath.Join(localRepo.GitDir, ".dolt-gc-last"), 0o755))
+	aDayAgo := time.Now().Add(-gcInterval - time.Minute)
+	require.NoError(t, os.Chtimes(filepath.Join(localRepo.GitDir, ".dolt-gc-last"), aDayAgo, aDayAgo))
+
+	var observed []GCFailure
+	opener := WithGCFailureObserver(ctx, func(f GCFailure) { observed = append(observed, f) })
+	bs, err := NewGitBlobstoreWithOptions(opener, localRepo.GitDir, DoltDataRef, GitBlobstoreOptions{RemoteName: "origin"})
+	require.NoError(t, err)
+	require.NoError(t, bs.Close())
+	require.Len(t, observed, 1)
+	require.Equal(t, localRepo.GitDir, observed[0].Mirror)
+	require.ErrorContains(t, observed[0].Err, "write gc marker .dolt-gc-last")
 }

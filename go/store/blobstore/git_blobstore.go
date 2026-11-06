@@ -39,7 +39,6 @@ import (
 	"github.com/google/uuid"
 	fslock "github.com/promptctl/primitives/filelock"
 
-	"github.com/dolthub/dolt/go/libraries/utils/gitcmd"
 	git "github.com/dolthub/dolt/go/store/blobstore/internal/git"
 )
 
@@ -736,10 +735,11 @@ const gcInterval = 24 * time.Hour
 // git push enough parents for efficient incremental delta computation.
 const maxParentedCommits = 64
 
-// GCFailure is a gc Close ran that failed without being cancelled: Mirror is
-// the git dir it ran in, ExitCode and Output are git's exit status and its
-// captured output, and Err is why the run ended. A gc its context cancelled
-// is not one: gitcmd reports that to its own observer.
+// GCFailure is a gc Close ran that failed: Mirror is the git dir it ran in,
+// ExitCode and Output are git's exit status and its captured output, and Err
+// is why the run ended. A gc its timeout ended is one, which gitcmd also
+// reports to its own observer as a cancel. A gc marker Close could not write
+// is one with only Mirror and Err.
 type GCFailure struct {
 	Mirror   string
 	ExitCode int
@@ -757,10 +757,6 @@ func WithGCFailureObserver(ctx context.Context, observe func(GCFailure)) context
 }
 
 func reportGCFailure(ctx context.Context, mirror string, err error) {
-	var cancelled *gitcmd.Cancelled
-	if errors.As(err, &cancelled) {
-		return
-	}
 	observe, ok := ctx.Value(gcFailureObserverKey{}).(func(GCFailure))
 	if !ok {
 		return
@@ -773,18 +769,34 @@ func reportGCFailure(ctx context.Context, mirror string, err error) {
 	observe(failure)
 }
 
-// maybeRunGC runs git gc --prune=now if >24h have elapsed since the last GC.
-// Uses a file lock so only one process GCs at a time, and a marker file whose
-// mtime records when GC last completed, so a gc that fails writes none and the
-// next Close tries again. A failed gc goes to the opener's GCFailure observer
-// rather than to Close's error: gc is an optimization, not a correctness
-// requirement, and the close it runs in has still done its work.
-func (gbs *GitBlobstore) maybeRunGC() {
-	markerPath := filepath.Join(gbs.gitDir, ".dolt-gc-last")
-	if info, err := os.Stat(markerPath); err == nil {
-		if time.Since(info.ModTime()) < gcInterval {
-			return
+// gcRetryInterval is how long a gc that failed waits before a Close tries it
+// again, so a mirror whose gc keeps failing or timing out costs a close that
+// gc at most once an hour, not on every close.
+const gcRetryInterval = time.Hour
+
+// gcDue reports whether gc is owed: the mtime of .dolt-gc-last, when gc last
+// completed, is older than gcInterval, and the mtime of .dolt-gc-failed, when
+// gc last failed, is older than gcRetryInterval.
+func gcDue(gitDir string) bool {
+	for marker, interval := range map[string]time.Duration{".dolt-gc-last": gcInterval, ".dolt-gc-failed": gcRetryInterval} {
+		if info, err := os.Stat(filepath.Join(gitDir, marker)); err == nil && time.Since(info.ModTime()) < interval {
+			return false
 		}
+	}
+	return true
+}
+
+// maybeRunGC runs git gc --prune=now when gcDue says it is owed, under a file
+// lock so only one process GCs at a time. A gc that completes writes
+// .dolt-gc-last. One that fails, its timeout included (closeCtx carries no
+// cancellation, so only gcTimeout ends it early), writes .dolt-gc-failed and
+// stays owed. A failed gc, and a marker that could not be written, go to the
+// opener's GCFailure observer rather than to Close's error: gc is an
+// optimization, not a correctness requirement, and the close it runs in has
+// still done its work.
+func (gbs *GitBlobstore) maybeRunGC() {
+	if !gcDue(gbs.gitDir) {
+		return
 	}
 
 	lockPath := filepath.Join(gbs.gitDir, ".dolt-gc.lock")
@@ -795,19 +807,20 @@ func (gbs *GitBlobstore) maybeRunGC() {
 	defer lck.Unlock()
 
 	// Re-check after acquiring lock — another instance may have GC'd.
-	if info, err := os.Stat(markerPath); err == nil {
-		if time.Since(info.ModTime()) < gcInterval {
-			return
-		}
+	if !gcDue(gbs.gitDir) {
+		return
 	}
 
 	ctx, cancel := context.WithTimeout(gbs.closeCtx, gbs.gcTimeout)
 	defer cancel()
+	marker := ".dolt-gc-last"
 	if _, err := gbs.runner.Run(ctx, git.RunOptions{}, "gc", "--prune=now"); err != nil {
 		reportGCFailure(gbs.closeCtx, gbs.gitDir, err)
-		return
+		marker = ".dolt-gc-failed"
 	}
-	_ = os.WriteFile(markerPath, nil, 0644)
+	if err := os.WriteFile(filepath.Join(gbs.gitDir, marker), nil, 0644); err != nil {
+		reportGCFailure(gbs.closeCtx, gbs.gitDir, fmt.Errorf("write gc marker %s: %w", marker, err))
+	}
 }
 
 func (gbs *GitBlobstore) syncForRead(ctx context.Context) error {
